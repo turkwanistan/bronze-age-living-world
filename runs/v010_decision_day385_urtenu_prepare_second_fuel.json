@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V010-D385-URTENU-PREPARE-SECOND-FUEL",
+  "actor_id": "P7",
+  "selected_intent": "use another bounded portion of the finite fuel reserve so charcoal does not immediately become the workshop bottleneck again",
+  "proposed_actions": [
+    {
+      "type": "prepare_charcoal_fuel",
+      "feedstock_input": 0.4,
+      "charcoal_output": 0.5,
+      "reason": "The disrupted metal lot has just supported one production cycle, but prepared charcoal has fallen back to the minimum threshold while finite feedstock remains available."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-CRAFT-FUEL-001-P7"],
+  "decision_basis_tags": ["recurring_fuel_dependency", "finite_feedstock", "workshop_resilience"],
+  "declared_uncertainty": "The second 0.40→0.50 conversion remains ASM-FIXTURE-029 calibration; it is not a historical charcoal-production rate."
+}

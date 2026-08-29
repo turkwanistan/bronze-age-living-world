@@ -1,35 +1,30 @@
 # NEXT SESSION
 
-Start from accepted v009 in `STATUS.md` and `runs/ACCEPTED_DAY375_V009_NETWORK_ALTERNATIVES.md`.
+Start from accepted v010 in `STATUS.md` and `runs/ACCEPTED_DAY385_V010_FUEL_MARKET_SHOCK.md`.
 
-1. Verify Git, `state/current.json`, authority hashes, 61 tests, and exact 114-decision replay to day 375.
-2. Preserve v002-v009; rebuild fresh candidates whenever scene generation, packet serialization, scenario fixtures, or canonical semantics change.
-3. Highest-value next step: make the new alternate metal network resilient rather than one-shot.
-   - repeated sourcing must require changed/new information, not automatic restocking;
-   - P12 may have no lot, worse terms, delay, damage, or refusal;
-   - recycling remains the local costly fallback;
-   - no return to infinite P3 credit.
-4. Introduce the first bounded non-catastrophic shock through an already-working system, preferably the alternate cargo/market path or a weather/tool interruption. Explicitly fixture-label timing/probability/quantity and avoid collapse-scale events.
-5. Add language/interpreter or scribal-record constraints when the alternate trade path becomes multi-party enough to need them; do not add generic complexity before it changes decisions.
-6. Continue care/property depth: Kothar has six fulfillments and one harvest-time deferment. Let future care be shared, renegotiated, or contested before any succession event; the property preference remains non-binding.
-7. Consider a second independent life-course transition only when state supports it; prefer work/status/migration/household formation over another scripted marriage.
-8. Deepen tools/livestock/weather conservatively while keeping the neutral staple baseline until a production model can replace it without structural poverty drift.
-9. Add paired/counterfactual or second-seed runs before treating behavioral frequencies as meaningful.
-10. Every accepted checkpoint requires tests, evidence mappings, protocol docs, exact replay with zero new cognition, state/status/manifest updates, and clean Git.
+1. Verify Git, authority hashes, `state/current.json`, **66 tests**, and exact **124-decision** replay to day 385.
+2. Preserve v002-v010. Rebuild fresh candidates whenever scenario, scene generation, packet serialization or canonical semantics change.
+3. Highest-value next step: make workshop resilience less fixture-specific.
+   - finite fuel feedstock now works; decide how additional fuel is obtained only through a material/social path, not automatic replenishment;
+   - repeat alternate metal availability must continue to require changed information; no permanent P12 faucet;
+   - let a future genuinely poor/unavailable market update make recycling the rational strict choice without scripting it.
+4. Add one additional bounded shock only after it stresses an existing system: surprise cargo delay/damage after commitment, temporary tool loss, local weather effect on agriculture, or household care burden. Do not escalate to collapse.
+5. Deepen tool/livestock/weather mechanics conservatively and keep every quantity fixture-labeled. Preserve neutral staple provisioning until a tested production economy can replace it without poverty drift.
+6. Care/property: Kothar has six fulfillments and one harvest deferment; add shared/renegotiated care or property-use disagreement before any succession event. Property preference remains non-binding.
+7. A second independent life-course transition remains desirable when state supports it—work/status/migration/household formation preferred over another scripted marriage.
+8. Add language/interpreter or scribal-record constraints only when they materially alter the now multi-party P7/P11/P12 network.
+9. Add second-seed / paired-counterfactual testing before treating behavior frequencies as historically meaningful.
+10. Every accepted checkpoint still requires tests, evidence mappings, protocol/docs, `state/current.json`, acceptance manifest, exact replay with zero new cognition, and clean Git.
 
-Current v009 facts:
+Current v010 facts:
 
-- day 375, seed 1701, scenario 0.7.0, schema 3;
-- hash `7ea6a82c61fcd10f94b1e741b357efba0bafb50e5acaa24ebf4e0e6319c4ada3`;
-- 5,290 events;
-- 61/61 tests;
-- 114 accepted decisions / 0 rejected / 0 pending / 0 open scenes;
-- exact 114-decision replay / 0 new cognition;
-- P7 receives alternate lead only on day 363 and terms only on day 365;
-- 0.30 craft silver leaves on day 365; 0.30 metal arrives day 368; ordinary craft work consumes it day 371;
-- P7->P12 is now a `market_contact`; P7->P11 is a `market_introduction_contact`;
-- zero P7->P3 resource requests after the accepted scarcity refusal;
-- recycling exists as a tested lossy fallback but was not chosen in strict history;
-- Kothar deferred one care episode at the 1.00 harvest bottleneck after six prior fulfillments; care obligation/property preference remain active.
+- day 385, scenario 0.8.0, schema 3, seed 1701;
+- hash `e2720f1e974c23901ce746f0ffa2d5afbf7d4ce65e317d51653b899b8634c661`;
+- 5,475 events; 124 accepted decisions; 66/66 tests; exact replay;
+- H-CRAFT fuel feedstock 1.20 -> 0.80 -> 0.40 through two real preparation episodes;
+- disrupted market information reaches P7 only on day 380;
+- 0.30 silver leaves day 380, 0.18 metal arrives day 385; ordinary craft work immediately consumes 0.15 metal + 0.20 charcoal;
+- zero post-day-308 P7->P3 resource requests;
+- Arhalbu palace service moved to day 420 during the 1.00 harvest bottleneck.
 
 **The world is structured. The people are not scripted.**

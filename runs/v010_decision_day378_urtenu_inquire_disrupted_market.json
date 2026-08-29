@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V010-D378-URTENU-INQUIRE-DISRUPTED-MARKET",
+  "actor_id": "P7",
+  "selected_intent": "ask the established market contact for current availability instead of assuming the prior lot can simply be repeated",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P12",
+      "sender_intent": "inquiry",
+      "content": "The first alternate lot helped, but the workshop is short again. What raw-metal availability, usable amount, cost, and delay can you actually offer now?"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-ALT-METAL-001-P7"],
+  "decision_basis_tags": ["changed_information_required", "existing_market_contact", "no_automatic_restock"],
+  "declared_uncertainty": "Urtenu knows only that alternate availability can change; he does not know P12's private v010 disruption terms before the reply arrives."
+}

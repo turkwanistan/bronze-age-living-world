@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V010-D385-ARHALBU-RESCHEDULE-PALACE",
+  "actor_id": "P13",
+  "selected_intent": "move palace labor out of the full cereal-harvest bottleneck while preserving the obligation",
+  "proposed_actions": [
+    {
+      "type": "reschedule_palace_labor",
+      "obligation_id": "O-cec93bee2eaa0638",
+      "new_due_day": 420,
+      "reason": "The household is again in the modeled 1.00 cereal-harvest transport/threshing bottleneck; prior history supports postponing palace service until the next genuinely lower-intensity phase rather than abandoning it."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-LABOR-001-P13"],
+  "decision_basis_tags": ["harvest_bottleneck", "household_labor", "institutional_compliance", "reschedule_not_refusal"],
+  "declared_uncertainty": "The day-420 reschedule target and palace-labor cadence are ASM-FIXTURE-011 calibration, not a historical Ugaritic corvée schedule."
+}

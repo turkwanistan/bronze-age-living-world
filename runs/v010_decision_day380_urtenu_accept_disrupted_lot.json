@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V010-D380-URTENU-ACCEPT-DISRUPTED-LOT",
+  "actor_id": "P7",
+  "selected_intent": "accept the degraded external lot because preserving finished output is still preferable to immediate remelting at current household resources",
+  "proposed_actions": [
+    {
+      "type": "accept_alternate_metal_exchange",
+      "silver_cost": 0.3,
+      "metal_amount": 0.18,
+      "delivery_days": 5,
+      "reason": "The terms are worse than the first lot, but the workshop has 3.7 silver and 0.79 finished metalwork; paying 0.30 silver preserves finished output and still provides enough raw metal for another production cycle."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-7de4f0f6fe469c6f", "K-LOCAL-RECYCLE-001-P7", "K-LOCAL-ALT-METAL-001-P7"],
+  "decision_basis_tags": ["temporary_market_disruption", "preserve_finished_output", "bounded_silver_cost", "delayed_supply"],
+  "declared_uncertainty": "The degraded 0.30-silver/0.18-metal/five-day terms are ASM-FIXTURE-030 calibration; choosing them does not imply a historical price or universal preference over recycling."
+}

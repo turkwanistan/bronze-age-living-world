@@ -139,6 +139,9 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
             for r,amt in specialist_resources:
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
                             (h["id"],r,float(amt),"abstract_fixture_unit","ASM-FIXTURE-009"))
+            if "ASM-FIXTURE-029" in active_assumptions and h["id"] == "H-CRAFT":
+                con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
+                            ("H-CRAFT","fuel_feedstock",1.20,"abstract_fixture_unit","ASM-FIXTURE-029"))
             if "ASM-FIXTURE-025" in scenario.get("active_assumptions", []) and h["id"] == "H-FARM":
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
                             ("H-FARM","draft_team_condition",1.0,"abstract_fixture_unit","ASM-FIXTURE-025"))
@@ -232,6 +235,12 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "When one supplier is exhausted, trusted merchant and harbor contacts can sometimes provide information about other market opportunities, but availability and terms must be learned rather than assumed.",
                 ["P3","P7","P11","P12"],
             ))
+        if "ASM-FIXTURE-029" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-CRAFT-FUEL-001",
+                "Metalworking depends on prepared fuel as well as metal; finite household fuel material can require dedicated preparation before casting or finishing can resume.",
+                ["P7","P8"],
+            ))
         if "ASM-FIXTURE-028" in active_assumptions:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
                 "PROP-METAL-ALT-001",
@@ -248,6 +257,15 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 canonical_json({"canonical":"fixture_market_terms","topic":"alternate_workshop_metal","provenance":"ASM-FIXTURE-028"})))
             con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
                 "K-METAL-TERMS-P12","P12","PROP-METAL-TERMS-001",0,"initial_scenario",None,"[]","direct",.80,"ordinary",None))
+
+        if "ASM-FIXTURE-030" in active_assumptions:
+            con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
+                "PROP-METAL-DISRUPT-001",
+                "Dagan-beli reports that a later small raw-metal lot is disrupted by temporary harbor/weather handling problems: 0.30 silver would now secure only 0.18 usable metal after five days.",
+                "simulation_contingent",
+                canonical_json({"canonical":"fixture_disrupted_market_terms","topic":"alternate_workshop_metal","provenance":"ASM-FIXTURE-030"})))
+            con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
+                "K-METAL-DISRUPT-P12","P12","PROP-METAL-DISRUPT-001",0,"initial_scenario",None,"[]","direct",.82,"ordinary",None))
 
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",

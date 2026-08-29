@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V010-D379-DAGAN-BELI-REPORT-DISRUPTION",
+  "actor_id": "P12",
+  "selected_intent": "report the current degraded lot honestly rather than implying the earlier terms still hold",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P7",
+      "sender_intent": "report",
+      "proposition_id": "PROP-METAL-DISRUPT-001",
+      "content": "Current harbor conditions are worse than for the first lot: 0.30 silver would now secure only 0.18 usable metal, and delivery would take five days."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-METAL-DISRUPT-P12"],
+  "decision_basis_tags": ["current_market_information", "counterparty_trust", "temporary_disruption", "no_guaranteed_repeat_terms"],
+  "declared_uncertainty": "The disruption, usable amount, price and delay are ASM-FIXTURE-030 calibration, not a historical cargo report or probability claim."
+}

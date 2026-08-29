@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V010-D376-ABDI-RASHAP-MINOR-ILLNESS",
+  "actor_id": "P11",
+  "selected_intent": "repeat the prior conservative response to another minor illness without escalating an unchanged uncertainty level",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household protective observance",
+      "ritual_goods_cost": 0.15,
+      "practical_response": "reduce strenuous harbor work briefly, rest, and reassess before taking on voyage or porter work"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RITUAL-001-P11",
+    "K-LOCAL-P11"
+  ],
+  "decision_basis_tags": [
+    "minor_illness",
+    "prior_personal_response",
+    "harbor_work",
+    "proportionate_ritual"
+  ],
+  "declared_uncertainty": "This is another runtime-generated minor illness, not evidence of a diagnosis or worsening disease; the 0.15 ritual-goods cost remains a fixture abstraction."
+}

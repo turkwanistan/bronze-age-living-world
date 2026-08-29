@@ -1,6 +1,6 @@
 {
   "scenario_id": "ugarit_1350_micro_v001",
-  "scenario_version": "0.7.0",
+  "scenario_version": "0.8.0",
   "year_bce": 1350,
   "local_period_label": "Late Bronze Age Ugarit",
   "evidence_model_version": "evidence-v0.1",
@@ -49,10 +49,13 @@
     "ASM-FIXTURE-025",
     "ASM-FIXTURE-026",
     "ASM-FIXTURE-027",
-    "ASM-FIXTURE-028"
+    "ASM-FIXTURE-028",
+    "ASM-FIXTURE-029",
+    "ASM-FIXTURE-030"
   ],
   "v006_lifeways_start_day": 141,
   "v007_lifeways_start_day": 181,
   "v008_lifeways_start_day": 241,
-  "v009_lifeways_start_day": 361
+  "v009_lifeways_start_day": 361,
+  "v010_lifeways_start_day": 376
 }
