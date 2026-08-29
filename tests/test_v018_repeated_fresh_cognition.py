@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -10,13 +11,15 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_v018_repeated_same_packet_validation_reproduces(tmp_path: Path):
+def test_v018_repeated_same_packet_validation_reproduces(tmp_path: Path, request):
     source = ROOT / 'state' / 'ugarit_living_v015.sqlite'
     property_source = ROOT / 'state' / 'ugarit_living_v014.sqlite'
     attempts = ROOT / 'runs' / 'VALIDATION_V018_REPEATED_FRESH_DECISIONS.json'
     if not source.exists() or not property_source.exists():
         pytest.skip('accepted v014/v015 DB unavailable')
-    workdir = ROOT / '.pytest-v018-repeated' / tmp_path.name
+    scratch_root = ROOT / '.pytest-v018-repeated'
+    request.addfinalizer(lambda: shutil.rmtree(scratch_root, ignore_errors=True))
+    workdir = scratch_root / tmp_path.name
     out = workdir / 'results.json'
     workdir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)

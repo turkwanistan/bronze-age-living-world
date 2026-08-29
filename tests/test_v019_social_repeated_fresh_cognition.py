@@ -1,15 +1,17 @@
 from __future__ import annotations
-import json, os, subprocess, sys
+import json, os, shutil, subprocess, sys
 from pathlib import Path
 import pytest
 
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def test_v019_social_repeated_validation_reproduces(tmp_path: Path):
+def test_v019_social_repeated_validation_reproduces(tmp_path: Path, request):
     needed=[ROOT/'state/ugarit_living_v015.sqlite',ROOT/'state/ugarit_living_v014.sqlite',ROOT/'state/ugarit_living_v008.sqlite']
     if not all(p.exists() for p in needed): pytest.skip('accepted source DB unavailable')
-    work=ROOT/'.pytest-v019-social'/tmp_path.name; out=work/'results.json'; work.mkdir(parents=True,exist_ok=True)
+    scratch_root=ROOT/'.pytest-v019-social'
+    request.addfinalizer(lambda: shutil.rmtree(scratch_root, ignore_errors=True))
+    work=scratch_root/tmp_path.name; out=work/'results.json'; work.mkdir(parents=True,exist_ok=True)
     env=dict(os.environ); env['PYTHONDONTWRITEBYTECODE']='1'
     subprocess.run([sys.executable,str(ROOT/'scripts/social_repeated_fresh_cognition_validation.py'),'--root',str(ROOT),'--workdir',str(work/'branches'),'--attempts',str(ROOT/'runs/VALIDATION_V019_SOCIAL_REPEATED_DECISIONS.json'),'--v015',str(needed[0]),'--v014',str(needed[1]),'--v008',str(needed[2]),'--json-out',str(out)],cwd=ROOT,env=env,check=True,capture_output=True,text=True)
     r=json.loads(out.read_text())
