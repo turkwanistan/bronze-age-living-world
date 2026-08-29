@@ -28,7 +28,7 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
     memories = [dict(r) for r in db.all("SELECT * FROM memories WHERE person_id=? ORDER BY salience DESC, created_day DESC LIMIT 12", (actor["person_id"],))]
     institution_ids = _json(scene["institution_ids_json"])
     institutions = [dict(db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))) for iid in institution_ids if db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))]
-    obligations = [dict(r) for r in db.all("SELECT * FROM obligations WHERE status='active' AND (obligor_person_id=? OR beneficiary_person_id=? OR obligor_household_id=? OR beneficiary_household_id=?) ORDER BY COALESCE(due_day,999999)", (actor["person_id"],actor["person_id"],household["household_id"],household["household_id"]))]
+    obligations = [dict(r) for r in db.all("SELECT * FROM obligations WHERE status IN ('active','scheduled','granted') AND (obligor_person_id=? OR beneficiary_person_id=? OR obligor_household_id=? OR beneficiary_household_id=?) ORDER BY COALESCE(due_day,999999),obligation_id", (actor["person_id"],actor["person_id"],household["household_id"],household["household_id"]))]
     debts = [dict(r) for r in db.all("SELECT * FROM debts WHERE status='open' AND (debtor_household_id=? OR creditor_household_id=?) ORDER BY COALESCE(due_day,999999)", (household["household_id"],household["household_id"]))]
     packet = {
         "protocol_version": job["protocol_version"],

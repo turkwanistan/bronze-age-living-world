@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-D14-KOTHAR-WORK-REQUEST",
+  "actor_id": "P16",
+  "selected_intent": "seek household agreement before taking a brief outside work opportunity that could add resources",
+  "proposed_actions": [
+    {
+      "type": "request_household_work_agreement",
+      "target_person_id": "P15",
+      "reason": "The opportunity is brief and could add to household stores, but household labor priorities should be considered first."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P16"],
+  "decision_basis_tags": ["household_obligation", "earn_household_resources", "worker_agency"],
+  "declared_uncertainty": "The opportunity timing, duration, and compensation are explicit simulation fixtures; the packet does not expose P15's private preference."
+}

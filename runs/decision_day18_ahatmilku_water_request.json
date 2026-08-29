@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-D18-AHATMILKU-WATER-REQUEST",
+  "actor_id": "P2",
+  "selected_intent": "ask a known private-access neighbor for brief temporary water access while shared access is disrupted",
+  "proposed_actions": [
+    {
+      "type": "request_water_access",
+      "target_person_id": "P6",
+      "requested_days": 2,
+      "reason": "The shared neighborhood access is temporarily disrupted in this fixture, so I am asking for a short negotiated accommodation."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P2"],
+  "decision_basis_tags": ["neighbor_reputation", "negotiation", "temporary_need", "household_continuity"],
+  "declared_uncertainty": "The disruption and exact access procedure are simulation fixtures; the packet supports negotiation but does not establish a legal entitlement or reconstructed Ugaritic procedure."
+}

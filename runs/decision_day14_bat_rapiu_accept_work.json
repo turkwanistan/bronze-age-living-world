@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-D14-BAT-RAPIU-ACCEPT-WORK",
+  "actor_id": "P15",
+  "selected_intent": "allow Kothar to take the brief outside work because it adds household resources without materially obstructing current household obligations",
+  "proposed_actions": [
+    {
+      "type": "accept_fixture_work",
+      "work_id": "WORK-P16-PORTER-001"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P15"],
+  "decision_basis_tags": ["preserve_household_property", "kin_support", "brief_absence", "household_obligation"],
+  "declared_uncertainty": "The one-day duration and 1.0 abstract-grain receipt are simulation fixtures, not reconstructed historical work terms or wages."
+}

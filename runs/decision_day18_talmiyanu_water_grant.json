@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-D18-TALMIYANU-WATER-GRANT",
+  "actor_id": "P6",
+  "selected_intent": "grant the trusted neighbor a short temporary accommodation while keeping the arrangement explicitly bounded",
+  "proposed_actions": [
+    {
+      "type": "grant_water_access",
+      "requested_days": 2
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P6"],
+  "decision_basis_tags": ["maintain_neighborhood_ties", "reciprocity", "bounded_access", "household_security"],
+  "declared_uncertainty": "The request and grant are simulation circumstances. This decision does not establish a permanent right or reconstruct a specific Ugaritic water-access procedure."
+}

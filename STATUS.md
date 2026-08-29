@@ -1,6 +1,6 @@
 # STATUS
 
-**Checkpoint:** accepted permanent OptiPlex implementation; first strict 60-day Ugarit gate accepted.
+**Checkpoint:** accepted permanent OptiPlex implementation; strict day-60 Ugarit v003 ordinary-social gate accepted.
 
 ## Authority
 
@@ -10,19 +10,19 @@
 
 ## Accepted strict runtime
 
-Canonical DB: `state/ugarit_living_v002.sqlite`.
+Current canonical DB: `state/ugarit_living_v003.sqlite`. The earlier accepted `state/ugarit_living_v002.sqlite` remains an immutable baseline history; v003 was rebuilt from seed after scene-generation changes.
 
 - run_id: `RUN-3dda7920595c1748`
 - seed: `1701`
 - current/accepted day: **60**
-- state hash: `2b59046401f398c24604eee4242e12865690a64749811b6c56d31c5c3eb0f504`
-- events: **577**
-- cognition: **8 accepted / 0 rejected / 0 pending**
+- state hash: `96994dcc063475fb2cc449d933d71510b6f99e6af23563bbfcbf393be7a9ce8c`
+- events: **593**
+- cognition: **12 accepted / 0 rejected / 0 pending**
 - open scenes: **0**
-- full tests: **27/27 passing**
-- recorded-decision replay to day 60: **exact hash match**, 8 stored decisions applied, **0 new cognition calls**
+- full tests: **30/30 passing**
+- recorded-decision replay to day 60: **exact hash match**, 12 stored decisions applied, **0 new cognition calls**
 
-Acceptance evidence is summarized in `runs/ACCEPTED_DAY60.md`.
+Acceptance evidence is summarized in `runs/ACCEPTED_DAY60_V003_SOCIAL.md`. The prior gate remains in `runs/ACCEPTED_DAY60.md`.
 
 ## Implemented
 
@@ -36,31 +36,37 @@ Acceptance evidence is summarized in `runs/ACCEPTED_DAY60.md`.
 - deterministic routine engine using explicitly abstract fixture quantities;
 - strict advancement that halts at unresolved/rejected cognition;
 - sealed temporal character packets;
-- fail-closed typed action validation including epistemic leakage, route availability, resource control, and atomic application;
+- fail-closed typed action validation including epistemic leakage, route availability, resource control, scene/target constraints, and atomic application;
 - delayed engine-owned message delivery and recipient knowledge only on delivery;
 - typed `send_message` cognition action with engine-selected route/delay and provenance;
 - merchant/harbor information-uncertainty chain using Yabninu, Abdi-Rashap, and Dagan-beli without specifying a historical shipment outcome;
 - forward-looking `RULE-RESOURCE-RUNWAY-001`, replacing the former absolute grain threshold with projection over current stock, configured daily need, receipt timing, and receipt amount;
-- regressions for safe low-stock bridging, genuine projected shortfall, deterministic projection, delayed-message containment, route validation, replay, and authority integrity;
-- exact replay from seed + accepted stored cognition without re-querying ChatGPT.
+- household work negotiation: P16 can request household approval for a bounded fixture opportunity; acceptance schedules later engine-owned completion, resource receipt, memories, and relationship consequences;
+- unequal water-access negotiation: a shared-access household can request a bounded accommodation from the scene-designated private-access neighbor; grants create temporary `I-WATER`-linked permission, favor/relationship effects, memories, and deterministic expiry;
+- exact recorded replay now preserves **source decision application order**, including multiple cognition decisions on the same day and possible same-day follow-ups;
+- regressions for resource runway, delayed-message containment, route validation, ordinary social chains, replay ordering, replay exactness, and authority integrity.
 
 ## Day-60 qualitative gate
 
-The accepted run contains no `household_resource_shortfall` scenes. Cognition remained sparse: 8 jobs over 60 days. Situation triggers include merchant information uncertainty, delivered inquiries, contradictory/incomplete reports, reciprocal obligation, debt repayment, and minor illness. Message-derived knowledge has zero pre-delivery temporal violations.
+The accepted v003 run contains no `household_resource_shortfall` scenes. Cognition remains sparse at 12 decisions across 60 days while situation diversity expands to 10 trigger types. New work and water chains each occur once and leave persistent material/social/autobiographical consequences rather than flavor-only events.
 
-The old day-56 candidate DB remains diagnostic evidence only. Its identity/hash and the intentionally unresolved `JOB-576143bba3e7ae07` are preserved in `artifacts/diagnostic/day56_candidate/README.md`; the binary was not rewritten or transferred through Base64.
+The work chain records request → household decision → scheduled commitment → next-day completion/resource receipt. The water chain records pressure → request → grant → favor/relationship change → deterministic expiry. Later character packets reflect these memories and relationship changes. Unrelated P14 and P13 packets remained byte-identical to the previous accepted history at their cognition boundaries, supporting containment.
 
-## Not yet claimed
+The old pre-runway day-56 candidate remains diagnostic evidence only. Its identity/hash and intentionally unresolved `JOB-576143bba3e7ae07` are preserved in `artifacts/diagnostic/day56_candidate/README.md`; its binary was never rewritten or transferred through Base64.
 
-- historically calibrated household resource rates/quantities;
-- Ugarit-specific ordinary debt/legal procedure resolution beyond bounded fixture mechanics;
+## Not yet claimed / current weaknesses
+
+- historically calibrated household resource rates, work compensation, travel speeds, or water-access duration;
+- Ugarit-specific ordinary debt/legal/property/water procedure beyond bounded evidence-linked fixture mechanics;
+- generalized emergent situation generation: the new work/day-14 and water/day-18 situations are currently deterministic benchmark fixtures;
 - final verified ordinary-name pool by date/social context;
-- broad situational diversity across water access, household work disagreement, feast/status reciprocity, palace labor requests, and other non-crisis life;
+- broad ordinary-life diversity across feast/status reciprocity, palace labor/resource requests, craft/work complications, household disputes, market exchange, kin/marriage issues, and other non-crisis life;
 - 50–100 inspected character cognition decisions;
+- richer reputation propagation beyond directed relationship/favor state and memories;
 - observer UI;
 - geopolitics/collapse systems;
 - evidence that a new Self-Building Computer generation is needed.
 
 ## Guardrails
 
-All fixture quantities remain explicit `ASM-FIXTURE-*` abstractions and must not be presented as historical rates. Character cognition may use only sealed packet information available to that character at that time. Historical uncertainty, epistemic uncertainty, and runtime stochasticity remain distinct. Culture constrains institutions/roles/affordances; it does not generate civilization-wide personality stereotypes.
+All fixture quantities and benchmark circumstances remain explicit `ASM-FIXTURE-*` abstractions and must not be presented as historical rates or events. Character cognition may use only sealed packet information available to that character at that time. Historical uncertainty, epistemic uncertainty, and runtime stochasticity remain distinct. Culture constrains institutions/roles/affordances; it does not generate civilization-wide personality stereotypes.

@@ -70,6 +70,12 @@ def replay_recorded_decisions(
             (run_id, replay_day),
         )
         recorded = {str(r["job_id"]): json.loads(r["envelope_json"]) for r in decision_rows}
+        # Decision rowid is the canonical application sequence in the source history.
+        # Multiple cognition jobs can be pending on the same simulated day, and action
+        # application order can affect event/memory IDs even when material outcomes are
+        # otherwise commutative. Replay must therefore reproduce source application order,
+        # not destination cognition-job creation order.
+        recorded_order = {str(r["job_id"]): int(r["decision_rowid"]) for r in decision_rows}
         source_hash = source.state_hash(run_id) if replay_day == source_day else None
         seed = int(source_run["rng_seed"])
 
@@ -83,27 +89,33 @@ def replay_recorded_decisions(
 
         while True:
             pending = dest.all(
-                "SELECT job_id,created_day FROM cognition_jobs "
-                "WHERE run_id=? AND status IN ('pending','rejected') "
-                "ORDER BY created_day,rowid",
+                "SELECT job_id,created_day,rowid AS job_rowid FROM cognition_jobs "
+                "WHERE run_id=? AND status IN ('pending','rejected')",
                 (rebuilt_run_id,),
             )
-            if pending:
-                for job in pending:
+            eligible = [j for j in pending if int(j["created_day"]) <= replay_day]
+            if eligible:
+                # Fail closed before applying anything if the rebuilt history exposes a
+                # cognition boundary absent from the recorded source history.
+                for job in eligible:
                     job_id = str(job["job_id"])
-                    if int(job["created_day"]) > replay_day:
-                        continue
-                    envelope = recorded.get(job_id)
-                    if envelope is None:
+                    if job_id not in recorded:
                         raise RecordedReplayError(f"missing_recorded_decision:{job_id}:day={job['created_day']}")
-                    result = eng.submit_decision(job_id, envelope)
-                    if not result.ok:
-                        raise RecordedReplayError(
-                            f"recorded_decision_rejected:{job_id}:{'|'.join(result.errors)}"
-                        )
-                    applied.append(job_id)
-                # A decision may enqueue another same-day cognition job. Resolve it
-                # before permitting time to advance.
+
+                # Apply exactly one decision, then re-query. A decision can enqueue a
+                # same-day follow-up whose source sequence belongs before another already
+                # pending sibling, so batch-applying the current pending set is unsafe.
+                job = min(
+                    eligible,
+                    key=lambda j: (recorded_order[str(j["job_id"])], int(j["created_day"]), int(j["job_rowid"])),
+                )
+                job_id = str(job["job_id"])
+                result = eng.submit_decision(job_id, recorded[job_id])
+                if not result.ok:
+                    raise RecordedReplayError(
+                        f"recorded_decision_rejected:{job_id}:{'|'.join(result.errors)}"
+                    )
+                applied.append(job_id)
                 continue
 
             if eng.day >= replay_day:

@@ -61,6 +61,10 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `send_message` — delayed route-validated inquiry/report; reports require a proposition already present in the sender packet
 - `enter_obligation`
 - `repay_debt`
+- `request_household_work_agreement` — ask a co-located household senior to decide a bounded fixture work opportunity
+- `accept_fixture_work` / `decline_fixture_work` — resolve that specific work opportunity; accepted work completes later through engine time
+- `request_water_access` — request bounded temporary access from the scene-designated private-access neighbor
+- `grant_water_access` — create a temporary institution-linked permission that expires deterministically
 - `seek_mediation`
 - `perform_ritual`
 - `accept_proposal`

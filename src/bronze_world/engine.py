@@ -169,6 +169,82 @@ class WorldEngine:
                             payload={"notice": "abstract fixture unit"}, discriminator=h["household_id"],
                         )
 
+                # Complete fixture outside-work commitments only after the agreed delay.
+                scheduled_work = con.execute(
+                    "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_outside_work' "
+                    "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+                    (target_day,),
+                ).fetchall()
+                for o in scheduled_work:
+                    provenance = json.loads(o["provenance_json"])
+                    resource = provenance.get("resource", "grain")
+                    amount = float(provenance.get("amount", 0))
+                    household_id = o["beneficiary_household_id"] or o["obligor_household_id"]
+                    if amount > 0 and household_id:
+                        stock = con.execute(
+                            "SELECT 1 FROM resource_stocks WHERE household_id=? AND resource_type=?",
+                            (household_id, resource),
+                        ).fetchone()
+                        if stock:
+                            con.execute(
+                                "UPDATE resource_stocks SET amount=amount+? WHERE household_id=? AND resource_type=?",
+                                (amount, household_id, resource),
+                            )
+                        else:
+                            con.execute(
+                                "INSERT INTO resource_stocks VALUES (?,?,?,?,?)",
+                                (household_id, resource, amount, "abstract_fixture_unit", "ASM-FIXTURE-006"),
+                            )
+                    con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?", (o["obligation_id"],))
+                    actors = [x for x in [o["obligor_person_id"], provenance.get("household_senior_person_id")] if x]
+                    eid = self._event(
+                        con, target_day, "fixture_outside_work_completed", actors=actors,
+                        rules=["ASM-FIXTURE-006", "RULE-HOUSEHOLD-WORK-NEGOTIATION-001"],
+                        material={household_id: {resource: amount}} if amount > 0 and household_id else {},
+                        payload={"obligation_id": o["obligation_id"], "work_id": provenance.get("work_id"),
+                                 "notice": "abstract fixture work receipt; not a historical wage"},
+                        discriminator=o["obligation_id"],
+                    )
+                    if o["obligor_person_id"]:
+                        self._memory(
+                            con, o["obligor_person_id"], target_day,
+                            f"Completed agreed outside work; my household received {amount:g} {resource} in fixture units.",
+                            event_id=eid, memory_type="work", salience=.72, relationship_relevance=.55, goal_relevance=.8,
+                            provenance={"assumption_id": "ASM-FIXTURE-006", "work_id": provenance.get("work_id")},
+                        )
+                    senior = provenance.get("household_senior_person_id")
+                    if senior:
+                        self._memory(
+                            con, senior, target_day,
+                            f"{o['obligor_person_id']} completed the agreed outside work; the household received {amount:g} {resource} in fixture units.",
+                            event_id=eid, memory_type="work", salience=.66, relationship_relevance=.6, goal_relevance=.7,
+                            provenance={"assumption_id": "ASM-FIXTURE-006", "work_id": provenance.get("work_id")},
+                        )
+
+                # Temporary water permissions expire deterministically without requiring cognition.
+                expiring_water = con.execute(
+                    "SELECT * FROM obligations WHERE status='granted' AND obligation_type='temporary_water_access' "
+                    "AND due_day IS NOT NULL AND due_day<? ORDER BY obligation_id",
+                    (target_day,),
+                ).fetchall()
+                for o in expiring_water:
+                    provenance = json.loads(o["provenance_json"])
+                    con.execute("UPDATE obligations SET status='expired' WHERE obligation_id=?", (o["obligation_id"],))
+                    actors = [x for x in [o["obligor_person_id"], o["beneficiary_person_id"]] if x]
+                    eid = self._event(
+                        con, target_day, "water_access_permission_expired", actors=actors,
+                        rules=["ASM-FIXTURE-007", "RULE-WATER-NEGOTIATION-001"],
+                        institutions={"I-WATER": {"temporary_access": "expired"}},
+                        payload={"obligation_id": o["obligation_id"], "request_event_id": provenance.get("request_event_id")},
+                        discriminator=o["obligation_id"],
+                    )
+                    for person_id in actors:
+                        self._memory(
+                            con, person_id, target_day, "The temporary negotiated water-access period ended.",
+                            event_id=eid, memory_type="water_access", salience=.5, relationship_relevance=.45, goal_relevance=.55,
+                            provenance={"assumption_id": "ASM-FIXTURE-007"},
+                        )
+
                 due = con.execute(
                     "SELECT * FROM messages WHERE delivered_day IS NULL AND arrival_day<=? ORDER BY message_id",
                     (target_day,),
@@ -408,6 +484,84 @@ class WorldEngine:
                         con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (sid, "P12", "market_contact"))
                     created.append(self.enqueue_job(sid, "P3", ["send_message", "wait"]))
 
+        # Ordinary-life fixture: a younger household member receives a bounded outside-work
+        # opportunity. The fixture supplies the opportunity, not the character's response.
+        if day >= 14:
+            sid = stable_id("SCENE", self.run_id, "outside_work_opportunity", "WORK-P16-PORTER-001")
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                worker = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P16'")
+                senior = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P15'")
+                if worker and senior and worker["alive"] and worker["available"] and senior["alive"] and senior["available"]:
+                    stakes = {
+                        "situation_id": "SIT-006",
+                        "work_id": "WORK-P16-PORTER-001",
+                        "worker_person_id": "P16",
+                        "household_senior_person_id": "P15",
+                        "work_kind": "outside_porter_work",
+                        "absence_days": 1,
+                        "household_receipt": {"resource": "grain", "amount": 1.0, "unit": "abstract_fixture_unit"},
+                        "epistemic_status": "the opportunity is known to P16; P15's private preferences are not exposed",
+                        "fixture_notice": "ASM-FIXTURE-006 timing, duration, and compensation are engineering fixtures, not historical wage evidence.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute(
+                            "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (sid, self.run_id, day, worker["current_place_id"], "household", "outside_work_opportunity",
+                             canonical_json(stakes), canonical_json({"absence_days": 1, "household_receipt": stakes["household_receipt"]}),
+                             canonical_json({"worker_agency": True, "household_labor_priority": True, "senior_private_preferences_hidden": True}),
+                             "[]", "open"),
+                        )
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (sid, "P16", "decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (sid, "P15", "household_senior"))
+                        self._event(
+                            con, day, "fixture_work_opportunity_presented", scene_id=sid, actors=["P16"],
+                            rules=["ASM-FIXTURE-006"], payload=stakes, discriminator=sid,
+                        )
+                    created.append(self.enqueue_job(
+                        sid, "P16", ["request_household_work_agreement", "decline_fixture_work", "wait", "communicate"]
+                    ))
+
+        # Ordinary-life fixture: a temporary shared-water-point disruption makes unequal
+        # access consequential. The exact disruption and negotiation procedure are not
+        # historical claims; the archaeological inequality basis remains separate.
+        if day >= 18:
+            sid = stable_id("SCENE", self.run_id, "water_access_pressure", "WATER-P2-P6-001")
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                requester = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P2'")
+                holder = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P6'")
+                if requester and holder and requester["alive"] and requester["available"] and holder["alive"] and holder["available"]:
+                    requester_status = json.loads(self.db.one("SELECT status_json FROM households WHERE household_id='H-FARM'")[0])
+                    holder_status = json.loads(self.db.one("SELECT status_json FROM households WHERE household_id='H-SCRIBE'")[0])
+                    if requester_status.get("water_access") == "shared" and holder_status.get("water_access") == "private":
+                        stakes = {
+                            "situation_id": "SIT-007",
+                            "requester_person_id": "P2",
+                            "requester_household_id": "H-FARM",
+                            "access_holder_person_id": "P6",
+                            "access_holder_household_id": "H-SCRIBE",
+                            "shared_access_state": "temporarily_disrupted",
+                            "known_access_option": "P6's household has private access that may be negotiated",
+                            "suggested_request_days": 2,
+                            "fixture_notice": "ASM-FIXTURE-007 is a simulation circumstance; exact Ugaritic access rights/procedure remain uncertain.",
+                        }
+                        with self.db.transaction() as con:
+                            con.execute(
+                                "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (sid, self.run_id, day, requester["current_place_id"], "household", "water_access_pressure",
+                                 canonical_json(stakes), canonical_json({"shared_access": "temporarily_disrupted"}),
+                                 canonical_json({"unequal_access": True, "negotiation_not_entitlement": True, "exact_procedure_uncertain": True}),
+                                 canonical_json(["I-WATER"]), "open"),
+                            )
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (sid, "P2", "decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (sid, "P6", "private_access_neighbor"))
+                            self._event(
+                                con, day, "fixture_water_access_pressure", scene_id=sid, actors=["P2"],
+                                rules=["ASM-FIXTURE-007", "ASM-UGA-001"], payload=stakes, discriminator=sid,
+                            )
+                        created.append(self.enqueue_job(
+                            sid, "P2", ["request_water_access", "seek_mediation", "wait", "communicate"]
+                        ))
+
         obligations = self.db.all(
             "SELECT * FROM obligations WHERE status='active' AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
             (day,),
@@ -623,6 +777,71 @@ class WorldEngine:
                 requested = packet.get("scene", {}).get("stakes", {}).get("new_due_day")
                 if not isinstance(new_due, int) or new_due <= self.day or (requested is not None and new_due != requested):
                     errors.append(f"action_{i}:invalid_extension_due_day")
+            elif typ == "request_household_work_agreement":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                target_person = action.get("target_person_id")
+                if packet.get("scene", {}).get("trigger") != "outside_work_opportunity":
+                    errors.append(f"action_{i}:invalid_scene_for_work_request")
+                if stakes.get("worker_person_id") != job["actor_person_id"]:
+                    errors.append(f"action_{i}:worker_mismatch")
+                if target_person != stakes.get("household_senior_person_id"):
+                    errors.append(f"action_{i}:invalid_household_senior")
+                target = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?", (target_person,)) if target_person else None
+                if not target or not target["alive"] or not target["available"]:
+                    errors.append(f"action_{i}:household_senior_unavailable")
+                elif actor and target["current_place_id"] != actor["current_place_id"]:
+                    errors.append(f"action_{i}:household_senior_not_colocated")
+                if target_person and self._household_for_person(target_person) != actor_household:
+                    errors.append(f"action_{i}:household_senior_not_same_household")
+            elif typ == "accept_fixture_work":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "household_work_request":
+                    errors.append(f"action_{i}:invalid_scene_for_work_acceptance")
+                if action.get("work_id") != stakes.get("work_id"):
+                    errors.append(f"action_{i}:work_id_mismatch")
+                worker_id = stakes.get("worker_person_id")
+                if not worker_id or self._household_for_person(worker_id) != actor_household:
+                    errors.append(f"action_{i}:worker_not_in_household")
+            elif typ == "decline_fixture_work":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "outside_work_opportunity":
+                    errors.append(f"action_{i}:invalid_scene_for_work_decline")
+                if action.get("work_id") != stakes.get("work_id"):
+                    errors.append(f"action_{i}:work_id_mismatch")
+            elif typ == "request_water_access":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                target_person = action.get("target_person_id")
+                requested_days = action.get("requested_days")
+                if packet.get("scene", {}).get("trigger") != "water_access_pressure":
+                    errors.append(f"action_{i}:invalid_scene_for_water_request")
+                if target_person != stakes.get("access_holder_person_id"):
+                    errors.append(f"action_{i}:invalid_water_access_holder")
+                if not isinstance(requested_days, int) or requested_days < 1 or requested_days > 7:
+                    errors.append(f"action_{i}:invalid_requested_days")
+                target = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?", (target_person,)) if target_person else None
+                if not target or not target["alive"] or not target["available"]:
+                    errors.append(f"action_{i}:water_access_holder_unavailable")
+                elif actor and target["current_place_id"] != actor["current_place_id"]:
+                    errors.append(f"action_{i}:water_access_holder_not_colocated")
+                actor_h = self.db.one("SELECT status_json FROM households WHERE household_id=?", (actor_household,)) if actor_household else None
+                target_household = self._household_for_person(target_person) if target_person else None
+                target_h = self.db.one("SELECT status_json FROM households WHERE household_id=?", (target_household,)) if target_household else None
+                if not actor_h or json.loads(actor_h[0]).get("water_access") != "shared":
+                    errors.append(f"action_{i}:requester_not_shared_access_household")
+                if not target_h or json.loads(target_h[0]).get("water_access") != "private":
+                    errors.append(f"action_{i}:target_not_private_access_household")
+            elif typ == "grant_water_access":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "water_access_request":
+                    errors.append(f"action_{i}:invalid_scene_for_water_grant")
+                requested_days = stakes.get("requested_days")
+                if action.get("requested_days") != requested_days:
+                    errors.append(f"action_{i}:requested_days_mismatch")
+                requester_id = stakes.get("requester_person_id")
+                if not requester_id or self._household_for_person(requester_id) != stakes.get("requester_household_id"):
+                    errors.append(f"action_{i}:invalid_water_requester")
+                if actor_household != stakes.get("access_holder_household_id"):
+                    errors.append(f"action_{i}:grantor_household_mismatch")
             elif typ == "send_message":
                 target_person = action.get("target_person_id")
                 if target_person == job["actor_person_id"]:
@@ -911,6 +1130,204 @@ class WorldEngine:
                         self._memory(con, requester, day, f"{actor_id} extended debt {debt['debt_id']} to day {new_due}.",
                                      event_id=eid, memory_type="debt_negotiation", salience=.82, relationship_relevance=.8, goal_relevance=.9)
 
+                elif typ == "request_household_work_agreement":
+                    target_person = action["target_person_id"]
+                    work_id = scene_stakes["work_id"]
+                    request_scene = stable_id("SCENE", self.run_id, day, "household_work_request", decision_id, idx)
+                    request_stakes = {
+                        "situation_id": "SIT-006",
+                        "requester_person_id": actor_id,
+                        "worker_person_id": actor_id,
+                        "household_senior_person_id": target_person,
+                        "work_id": work_id,
+                        "work_kind": scene_stakes["work_kind"],
+                        "absence_days": int(scene_stakes["absence_days"]),
+                        "household_receipt": scene_stakes["household_receipt"],
+                        "request_reason": action.get("reason", "outside work may benefit the household"),
+                        "fixture_notice": scene_stakes["fixture_notice"],
+                    }
+                    con.execute(
+                        "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (request_scene, self.run_id, day, scene["place_id"], "household", "household_work_request",
+                         canonical_json(request_stakes), canonical_json({"absence_days": request_stakes["absence_days"],
+                                                                        "household_receipt": request_stakes["household_receipt"]}),
+                         canonical_json({"worker_agency": True, "household_priority_decision": True}),
+                         "[]", "open"),
+                    )
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (request_scene, actor_id, "requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (request_scene, target_person, "decision_actor"))
+                    eid = self._event(
+                        con, day, "household_work_agreement_requested", scene_id=request_scene, decision_id=decision_id,
+                        actors=[actor_id, target_person], knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-006", "RULE-HOUSEHOLD-WORK-NEGOTIATION-001"],
+                        payload={"action_id": aid, "work_id": work_id, "reason": action.get("reason")}, discriminator=aid,
+                    )
+                    request_stakes["request_event_id"] = eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?", (canonical_json(request_stakes), request_scene))
+                    self._memory(
+                        con, actor_id, day, f"Asked {target_person} to agree that I take the outside work opportunity {work_id}.",
+                        event_id=eid, memory_type="household_work", salience=.72, relationship_relevance=.8, goal_relevance=.85,
+                        provenance={"assumption_id": "ASM-FIXTURE-006"},
+                    )
+                    self._memory(
+                        con, target_person, day, f"{actor_id} asked to take outside work {work_id}; household labor and the fixture receipt are both at stake.",
+                        event_id=eid, memory_type="household_work", salience=.7, relationship_relevance=.8, goal_relevance=.75,
+                        provenance={"assumption_id": "ASM-FIXTURE-006"},
+                    )
+                    self._adjust_relationship(con, actor_id, target_person)
+                    self._adjust_relationship(con, target_person, actor_id)
+                    followups.append((request_scene, target_person, ["accept_fixture_work", "refuse_proposal", "communicate"]))
+
+                elif typ == "accept_fixture_work":
+                    worker_id = scene_stakes["worker_person_id"]
+                    compensation = scene_stakes["household_receipt"]
+                    absence_days = int(scene_stakes["absence_days"])
+                    completion_day = day + absence_days
+                    oid = stable_id("O", self.run_id, "fixture_outside_work", scene_stakes["work_id"], decision_id)
+                    provenance = {
+                        "assumption_id": "ASM-FIXTURE-006",
+                        "rule_id": "RULE-HOUSEHOLD-WORK-NEGOTIATION-001",
+                        "work_id": scene_stakes["work_id"],
+                        "resource": compensation["resource"],
+                        "amount": float(compensation["amount"]),
+                        "household_senior_person_id": actor_id,
+                        "request_event_id": scene_stakes.get("request_event_id"),
+                        "notice": "fixture work timing/receipt; not a historical wage or contract",
+                    }
+                    con.execute(
+                        "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid, worker_id, actor_household, actor_id, actor_household, "fixture_outside_work",
+                         f"Complete fixture outside work {scene_stakes['work_id']} for the household.",
+                         completion_day, "scheduled", canonical_json(provenance)),
+                    )
+                    relationship_delta = {
+                        f"{actor_id}->{worker_id}": self._adjust_relationship(con, actor_id, worker_id, trust=.01, respect=.01),
+                        f"{worker_id}->{actor_id}": self._adjust_relationship(con, worker_id, actor_id, trust=.02, respect=.01),
+                    }
+                    eid = self._event(
+                        con, day, "household_work_agreed", scene_id=job["scene_id"], decision_id=decision_id,
+                        actors=[actor_id, worker_id], causes=[scene_stakes["request_event_id"]] if scene_stakes.get("request_event_id") else [],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-006", "RULE-HOUSEHOLD-WORK-NEGOTIATION-001"],
+                        relationships=relationship_delta,
+                        payload={"action_id": aid, "work_id": scene_stakes["work_id"], "completion_day": completion_day,
+                                 "scheduled_obligation_id": oid, "household_receipt": compensation}, discriminator=aid,
+                    )
+                    self._memory(
+                        con, actor_id, day, f"Agreed that {worker_id} may take outside work {scene_stakes['work_id']}; completion is expected on day {completion_day}.",
+                        event_id=eid, memory_type="household_work", salience=.74, relationship_relevance=.8, goal_relevance=.75,
+                        provenance={"assumption_id": "ASM-FIXTURE-006"},
+                    )
+                    self._memory(
+                        con, worker_id, day, f"{actor_id} agreed that I may take outside work {scene_stakes['work_id']} for the household.",
+                        event_id=eid, memory_type="household_work", salience=.78, relationship_relevance=.85, goal_relevance=.85,
+                        provenance={"assumption_id": "ASM-FIXTURE-006"},
+                    )
+
+                elif typ == "decline_fixture_work":
+                    eid = self._event(
+                        con, day, "fixture_work_declined", scene_id=job["scene_id"], decision_id=decision_id,
+                        actors=[actor_id], knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-006", "RULE-HOUSEHOLD-WORK-NEGOTIATION-001"],
+                        payload={"action_id": aid, "work_id": scene_stakes["work_id"], "reason": action.get("reason")},
+                        discriminator=aid,
+                    )
+                    self._memory(
+                        con, actor_id, day, f"Declined outside work {scene_stakes['work_id']}: {action.get('reason', 'household priorities came first')}.",
+                        event_id=eid, memory_type="household_work", salience=.62, relationship_relevance=.35, goal_relevance=.72,
+                        provenance={"assumption_id": "ASM-FIXTURE-006"},
+                    )
+
+                elif typ == "request_water_access":
+                    target_person = action["target_person_id"]
+                    target_household = self._household_for_person(target_person)
+                    request_scene = stable_id("SCENE", self.run_id, day, "water_access_request", decision_id, idx)
+                    request_stakes = {
+                        "situation_id": "SIT-007",
+                        "requester_person_id": actor_id,
+                        "requester_household_id": actor_household,
+                        "access_holder_person_id": target_person,
+                        "access_holder_household_id": target_household,
+                        "requested_days": int(action["requested_days"]),
+                        "reason": action.get("reason", "temporary shared-water access disruption"),
+                        "fixture_notice": scene_stakes["fixture_notice"],
+                    }
+                    con.execute(
+                        "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (request_scene, self.run_id, day, scene["place_id"], "household", "water_access_request",
+                         canonical_json(request_stakes), canonical_json({"requested_days": request_stakes["requested_days"]}),
+                         canonical_json({"negotiation_not_entitlement": True, "exact_procedure_uncertain": True}),
+                         canonical_json(["I-WATER"]), "open"),
+                    )
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (request_scene, actor_id, "requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)", (request_scene, target_person, "decision_actor"))
+                    eid = self._event(
+                        con, day, "water_access_requested", scene_id=request_scene, decision_id=decision_id,
+                        actors=[actor_id, target_person], knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-007", "ASM-UGA-001", "RULE-WATER-NEGOTIATION-001"],
+                        institutions={"I-WATER": {"requested": True}},
+                        payload={"action_id": aid, "requested_days": request_stakes["requested_days"],
+                                 "reason": request_stakes["reason"]}, discriminator=aid,
+                    )
+                    request_stakes["request_event_id"] = eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?", (canonical_json(request_stakes), request_scene))
+                    self._memory(
+                        con, actor_id, day, f"Asked {target_person} for temporary water access for {request_stakes['requested_days']} day(s).",
+                        event_id=eid, memory_type="water_access", salience=.75, relationship_relevance=.82, goal_relevance=.8,
+                        provenance={"assumption_id": "ASM-FIXTURE-007"},
+                    )
+                    self._memory(
+                        con, target_person, day, f"{actor_id} asked my household for temporary water access for {request_stakes['requested_days']} day(s).",
+                        event_id=eid, memory_type="water_access", salience=.73, relationship_relevance=.82, goal_relevance=.72,
+                        provenance={"assumption_id": "ASM-FIXTURE-007"},
+                    )
+                    self._adjust_relationship(con, actor_id, target_person)
+                    self._adjust_relationship(con, target_person, actor_id)
+                    followups.append((request_scene, target_person, ["grant_water_access", "refuse_proposal", "communicate", "seek_mediation"]))
+
+                elif typ == "grant_water_access":
+                    requester = scene_stakes["requester_person_id"]
+                    requester_household = scene_stakes["requester_household_id"]
+                    requested_days = int(scene_stakes["requested_days"])
+                    last_access_day = day + requested_days - 1
+                    oid = stable_id("O", self.run_id, "temporary_water_access", scene_stakes["request_event_id"], actor_id)
+                    provenance = {
+                        "assumption_id": "ASM-FIXTURE-007",
+                        "rule_id": "RULE-WATER-NEGOTIATION-001",
+                        "request_event_id": scene_stakes["request_event_id"],
+                        "institution_id": "I-WATER",
+                        "notice": "temporary fixture permission; exact historical access procedure remains uncertain",
+                    }
+                    con.execute(
+                        "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid, actor_id, actor_household, requester, requester_household, "temporary_water_access",
+                         f"Temporary negotiated water access for {requester_household} through day {last_access_day}.",
+                         last_access_day, "granted", canonical_json(provenance)),
+                    )
+                    relationship_delta = {
+                        f"{actor_id}->{requester}": self._adjust_relationship(con, actor_id, requester, trust=.01, favors_given=1),
+                        f"{requester}->{actor_id}": self._adjust_relationship(con, requester, actor_id, trust=.02, respect=.01, favors_owed=1),
+                    }
+                    eid = self._event(
+                        con, day, "water_access_granted", scene_id=job["scene_id"], decision_id=decision_id,
+                        actors=[actor_id, requester], causes=[scene_stakes["request_event_id"]],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-007", "ASM-UGA-001", "RULE-WATER-NEGOTIATION-001"],
+                        relationships=relationship_delta, institutions={"I-WATER": {"temporary_access": "granted"}},
+                        payload={"action_id": aid, "obligation_id": oid, "requested_days": requested_days,
+                                 "last_access_day": last_access_day}, discriminator=aid,
+                    )
+                    self._memory(
+                        con, actor_id, day, f"Granted {requester} temporary water access through day {last_access_day}.",
+                        event_id=eid, memory_type="water_access", salience=.76, relationship_relevance=.85, goal_relevance=.65,
+                        provenance={"assumption_id": "ASM-FIXTURE-007"},
+                    )
+                    self._memory(
+                        con, requester, day, f"{actor_id} granted my household temporary water access through day {last_access_day}.",
+                        event_id=eid, memory_type="water_access", salience=.82, relationship_relevance=.9, goal_relevance=.82,
+                        provenance={"assumption_id": "ASM-FIXTURE-007"},
+                    )
+
                 elif typ == "send_message":
                     target = action["target_person_id"]
                     content = action["content"].strip()
@@ -1073,13 +1490,20 @@ class WorldEngine:
                     )
 
                 elif typ == "refuse_proposal":
+                    requester = scene_stakes.get("requester_person_id")
+                    actors = [actor_id] + ([requester] if requester else [])
                     eid = self._event(
                         con, day, "proposal_refused", scene_id=job["scene_id"], decision_id=decision_id,
-                        actors=[actor_id], knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
-                        payload={"action_id": aid, "reason": action.get("reason")}, discriminator=aid,
+                        actors=actors, knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        payload={"action_id": aid, "reason": action.get("reason"), "requester_person_id": requester}, discriminator=aid,
                     )
                     self._memory(con, actor_id, day, f"Refused: {action.get('reason', 'proposal not accepted')}.",
                                  event_id=eid, memory_type="decision", salience=.6, relationship_relevance=.5, goal_relevance=.6)
+                    if requester:
+                        self._memory(
+                            con, requester, day, f"{actor_id} refused my proposal: {action.get('reason', 'proposal not accepted')}.",
+                            event_id=eid, memory_type="decision", salience=.64, relationship_relevance=.72, goal_relevance=.65,
+                        )
 
                 else:
                     self._event(

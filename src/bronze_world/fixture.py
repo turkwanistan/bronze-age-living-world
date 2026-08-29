@@ -82,6 +82,8 @@ RELATIONSHIPS = [
     ("P3","P11","trade_contact",.38,.69,.04,.58),("P11","P3","trade_contact",.42,.66,.10,.72),
     ("P3","P5","record_client",.45,.77,.03,.73),("P5","P3","client",.41,.71,.05,.63),
     ("P15","P2","neighbor",.58,.65,.03,.57),("P2","P15","neighbor",.61,.68,.02,.60),
+    # Fixture neighbor tie used only to exercise bounded water-access negotiation.
+    ("P2","P6","neighbor",.50,.58,.03,.55),("P6","P2","neighbor",.53,.60,.03,.57),
 ]
 
 
