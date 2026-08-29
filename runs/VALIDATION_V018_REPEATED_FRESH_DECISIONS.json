@@ -1,0 +1,174 @@
+{
+  "mode": "repeated_fresh_cognition_same_packet",
+  "attempts_per_packet": 3,
+  "packets": {
+    "p10_illness_adequate": [
+      {
+        "actor_id": "P10",
+        "selected_intent": "pair a modest material protective observance with short practical rest while ritual supplies are ample",
+        "proposed_actions": [{"type": "perform_ritual", "ritual_kind": "modest household protective observance", "ritual_goods_cost": 0.15, "practical_response": "rest briefly and reduce client-care exertion while symptoms remain minor"}],
+        "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P10"],
+        "decision_basis_tags": ["minor_illness", "ample_ritual_stock", "ritual_commitment", "practical_rest"],
+        "declared_uncertainty": "The packet identifies only minor illness; neither diagnosis nor a specific historical rite is known."
+      },
+      {
+        "actor_id": "P10",
+        "selected_intent": "use a bounded household rite and temporary reduction in care work without escalating a minor illness",
+        "proposed_actions": [{"type": "perform_ritual", "ritual_kind": "brief household protective rite", "ritual_goods_cost": 0.2, "practical_response": "reduce client-facing exertion and rest for the short term while symptoms remain minor"}],
+        "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P10"],
+        "decision_basis_tags": ["minor_illness", "ritual_resources_available", "care_work", "bounded_response"],
+        "declared_uncertainty": "The response does not imply a diagnosis, cure, or reconstructed Ugaritic treatment."
+      },
+      {
+        "actor_id": "P10",
+        "selected_intent": "make a small protective observance while conserving most household ritual stock and resting",
+        "proposed_actions": [{"type": "perform_ritual", "ritual_kind": "small household protective observance", "ritual_goods_cost": 0.1, "practical_response": "rest and avoid unnecessary exertion until the minor symptoms settle"}],
+        "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P10"],
+        "decision_basis_tags": ["minor_illness", "resource_conservation", "ritual_commitment", "rest"],
+        "declared_uncertainty": "The packet supports a conservative response only; the exact rite and recovery remain unspecified."
+      }
+    ],
+    "p10_illness_depleted": [
+      {
+        "actor_id": "P10",
+        "selected_intent": "keep ritual meaning without spending the household's nearly exhausted material stock and rest briefly",
+        "proposed_actions": [{"type": "perform_ritual", "ritual_kind": "spoken household protective observance", "ritual_goods_cost": 0.0, "practical_response": "rest briefly and reduce client-care exertion while conserving the remaining ritual goods"}],
+        "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P10"],
+        "decision_basis_tags": ["minor_illness", "ritual_material_scarcity", "ritual_commitment", "rest"],
+        "declared_uncertainty": "No material rite is assumed necessary; the illness remains minor and unspecified."
+      },
+      {
+        "actor_id": "P10",
+        "selected_intent": "use only the last very small available material amount for a minimal observance while relying mainly on rest",
+        "proposed_actions": [{"type": "perform_ritual", "ritual_kind": "minimal household protective observance", "ritual_goods_cost": 0.05, "practical_response": "rest and reduce client-care exertion rather than escalating treatment"}],
+        "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P10"],
+        "decision_basis_tags": ["minor_illness", "severe_ritual_stock_constraint", "high_ritual_commitment", "practical_rest"],
+        "declared_uncertainty": "Using the remaining fixture stock does not imply a historical ration or medical requirement."
+      },
+      {
+        "actor_id": "P10",
+        "selected_intent": "preserve scarce ritual materials completely while maintaining a non-material observance and practical recovery",
+        "proposed_actions": [{"type": "perform_ritual", "ritual_kind": "non-material household protective words", "ritual_goods_cost": 0.0, "practical_response": "pause unnecessary client-care exertion and rest while symptoms remain minor"}],
+        "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P10"],
+        "decision_basis_tags": ["minor_illness", "material_scarcity", "ritual_continuity", "practical_recovery"],
+        "declared_uncertainty": "The exact form or efficacy of the observance is not reconstructed."
+      }
+    ],
+    "p7_recycling_buffered": [
+      {
+        "actor_id": "P7",
+        "selected_intent": "recycle a bounded share of finished output because enough saleable work remains and the recovered metal restores one viable cycle",
+        "proposed_actions": [{"type": "recycle_finished_metalwork", "input_finished_metalwork": 0.2, "output_metal": 0.12}],
+        "decisive_knowledge_or_belief_ids": ["K-e0325e0f464ffea5"],
+        "decision_basis_tags": ["market_unavailable", "finished_stock_buffer", "workshop_continuity", "lossy_recycling"],
+        "declared_uncertainty": "The recovery ratio is fixture calibration and does not guarantee future supply."
+      },
+      {
+        "actor_id": "P7",
+        "selected_intent": "accept the recycling loss now because the workshop retains substantial finished stock afterward and raw metal reaches the next-cycle threshold",
+        "proposed_actions": [{"type": "recycle_finished_metalwork", "input_finished_metalwork": 0.2, "output_metal": 0.12}],
+        "decisive_knowledge_or_belief_ids": ["K-e0325e0f464ffea5"],
+        "decision_basis_tags": ["no_current_lot", "buffered_finished_output", "next_cycle_material", "bounded_loss"],
+        "declared_uncertainty": "No later buyer, supplier, or price outcome is assumed."
+      },
+      {
+        "actor_id": "P7",
+        "selected_intent": "keep the workshop supplied by remelting a limited amount while preserving most finished output",
+        "proposed_actions": [{"type": "recycle_finished_metalwork", "input_finished_metalwork": 0.2, "output_metal": 0.12}],
+        "decisive_knowledge_or_belief_ids": ["K-e0325e0f464ffea5"],
+        "decision_basis_tags": ["workshop_supply", "market_unavailability", "finished_stock_cushion", "recycling_cost"],
+        "declared_uncertainty": "The remelt is a calibrated fallback, not a historical recovery-rate claim."
+      }
+    ],
+    "p7_recycling_near_exhausted": [
+      {
+        "actor_id": "P7",
+        "selected_intent": "wait rather than sacrifice almost the entire remaining finished stock for one short raw-metal cycle",
+        "proposed_actions": [{"type": "wait", "reason": "Recycling 0.20 of 0.21 finished output would erase nearly all saleable or usable finished work while no changed market information exists."}],
+        "decisive_knowledge_or_belief_ids": ["K-e0325e0f464ffea5"],
+        "decision_basis_tags": ["market_unavailable", "finished_stock_near_exhaustion", "preserve_output", "wait_for_change"],
+        "declared_uncertainty": "Waiting preserves stock but does not assume that another supplier will appear."
+      },
+      {
+        "actor_id": "P7",
+        "selected_intent": "preserve the last finished pieces until material information changes instead of converting nearly all of them into raw input",
+        "proposed_actions": [{"type": "wait", "reason": "The recycling loss is too destructive at the current finished-stock level; retain output and reconsider only when market or material conditions change."}],
+        "decisive_knowledge_or_belief_ids": ["K-e0325e0f464ffea5"],
+        "decision_basis_tags": ["finished_output_security", "no_market_lot", "lossy_recycling", "defer"],
+        "declared_uncertainty": "The packet gives no evidence about when conditions will improve."
+      },
+      {
+        "actor_id": "P7",
+        "selected_intent": "avoid a technically possible but economically destructive remelt while finished output is nearly exhausted",
+        "proposed_actions": [{"type": "wait", "reason": "Keep the 0.21 finished stock intact; remelting 0.20 would leave no meaningful buffer for sale, use, or repair."}],
+        "decisive_knowledge_or_belief_ids": ["K-e0325e0f464ffea5"],
+        "decision_basis_tags": ["preserve_finished_stock", "workshop_resilience", "market_uncertainty", "wait"],
+        "declared_uncertainty": "No future market recovery or replacement stock is presumed."
+      }
+    ],
+    "p3_shipping_single_report": [
+      {
+        "actor_id": "P3",
+        "selected_intent": "seek independent confirmation from both known contacts before changing trade or credit commitments",
+        "proposed_actions": [
+          {"type": "send_message", "target_person_id": "P11", "sender_intent": "inquiry", "content": "What report do you currently have about the expected arrival timing?"},
+          {"type": "send_message", "target_person_id": "P12", "sender_intent": "inquiry", "content": "What report do you currently have about the expected arrival timing?"}
+        ],
+        "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-LOCAL-TRADE-001-P3"],
+        "decision_basis_tags": ["single_unconfirmed_report", "information_provenance", "credit_preservation", "independent_confirmation"],
+        "declared_uncertainty": "The one report is unconfirmed and the packet does not reveal either contact's private information."
+      },
+      {
+        "actor_id": "P3",
+        "selected_intent": "ask both harbor and market contacts what they actually know instead of converting a low-confidence delay report into fact",
+        "proposed_actions": [
+          {"type": "send_message", "target_person_id": "P11", "sender_intent": "inquiry", "content": "Have you received any direct report that changes the expected arrival timing?"},
+          {"type": "send_message", "target_person_id": "P12", "sender_intent": "inquiry", "content": "Has your market-side information confirmed any change to the expected arrival timing?"}
+        ],
+        "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-LOCAL-TRADE-001-P3"],
+        "decision_basis_tags": ["uncertain_shipping_report", "trusted_contacts", "provenance", "protect_credit"],
+        "declared_uncertainty": "Neither contact's answer nor the actual vessel outcome is known in advance."
+      },
+      {
+        "actor_id": "P3",
+        "selected_intent": "gather two independent reports before taking a material position on the possible delay",
+        "proposed_actions": [
+          {"type": "send_message", "target_person_id": "P11", "sender_intent": "inquiry", "content": "What is the strongest current harbor report you have on this vessel's timing?"},
+          {"type": "send_message", "target_person_id": "P12", "sender_intent": "inquiry", "content": "What is the strongest current market-side report you have on this vessel's timing?"}
+        ],
+        "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-LOCAL-TRADE-001-P3"],
+        "decision_basis_tags": ["information_first", "single_report", "credit_risk", "independent_sources"],
+        "declared_uncertainty": "A possible delay remains only a report; no canonical shipment outcome is exposed."
+      }
+    ],
+    "p3_shipping_discordant_reports": [
+      {
+        "actor_id": "P3",
+        "selected_intent": "wait rather than commit while two delivered reports remain discordant and incomplete",
+        "proposed_actions": [{"type": "wait", "until_day": 14, "reason": "Neither delivered report resolves the shipment outcome, so preserve credit and wait for changed or stronger information."}],
+        "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-V017-SHIP2-P3", "K-LOCAL-TRADE-001-P3"],
+        "decision_basis_tags": ["discordant_reports", "credit_preservation", "information_provenance", "no_false_certainty"],
+        "declared_uncertainty": "Neither report establishes the actual arrival outcome."
+      },
+      {
+        "actor_id": "P3",
+        "selected_intent": "seek clarification of the disagreement without treating either report as true",
+        "proposed_actions": [
+          {"type": "send_message", "target_person_id": "P11", "sender_intent": "inquiry", "content": "What is the source and timing of your current vessel-delay report, and has anything changed since it was received?"},
+          {"type": "send_message", "target_person_id": "P12", "sender_intent": "inquiry", "content": "What exactly does your no-confirmation report establish, and has your contact received any newer information?"}
+        ],
+        "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-V017-SHIP2-P3", "K-LOCAL-TRADE-001-P3"],
+        "decision_basis_tags": ["discordant_reports", "clarify_provenance", "credit_preservation", "no_assumed_outcome"],
+        "declared_uncertainty": "The reports disagree in implication but neither is canonical truth; follow-up answers are unknown."
+      },
+      {
+        "actor_id": "P3",
+        "selected_intent": "hold trade commitments until the contradictory reports are resolved or superseded",
+        "proposed_actions": [{"type": "wait", "until_day": 14, "reason": "The current evidence is discordant and insufficient for a material commitment; keep household credit uncommitted."}],
+        "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-V017-SHIP2-P3", "K-LOCAL-TRADE-001-P3"],
+        "decision_basis_tags": ["epistemic_conflict", "wait_for_resolution", "protect_credit", "information_provenance"],
+        "declared_uncertainty": "Waiting does not imply either report is correct or that the shipment will arrive on any particular date."
+      }
+    ]
+  }
+}

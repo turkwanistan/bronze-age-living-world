@@ -80,3 +80,20 @@ A single fresh decision per packet does not measure model instability. The next 
 - variance in action family and stated rationale.
 
 Repeated-run frequencies remain model-behavior diagnostics only, never estimates of Bronze Age human behavior.
+
+## Repeated same-packet fresh cognition
+
+From v018, `scripts/repeated_fresh_cognition_validation.py` rebuilds selected v017 packet fixtures and applies several independently authored fresh cognition attempts to byte-identical sealed packets. Each attempt runs on its own disposable branch and must pass the ordinary engine validator.
+
+The v018 subset uses six packets, three attempts each (18 decisions total):
+
+- P10 minor illness with adequate ritual stock;
+- P10 minor illness with depleted ritual stock;
+- P7 recycling with buffered finished output;
+- P7 recycling with near-exhausted finished output;
+- P3 with one unconfirmed shipping report;
+- P3 with two discordant delivered reports.
+
+The diagnostic asks whether controlled-factor effects are stronger than within-packet answer variance. Stable action family is useful but not mandatory when more than one action is causally and epistemically defensible. In particular, asking for clarification and waiting are both acceptable conservative responses to unresolved contradictory reports if neither invents a shipment outcome.
+
+All repeated-choice frequencies are **model-configuration diagnostics only**. They are not historical probabilities, population estimates, or evidence that Bronze Age people would choose an action at the observed rate.

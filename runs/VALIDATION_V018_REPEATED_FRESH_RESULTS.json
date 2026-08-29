@@ -1,0 +1,721 @@
+{
+  "mode": "repeated_fresh_cognition_same_packet_validation",
+  "attempts_per_packet": 3,
+  "packet_count": 6,
+  "total_attempts": 18,
+  "results": {
+    "p10_illness_adequate": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p10_illness_adequate-A1",
+        "action_family": "perform_ritual",
+        "action_types": [
+          "perform_ritual"
+        ],
+        "selected_intent": "pair a modest material protective observance with short practical rest while ritual supplies are ample",
+        "declared_uncertainty": "The packet identifies only minor illness; neither diagnosis nor a specific historical rite is known.",
+        "packet_hash": "29f59e88fab50985b519365b2a2a6b410ab693f2514edf3b8a88e4efd45d481b",
+        "household_resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 1.0,
+          "silver": 2.8000000000000003
+        },
+        "household_resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.85,
+          "silver": 2.8000000000000003
+        },
+        "ritual_goods_cost": 0.15,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p10_illness_adequate-A2",
+        "action_family": "perform_ritual",
+        "action_types": [
+          "perform_ritual"
+        ],
+        "selected_intent": "use a bounded household rite and temporary reduction in care work without escalating a minor illness",
+        "declared_uncertainty": "The response does not imply a diagnosis, cure, or reconstructed Ugaritic treatment.",
+        "packet_hash": "29f59e88fab50985b519365b2a2a6b410ab693f2514edf3b8a88e4efd45d481b",
+        "household_resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 1.0,
+          "silver": 2.8000000000000003
+        },
+        "household_resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.8,
+          "silver": 2.8000000000000003
+        },
+        "ritual_goods_cost": 0.2,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p10_illness_adequate-A3",
+        "action_family": "perform_ritual",
+        "action_types": [
+          "perform_ritual"
+        ],
+        "selected_intent": "make a small protective observance while conserving most household ritual stock and resting",
+        "declared_uncertainty": "The packet supports a conservative response only; the exact rite and recovery remain unspecified.",
+        "packet_hash": "29f59e88fab50985b519365b2a2a6b410ab693f2514edf3b8a88e4efd45d481b",
+        "household_resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 1.0,
+          "silver": 2.8000000000000003
+        },
+        "household_resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.9,
+          "silver": 2.8000000000000003
+        },
+        "ritual_goods_cost": 0.1,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      }
+    ],
+    "p10_illness_depleted": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p10_illness_depleted-A1",
+        "action_family": "perform_ritual",
+        "action_types": [
+          "perform_ritual"
+        ],
+        "selected_intent": "keep ritual meaning without spending the household's nearly exhausted material stock and rest briefly",
+        "declared_uncertainty": "No material rite is assumed necessary; the illness remains minor and unspecified.",
+        "packet_hash": "2640115e4310729cfc0a8f14c176e11fa4cb8c19299f54ce08253e2d045a7700",
+        "household_resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.05,
+          "silver": 2.8000000000000003
+        },
+        "household_resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.05,
+          "silver": 2.8000000000000003
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p10_illness_depleted-A2",
+        "action_family": "perform_ritual",
+        "action_types": [
+          "perform_ritual"
+        ],
+        "selected_intent": "use only the last very small available material amount for a minimal observance while relying mainly on rest",
+        "declared_uncertainty": "Using the remaining fixture stock does not imply a historical ration or medical requirement.",
+        "packet_hash": "2640115e4310729cfc0a8f14c176e11fa4cb8c19299f54ce08253e2d045a7700",
+        "household_resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.05,
+          "silver": 2.8000000000000003
+        },
+        "household_resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.0,
+          "silver": 2.8000000000000003
+        },
+        "ritual_goods_cost": 0.05,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p10_illness_depleted-A3",
+        "action_family": "perform_ritual",
+        "action_types": [
+          "perform_ritual"
+        ],
+        "selected_intent": "preserve scarce ritual materials completely while maintaining a non-material observance and practical recovery",
+        "declared_uncertainty": "The exact form or efficacy of the observance is not reconstructed.",
+        "packet_hash": "2640115e4310729cfc0a8f14c176e11fa4cb8c19299f54ce08253e2d045a7700",
+        "household_resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.05,
+          "silver": 2.8000000000000003
+        },
+        "household_resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.05,
+          "silver": 2.8000000000000003
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      }
+    ],
+    "p7_recycling_buffered": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p7_recycling_buffered-A1",
+        "action_family": "recycle_finished_metalwork",
+        "action_types": [
+          "recycle_finished_metalwork"
+        ],
+        "selected_intent": "recycle a bounded share of finished output because enough saleable work remains and the recovered metal restores one viable cycle",
+        "declared_uncertainty": "The recovery ratio is fixture calibration and does not guarantee future supply.",
+        "packet_hash": "15a5931ee5d7a3f5466c701421eeae242c185653b2ac05cf1427c1c5cbfff55c",
+        "household_resources_before": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.75,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "household_resources_after": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.55,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.15,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p7_recycling_buffered-A2",
+        "action_family": "recycle_finished_metalwork",
+        "action_types": [
+          "recycle_finished_metalwork"
+        ],
+        "selected_intent": "accept the recycling loss now because the workshop retains substantial finished stock afterward and raw metal reaches the next-cycle threshold",
+        "declared_uncertainty": "No later buyer, supplier, or price outcome is assumed.",
+        "packet_hash": "15a5931ee5d7a3f5466c701421eeae242c185653b2ac05cf1427c1c5cbfff55c",
+        "household_resources_before": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.75,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "household_resources_after": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.55,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.15,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p7_recycling_buffered-A3",
+        "action_family": "recycle_finished_metalwork",
+        "action_types": [
+          "recycle_finished_metalwork"
+        ],
+        "selected_intent": "keep the workshop supplied by remelting a limited amount while preserving most finished output",
+        "declared_uncertainty": "The remelt is a calibrated fallback, not a historical recovery-rate claim.",
+        "packet_hash": "15a5931ee5d7a3f5466c701421eeae242c185653b2ac05cf1427c1c5cbfff55c",
+        "household_resources_before": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.75,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "household_resources_after": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.55,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.15,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      }
+    ],
+    "p7_recycling_near_exhausted": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p7_recycling_near_exhausted-A1",
+        "action_family": "wait",
+        "action_types": [
+          "wait"
+        ],
+        "selected_intent": "wait rather than sacrifice almost the entire remaining finished stock for one short raw-metal cycle",
+        "declared_uncertainty": "Waiting preserves stock but does not assume that another supplier will appear.",
+        "packet_hash": "63e7be8c2ef9e2dcd9a8cfc6f11ba8ac2aa12eb07ff63dece2ebf9b71dda7a58",
+        "household_resources_before": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.21,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "household_resources_after": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.21,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p7_recycling_near_exhausted-A2",
+        "action_family": "wait",
+        "action_types": [
+          "wait"
+        ],
+        "selected_intent": "preserve the last finished pieces until material information changes instead of converting nearly all of them into raw input",
+        "declared_uncertainty": "The packet gives no evidence about when conditions will improve.",
+        "packet_hash": "63e7be8c2ef9e2dcd9a8cfc6f11ba8ac2aa12eb07ff63dece2ebf9b71dda7a58",
+        "household_resources_before": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.21,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "household_resources_after": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.21,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p7_recycling_near_exhausted-A3",
+        "action_family": "wait",
+        "action_types": [
+          "wait"
+        ],
+        "selected_intent": "avoid a technically possible but economically destructive remelt while finished output is nearly exhausted",
+        "declared_uncertainty": "No future market recovery or replacement stock is presumed.",
+        "packet_hash": "63e7be8c2ef9e2dcd9a8cfc6f11ba8ac2aa12eb07ff63dece2ebf9b71dda7a58",
+        "household_resources_before": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.21,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "household_resources_after": {
+          "charcoal": 0.4999999999999966,
+          "finished_metalwork": 0.21,
+          "fuel_feedstock": 0.7999999999999999,
+          "grain": 29.000000000000234,
+          "metal": 0.03,
+          "oil": 5.0,
+          "ritual_goods": 0.9499999999999991,
+          "silver": 3.2,
+          "workshop_tool_condition": 1.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 158,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      }
+    ],
+    "p3_shipping_single_report": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p3_shipping_single_report-A1",
+        "action_family": "send_message",
+        "action_types": [
+          "send_message",
+          "send_message"
+        ],
+        "selected_intent": "seek independent confirmation from both known contacts before changing trade or credit commitments",
+        "declared_uncertainty": "The one report is unconfirmed and the packet does not reveal either contact's private information.",
+        "packet_hash": "9b64440009e0b0253cdf515c89a14db512fdf186070114f1b9d76d6f2127d3d7",
+        "household_resources_before": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "household_resources_after": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p3_shipping_single_report-A2",
+        "action_family": "send_message",
+        "action_types": [
+          "send_message",
+          "send_message"
+        ],
+        "selected_intent": "ask both harbor and market contacts what they actually know instead of converting a low-confidence delay report into fact",
+        "declared_uncertainty": "Neither contact's answer nor the actual vessel outcome is known in advance.",
+        "packet_hash": "9b64440009e0b0253cdf515c89a14db512fdf186070114f1b9d76d6f2127d3d7",
+        "household_resources_before": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "household_resources_after": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p3_shipping_single_report-A3",
+        "action_family": "send_message",
+        "action_types": [
+          "send_message",
+          "send_message"
+        ],
+        "selected_intent": "gather two independent reports before taking a material position on the possible delay",
+        "declared_uncertainty": "A possible delay remains only a report; no canonical shipment outcome is exposed.",
+        "packet_hash": "9b64440009e0b0253cdf515c89a14db512fdf186070114f1b9d76d6f2127d3d7",
+        "household_resources_before": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "household_resources_after": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      }
+    ],
+    "p3_shipping_discordant_reports": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p3_shipping_discordant_reports-A1",
+        "action_family": "wait",
+        "action_types": [
+          "wait"
+        ],
+        "selected_intent": "wait rather than commit while two delivered reports remain discordant and incomplete",
+        "declared_uncertainty": "Neither report establishes the actual arrival outcome.",
+        "packet_hash": "980d90e8a02af4113fe2c68cd1e200208c4072ace854ca8bdce4c3a5bc905049",
+        "household_resources_before": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "household_resources_after": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p3_shipping_discordant_reports-A2",
+        "action_family": "send_message",
+        "action_types": [
+          "send_message",
+          "send_message"
+        ],
+        "selected_intent": "seek clarification of the disagreement without treating either report as true",
+        "declared_uncertainty": "The reports disagree in implication but neither is canonical truth; follow-up answers are unknown.",
+        "packet_hash": "980d90e8a02af4113fe2c68cd1e200208c4072ace854ca8bdce4c3a5bc905049",
+        "household_resources_before": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "household_resources_after": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "decision_id": "VAL-V018-p3_shipping_discordant_reports-A3",
+        "action_family": "wait",
+        "action_types": [
+          "wait"
+        ],
+        "selected_intent": "hold trade commitments until the contradictory reports are resolved or superseded",
+        "declared_uncertainty": "Waiting does not imply either report is correct or that the shipment will arrive on any particular date.",
+        "packet_hash": "980d90e8a02af4113fe2c68cd1e200208c4072ace854ca8bdce4c3a5bc905049",
+        "household_resources_before": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "household_resources_after": {
+          "grain": 33.0,
+          "metal": 3.0,
+          "oil": 10.0,
+          "ritual_goods": 2.0,
+          "silver": 18.0,
+          "trade_goods": 3.0
+        },
+        "ritual_goods_cost": 0.0,
+        "accepted_jobs": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0
+      }
+    ]
+  },
+  "packet_summaries": {
+    "p10_illness_adequate": {
+      "packet_hash": "29f59e88fab50985b519365b2a2a6b410ab693f2514edf3b8a88e4efd45d481b",
+      "attempts": 3,
+      "action_family_counts": {
+        "perform_ritual": 3
+      },
+      "distinct_action_families": 1,
+      "dominant_action_family": "perform_ritual",
+      "all_valid": true
+    },
+    "p10_illness_depleted": {
+      "packet_hash": "2640115e4310729cfc0a8f14c176e11fa4cb8c19299f54ce08253e2d045a7700",
+      "attempts": 3,
+      "action_family_counts": {
+        "perform_ritual": 3
+      },
+      "distinct_action_families": 1,
+      "dominant_action_family": "perform_ritual",
+      "all_valid": true
+    },
+    "p7_recycling_buffered": {
+      "packet_hash": "15a5931ee5d7a3f5466c701421eeae242c185653b2ac05cf1427c1c5cbfff55c",
+      "attempts": 3,
+      "action_family_counts": {
+        "recycle_finished_metalwork": 3
+      },
+      "distinct_action_families": 1,
+      "dominant_action_family": "recycle_finished_metalwork",
+      "all_valid": true
+    },
+    "p7_recycling_near_exhausted": {
+      "packet_hash": "63e7be8c2ef9e2dcd9a8cfc6f11ba8ac2aa12eb07ff63dece2ebf9b71dda7a58",
+      "attempts": 3,
+      "action_family_counts": {
+        "wait": 3
+      },
+      "distinct_action_families": 1,
+      "dominant_action_family": "wait",
+      "all_valid": true
+    },
+    "p3_shipping_single_report": {
+      "packet_hash": "9b64440009e0b0253cdf515c89a14db512fdf186070114f1b9d76d6f2127d3d7",
+      "attempts": 3,
+      "action_family_counts": {
+        "send_message": 3
+      },
+      "distinct_action_families": 1,
+      "dominant_action_family": "send_message",
+      "all_valid": true
+    },
+    "p3_shipping_discordant_reports": {
+      "packet_hash": "980d90e8a02af4113fe2c68cd1e200208c4072ace854ca8bdce4c3a5bc905049",
+      "attempts": 3,
+      "action_family_counts": {
+        "send_message": 1,
+        "wait": 2
+      },
+      "distinct_action_families": 2,
+      "dominant_action_family": "wait",
+      "all_valid": true
+    }
+  },
+  "variable_action_family_packets": [
+    "p3_shipping_discordant_reports"
+  ],
+  "checks": {
+    "all_18_decisions_valid": true,
+    "zero_rejected_jobs": true,
+    "zero_negative_resources": true,
+    "identical_packet_hash_within_each_packet": true,
+    "p10_stock_constraint_visible_in_all_attempts": true,
+    "p7_control_stronger_than_within_packet_noise": true,
+    "p3_single_report_consistently_seeks_information": true,
+    "p3_discordant_reports_remain_epistemically_conservative": true,
+    "p3_control_changes_dominant_action_family": true
+  },
+  "all_checks_pass": true,
+  "interpretation_notice": "Repeated-choice frequencies measure this cognition configuration only and are not historical probabilities."
+}
