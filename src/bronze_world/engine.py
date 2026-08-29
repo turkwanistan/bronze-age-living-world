@@ -170,6 +170,27 @@ class WorldEngine:
     def _seasonal_context(self, day: int) -> dict[str, Any]:
         return calendar_context(day, start_day_of_year=self._calendar_start_day_of_year())
 
+    def _v006_start_day(self) -> int:
+        row = self.db.one(
+            "SELECT s.config_json FROM scenarios s JOIN runs r ON r.scenario_id=s.scenario_id "
+            "WHERE r.run_id=? ORDER BY s.scenario_version DESC LIMIT 1",
+            (self.run_id,),
+        )
+        if not row:
+            return 141
+        try:
+            return int(json.loads(row[0]).get("v006_lifeways_start_day", 141))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return 141
+
+    def _is_unmarried(self, person_id: str) -> bool:
+        if self.db.schema_version() < 2:
+            return True
+        return not bool(self.db.one(
+            "SELECT 1 FROM marriages WHERE run_id=? AND status='active' AND (person_a_id=? OR person_b_id=?)",
+            (self.run_id, person_id, person_id),
+        ))
+
     def _next_lower_agricultural_intensity_day(self, day: int, *, threshold: float = 0.85) -> int:
         """Find the next calendar day whose modeled agricultural intensity is below threshold.
 
@@ -323,6 +344,14 @@ class WorldEngine:
                         self._change_resource(con, person["household_id"], "charcoal", -0.10, assumption_id="ASM-FIXTURE-017")
                         self._change_resource(con, person["household_id"], "finished_metalwork", 0.04, assumption_id="ASM-FIXTURE-017")
                         material = {person["household_id"]: {"metal": -0.08, "charcoal": -0.10, "finished_metalwork": 0.04}}
+                if (day >= self._v006_start_day()
+                        and seasonal["phase"] == "grape_olive_and_field_preparation"
+                        and any(r in roles for r in ("farmer", "dependent_field_worker"))):
+                    produced = 0.12
+                    self._change_resource(con, person["household_id"], "seasonal_produce", produced, assumption_id="ASM-FIXTURE-021")
+                    material.setdefault(person["household_id"], {})["seasonal_produce"] = (
+                        material.setdefault(person["household_id"], {}).get("seasonal_produce", 0.0) + produced
+                    )
                 self._event(
                     con, day, "occupation_work_cycle", actors=[person["person_id"]],
                     rules=["ASM-FIXTURE-008", "ASM-FIXTURE-009", "RULE-OCCUPATION-WORKFLOW-001"],
@@ -348,6 +377,23 @@ class WorldEngine:
                          "notice": "recurring Ugaritic port-work model; exact transaction volume is unspecified"},
                 discriminator="weekly-port",
             )
+
+        if day >= self._v006_start_day() and day % 30 == 0:
+            exposed = con.execute(
+                "SELECT household_id,amount FROM resource_stocks WHERE resource_type='seasonal_produce' AND amount>0 ORDER BY household_id"
+            ).fetchall()
+            for row in exposed:
+                loss = float(row["amount"]) * 0.05
+                if loss <= 0:
+                    continue
+                self._change_resource(con, row["household_id"], "seasonal_produce", -loss, assumption_id="ASM-FIXTURE-021")
+                self._event(
+                    con, day, "seasonal_storage_loss", rules=["ASM-FIXTURE-021", "RULE-SEASONAL-SURPLUS-STORAGE-001"],
+                    material={row["household_id"]: {"seasonal_produce": -loss}},
+                    payload={"household_id": row["household_id"], "loss_fraction": 0.05,
+                             "notice": "storage-loss fraction is engineering calibration, not a historical spoilage rate"},
+                    discriminator=row["household_id"],
+                )
 
         if household_ritual_due(day):
             households = con.execute("SELECT household_id FROM households ORDER BY household_id").fetchall()
@@ -902,6 +948,71 @@ class WorldEngine:
                         con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P9","ritual_host"))
                         con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P10","ritual_host"))
                     created.append(self.enqueue_job(sid,candidate["person_id"],["contribute_communal_feast","decline_feast_contribution","communicate","wait"]))
+
+        # A communal gathering can expose a marriage discussion opportunity, but the
+        # pairing/timing are explicit fixtures and no marriage occurs without both
+        # households and both principals passing through bounded typed decisions.
+        if (self.db.schema_version() >= 2 and day >= 150
+                and self.db.one("SELECT 1 FROM events WHERE run_id=? AND day=? AND event_type='communal_feast_calendar_due'", (self.run_id, day))
+                and self._is_unmarried("P16") and self._is_unmarried("P10")):
+            sid = stable_id("SCENE", self.run_id, "marriage_discussion_opportunity", "P16", "P10")
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                p16 = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P16'")
+                p10 = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P10'")
+                if p16 and p10 and p16["alive"] and p10["alive"] and p16["available"] and p10["available"] and p16["current_place_id"] == p10["current_place_id"]:
+                    stakes = {
+                        "situation_id":"SIT-015","initiator_person_id":"P16","prospective_partner_person_id":"P10",
+                        "initiator_household_id":"H-WIDOW","partner_household_id":"H-RITUAL",
+                        "household_senior_ids":["P15","P9"],
+                        "fixture_notice":"Pairing and feast timing are ASM-FIXTURE-019; no historical Ugaritic marriage or matchmaking event is claimed.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                    (sid,self.run_id,day,p16["current_place_id"],"household","marriage_discussion_opportunity",
+                                     canonical_json(stakes),"{}",canonical_json({"individual_willingness_first":True,"no_preselected_outcome":True}),
+                                     canonical_json(["I-MEDIATION"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P16","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P10","prospective_partner"))
+                        self._event(con,day,"marriage_discussion_opportunity",scene_id=sid,actors=["P16","P10"],
+                                    rules=["ASM-FIXTURE-019","RULE-MARRIAGE-NEGOTIATION-001"],payload=stakes,discriminator=sid)
+                    created.append(self.enqueue_job(sid,"P16",["request_marriage_discussion","wait","communicate"]))
+
+        # Seasonal surplus becomes a cognition boundary only once enough exposed produce
+        # has accumulated to make preservation materially consequential. It is separate
+        # from the neutral staple-grain baseline.
+        if day >= self._v006_start_day():
+            surplus_rows = self.db.all(
+                "SELECT household_id,amount FROM resource_stocks WHERE resource_type='seasonal_produce' AND amount>=0.45 ORDER BY household_id"
+            )
+            for sr in surplus_rows:
+                bucket = day // 30
+                sid = stable_id("SCENE", self.run_id, "seasonal_surplus_storage_pressure", sr["household_id"], bucket)
+                if self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                    continue
+                actor = self.db.one(
+                    "SELECT p.person_id,p.current_place_id FROM persons p JOIN household_memberships hm USING(person_id) "
+                    "WHERE hm.household_id=? AND hm.until_day IS NULL AND p.alive=1 AND p.available=1 "
+                    "ORDER BY CASE hm.membership_role WHEN 'senior' THEN 0 ELSE 1 END,p.person_id LIMIT 1",
+                    (sr["household_id"],),
+                )
+                if not actor:
+                    continue
+                max_preserve = min(0.4, float(sr["amount"]))
+                stakes = {
+                    "situation_id":"SIT-016","household_id":sr["household_id"],
+                    "exposed_seasonal_produce":float(sr["amount"]),"max_preserve_amount":max_preserve,
+                    "preservation_output_ratio":0.9,"seasonal_context":self._seasonal_context(day),
+                    "fixture_notice":"Surplus threshold, preservation amount/yield, and loss model are ASM-FIXTURE-021 calibration, not historical crop/storage rates.",
+                }
+                with self.db.transaction() as con:
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (sid,self.run_id,day,actor["current_place_id"],"economic","seasonal_surplus_storage_pressure",
+                                 canonical_json(stakes),canonical_json({"seasonal_produce":float(sr["amount"])}),
+                                 canonical_json({"household_storage_choice":True,"staple_grain_separate":True}),"[]","open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,actor["person_id"],"decision_actor"))
+                    self._event(con,day,"seasonal_surplus_storage_pressure",scene_id=sid,actors=[actor["person_id"]],
+                                rules=["ASM-FIXTURE-021","RULE-SEASONAL-SURPLUS-STORAGE-001"],payload=stakes,discriminator=sid)
+                created.append(self.enqueue_job(sid,actor["person_id"],["preserve_seasonal_surplus","wait","communicate"]))
 
         # Palace labor becomes a cognition boundary only while it collides with an
         # ecological labor bottleneck. Outside that bottleneck it is completed by the
@@ -1471,6 +1582,75 @@ class WorldEngine:
                 requested = action.get("new_due_day")
                 if requested != stakes.get("suggested_reschedule_day"):
                     errors.append(f"action_{i}:invalid_palace_reschedule_day")
+            elif typ == "request_marriage_discussion":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                target = action.get("target_person_id")
+                if packet.get("scene", {}).get("trigger") != "marriage_discussion_opportunity":
+                    errors.append(f"action_{i}:invalid_scene_for_marriage_discussion")
+                if job["actor_person_id"] != stakes.get("initiator_person_id") or target != stakes.get("prospective_partner_person_id"):
+                    errors.append(f"action_{i}:marriage_discussion_party_mismatch")
+                if not self._is_unmarried(job["actor_person_id"]) or not self._is_unmarried(target):
+                    errors.append(f"action_{i}:marriage_party_not_unmarried")
+                target_row = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?", (target,)) if target else None
+                if not target_row or not target_row["alive"] or not target_row["available"]:
+                    errors.append(f"action_{i}:marriage_target_unavailable")
+                elif actor and target_row["current_place_id"] != actor["current_place_id"]:
+                    errors.append(f"action_{i}:marriage_target_not_colocated")
+            elif typ == "accept_marriage_discussion":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "marriage_discussion_request":
+                    errors.append(f"action_{i}:invalid_scene_for_marriage_discussion_acceptance")
+                if job["actor_person_id"] != stakes.get("prospective_partner_person_id"):
+                    errors.append(f"action_{i}:prospective_partner_mismatch")
+                if not self._is_unmarried(job["actor_person_id"]) or not self._is_unmarried(stakes.get("initiator_person_id")):
+                    errors.append(f"action_{i}:marriage_party_not_unmarried")
+            elif typ == "propose_marriage_household_terms":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "marriage_household_terms":
+                    errors.append(f"action_{i}:invalid_scene_for_marriage_terms")
+                if job["actor_person_id"] != stakes.get("initiator_household_senior_person_id"):
+                    errors.append(f"action_{i}:marriage_terms_negotiator_mismatch")
+                residence = action.get("residence_household_id")
+                if residence not in {"H-WIDOW", "H-RITUAL"}:
+                    errors.append(f"action_{i}:invalid_marriage_residence")
+                if action.get("target_household_senior_person_id") != stakes.get("partner_household_senior_person_id"):
+                    errors.append(f"action_{i}:invalid_marriage_terms_target")
+                if not isinstance(action.get("continue_p16_care_to_p15"), bool):
+                    errors.append(f"action_{i}:invalid_care_term")
+            elif typ == "accept_marriage_household_terms":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "marriage_household_terms_review":
+                    errors.append(f"action_{i}:invalid_scene_for_marriage_terms_acceptance")
+                if job["actor_person_id"] != stakes.get("partner_household_senior_person_id"):
+                    errors.append(f"action_{i}:marriage_terms_reviewer_mismatch")
+                if action.get("residence_household_id") != stakes.get("residence_household_id"):
+                    errors.append(f"action_{i}:marriage_residence_term_mismatch")
+                if action.get("continue_p16_care_to_p15") != stakes.get("continue_p16_care_to_p15"):
+                    errors.append(f"action_{i}:marriage_care_term_mismatch")
+            elif typ == "give_marriage_consent":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "marriage_final_consent":
+                    errors.append(f"action_{i}:invalid_scene_for_marriage_consent")
+                if job["actor_person_id"] != stakes.get("consenting_person_id"):
+                    errors.append(f"action_{i}:marriage_consent_actor_mismatch")
+                if action.get("partner_person_id") != stakes.get("partner_person_id"):
+                    errors.append(f"action_{i}:marriage_consent_partner_mismatch")
+                if not self._is_unmarried(job["actor_person_id"]) or not self._is_unmarried(stakes.get("partner_person_id")):
+                    errors.append(f"action_{i}:marriage_party_not_unmarried")
+            elif typ == "decline_marriage_consent":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "marriage_final_consent" or job["actor_person_id"] != stakes.get("consenting_person_id"):
+                    errors.append(f"action_{i}:invalid_marriage_consent_decline")
+            elif typ == "preserve_seasonal_surplus":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "seasonal_surplus_storage_pressure":
+                    errors.append(f"action_{i}:invalid_scene_for_surplus_preservation")
+                amount = action.get("amount")
+                if not isinstance(amount, (int, float)) or amount <= 0 or amount > float(stakes.get("max_preserve_amount", 0)) + 1e-9:
+                    errors.append(f"action_{i}:invalid_preserve_amount")
+                stock = self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='seasonal_produce'", (actor_household,)) if actor_household else None
+                if not stock or not isinstance(amount, (int, float)) or amount > float(stock["amount"]) + 1e-9:
+                    errors.append(f"action_{i}:insufficient_seasonal_produce")
             elif typ == "request_household_reserve_agreement":
                 stakes = packet.get("scene", {}).get("stakes", {})
                 if packet.get("scene", {}).get("trigger") != "household_trade_reserve_priority":
@@ -2139,6 +2319,221 @@ class WorldEngine:
                                  event_id=eid,memory_type="institutional_labor",salience=.84,relationship_relevance=.3,goal_relevance=.9,
                                  provenance={"assumption_id":"ASM-FIXTURE-011"})
 
+                elif typ == "request_marriage_discussion":
+                    target_person = action["target_person_id"]
+                    self._ensure_relationship_pair(con, actor_id, target_person, relationship_type="prospective_marriage_contact")
+                    request_scene = stable_id("SCENE", self.run_id, day, "marriage_discussion_request", decision_id, idx)
+                    request_stakes = {
+                        "situation_id":"SIT-015","requester_person_id":actor_id,
+                        "initiator_person_id":actor_id,"prospective_partner_person_id":target_person,
+                        "initiator_household_id":scene_stakes["initiator_household_id"],
+                        "partner_household_id":scene_stakes["partner_household_id"],
+                        "initiator_household_senior_person_id":"P15","partner_household_senior_person_id":"P9",
+                        "request_reason":action.get("reason","ask whether to explore a marriage arrangement"),
+                        "fixture_notice":scene_stakes["fixture_notice"],
+                    }
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (request_scene,self.run_id,day,scene["place_id"],"household","marriage_discussion_request",
+                                 canonical_json(request_stakes),"{}",
+                                 canonical_json({"prospective_partner_has_independent_choice":True}),"[]","open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,actor_id,"requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,target_person,"decision_actor"))
+                    eid=self._event(con,day,"marriage_discussion_requested",scene_id=request_scene,decision_id=decision_id,
+                                    actors=[actor_id,target_person],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-019","RULE-MARRIAGE-NEGOTIATION-001"],
+                                    payload={"action_id":aid,"reason":action.get("reason")},discriminator=aid)
+                    request_stakes["request_event_id"]=eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?",(canonical_json(request_stakes),request_scene))
+                    self._memory(con,actor_id,day,f"Asked {target_person} whether to explore a marriage arrangement.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.82,relationship_relevance=.9,goal_relevance=.8,
+                                 provenance={"assumption_id":"ASM-FIXTURE-019"})
+                    self._memory(con,target_person,day,f"{actor_id} asked whether I would explore a marriage arrangement before any household terms are settled.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.84,relationship_relevance=.9,goal_relevance=.75,
+                                 provenance={"assumption_id":"ASM-FIXTURE-019"})
+                    followups.append((request_scene,target_person,["accept_marriage_discussion","refuse_proposal","communicate","wait"]))
+
+                elif typ == "accept_marriage_discussion":
+                    initiator=scene_stakes["initiator_person_id"]
+                    self._adjust_relationship(con,actor_id,initiator,trust=.01,respect=.01)
+                    self._adjust_relationship(con,initiator,actor_id,trust=.01,respect=.01)
+                    terms_scene=stable_id("SCENE",self.run_id,day,"marriage_household_terms",decision_id,idx)
+                    terms_stakes={
+                        "situation_id":"SIT-015","requester_person_id":initiator,
+                        "initiator_person_id":initiator,"prospective_partner_person_id":actor_id,
+                        "initiator_household_id":scene_stakes["initiator_household_id"],
+                        "partner_household_id":scene_stakes["partner_household_id"],
+                        "initiator_household_senior_person_id":scene_stakes["initiator_household_senior_person_id"],
+                        "partner_household_senior_person_id":scene_stakes["partner_household_senior_person_id"],
+                        "discussion_request_event_id":scene_stakes.get("request_event_id"),
+                        "fixture_notice":"Residence/care terms are bounded ASM-FIXTURE-020 options; no universal Ugaritic residence or marriage-transfer rule is claimed.",
+                    }
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (terms_scene,self.run_id,day,scene["place_id"],"household","marriage_household_terms",
+                                 canonical_json(terms_stakes),"{}",
+                                 canonical_json({"household_strategy":True,"no_resource_transfer_implied":True}),
+                                 canonical_json(["I-MEDIATION"]),"open"))
+                    for pid,role in ((initiator,"prospective_spouse"),(actor_id,"prospective_spouse"),("P15","decision_actor"),("P9","other_household_senior")):
+                        con.execute("INSERT OR IGNORE INTO scene_participants VALUES (?,?,?)",(terms_scene,pid,role))
+                    eid=self._event(con,day,"marriage_discussion_accepted",scene_id=job["scene_id"],decision_id=decision_id,
+                                    actors=[actor_id,initiator],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-019","RULE-MARRIAGE-NEGOTIATION-001"],payload={"action_id":aid},discriminator=aid)
+                    self._memory(con,actor_id,day,"Agreed to explore marriage terms; no marriage has been concluded.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.82,relationship_relevance=.9,goal_relevance=.75)
+                    self._memory(con,initiator,day,f"{actor_id} agreed to explore marriage terms; our households still need to negotiate residence and care obligations.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.84,relationship_relevance=.9,goal_relevance=.82)
+                    followups.append((terms_scene,"P15",["propose_marriage_household_terms","refuse_proposal","seek_mediation","communicate","wait"]))
+
+                elif typ == "propose_marriage_household_terms":
+                    residence=action["residence_household_id"]
+                    care=bool(action["continue_p16_care_to_p15"])
+                    reviewer=action["target_household_senior_person_id"]
+                    review_scene=stable_id("SCENE",self.run_id,day,"marriage_household_terms_review",decision_id,idx)
+                    review_stakes={
+                        **scene_stakes,"requester_person_id":actor_id,
+                        "residence_household_id":residence,"continue_p16_care_to_p15":care,
+                        "terms_proposer_person_id":actor_id,"partner_household_senior_person_id":reviewer,
+                        "occupational_roles_remain_active":True,"residence_changes_household_membership":True,
+                        "fixture_notice":"Residence and continuing-care terms are ASM-FIXTURE-020 calibration; no bridewealth/dowry or universal residence rule is inferred.",
+                    }
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (review_scene,self.run_id,day,scene["place_id"],"household","marriage_household_terms_review",
+                                 canonical_json(review_stakes),"{}",
+                                 canonical_json({"two_household_review":True,"mediation_if_household_terms_disagree":True}),
+                                 canonical_json(["I-MEDIATION"]),"open"))
+                    for pid,role in ((actor_id,"terms_proposer"),(reviewer,"decision_actor"),(scene_stakes["initiator_person_id"],"prospective_spouse"),(scene_stakes["prospective_partner_person_id"],"prospective_spouse")):
+                        con.execute("INSERT OR IGNORE INTO scene_participants VALUES (?,?,?)",(review_scene,pid,role))
+                    eid=self._event(con,day,"marriage_household_terms_proposed",scene_id=review_scene,decision_id=decision_id,
+                                    actors=[actor_id,reviewer,scene_stakes["initiator_person_id"],scene_stakes["prospective_partner_person_id"]],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-020","RULE-MARRIAGE-NEGOTIATION-001"],
+                                    payload={"action_id":aid,"residence_household_id":residence,"continue_p16_care_to_p15":care,
+                                             "reason":action.get("reason")},discriminator=aid)
+                    review_stakes["terms_event_id"]=eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?",(canonical_json(review_stakes),review_scene))
+                    for pid in ("P15","P9","P16","P10"):
+                        self._memory(con,pid,day,f"Marriage household terms proposed: residence {residence}; continuing P16 care to P15={care}.",
+                                     event_id=eid,memory_type="marriage_negotiation",salience=.82,relationship_relevance=.82,goal_relevance=.8,
+                                     provenance={"assumption_id":"ASM-FIXTURE-020"})
+                    followups.append((review_scene,reviewer,["accept_marriage_household_terms","refuse_proposal","seek_mediation","communicate"]))
+
+                elif typ == "accept_marriage_household_terms":
+                    consent_scene=stable_id("SCENE",self.run_id,day,"marriage_final_consent","P16",decision_id,idx)
+                    consent_stakes={
+                        **scene_stakes,"consenting_person_id":"P16","partner_person_id":"P10","consent_stage":"initiator",
+                        "terms_acceptance_event_id":None,
+                        "fixture_notice":"Household terms are accepted, but marriage still requires separate final consent from P16 and P10.",
+                    }
+                    eid=self._event(con,day,"marriage_household_terms_accepted",scene_id=job["scene_id"],decision_id=decision_id,
+                                    actors=[actor_id,scene_stakes["terms_proposer_person_id"],"P16","P10"],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-020","RULE-MARRIAGE-NEGOTIATION-001"],
+                                    payload={"action_id":aid,"residence_household_id":scene_stakes["residence_household_id"],
+                                             "continue_p16_care_to_p15":scene_stakes["continue_p16_care_to_p15"]},discriminator=aid)
+                    consent_stakes["terms_acceptance_event_id"]=eid
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (consent_scene,self.run_id,day,scene["place_id"],"household","marriage_final_consent",
+                                 canonical_json(consent_stakes),"{}",
+                                 canonical_json({"individual_final_consent":True,"no_mediation_overrides_refusal":True}),"[]","open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(consent_scene,"P16","decision_actor"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(consent_scene,"P10","prospective_spouse"))
+                    for pid in ("P15","P9","P16","P10"):
+                        self._memory(con,pid,day,"Both household seniors accepted the bounded residence/care terms; final individual consent is still required.",
+                                     event_id=eid,memory_type="marriage_negotiation",salience=.84,relationship_relevance=.82,goal_relevance=.84)
+                    followups.append((consent_scene,"P16",["give_marriage_consent","decline_marriage_consent","communicate"]))
+
+                elif typ == "give_marriage_consent":
+                    partner=scene_stakes["partner_person_id"]
+                    eid=self._event(con,day,"marriage_consent_given",scene_id=job["scene_id"],decision_id=decision_id,
+                                    actors=[actor_id,partner],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-019","ASM-FIXTURE-020","RULE-MARRIAGE-NEGOTIATION-001"],
+                                    payload={"action_id":aid,"consent_stage":scene_stakes["consent_stage"]},discriminator=aid)
+                    self._memory(con,actor_id,day,"Gave final consent to the negotiated marriage terms.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.95,relationship_relevance=.95,goal_relevance=.9)
+                    self._memory(con,partner,day,f"{actor_id} gave final consent to the negotiated marriage terms.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.9,relationship_relevance=.95,goal_relevance=.85)
+                    if scene_stakes["consent_stage"] == "initiator":
+                        next_scene=stable_id("SCENE",self.run_id,day,"marriage_final_consent","P10",decision_id,idx)
+                        next_stakes={**scene_stakes,"consenting_person_id":"P10","partner_person_id":"P16","consent_stage":"partner",
+                                     "initiator_consent_event_id":eid}
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                    (next_scene,self.run_id,day,scene["place_id"],"household","marriage_final_consent",
+                                     canonical_json(next_stakes),"{}",canonical_json({"individual_final_consent":True,"no_mediation_overrides_refusal":True}),"[]","open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(next_scene,"P10","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(next_scene,"P16","prospective_spouse"))
+                        followups.append((next_scene,"P10",["give_marriage_consent","decline_marriage_consent","communicate"]))
+                    else:
+                        residence=scene_stakes["residence_household_id"]
+                        care=bool(scene_stakes["continue_p16_care_to_p15"])
+                        marriage_id=stable_id("MAR",self.run_id,"P16","P10",day,scene_stakes.get("terms_event_id",""))
+                        terms={"residence_household_id":residence,"continue_p16_care_to_p15":care,"no_material_transfer_modeled":True}
+                        provenance={"assumption_ids":["ASM-FIXTURE-019","ASM-FIXTURE-020"],"rule_id":"RULE-MARRIAGE-NEGOTIATION-001",
+                                    "notice":"simulation marriage outcome; no historical individual/event or universal Ugaritic marriage rule claimed"}
+                        con.execute("INSERT INTO marriages VALUES (?,?,?,?,?,?,?,?,?,?)",
+                                    (marriage_id,self.run_id,"P16","P10",day,None,"active",residence,canonical_json(terms),canonical_json(provenance)))
+                        for a,b,ktype in (("P16","P10","spouse"),("P15","P10","affinal_kin"),("P9","P16","affinal_kin")):
+                            kid=stable_id("KIN",self.run_id,a,b,ktype,day)
+                            con.execute("INSERT INTO kinship_edges VALUES (?,?,?,?,?,?,?,?)",
+                                        (kid,self.run_id,a,b,ktype,day,None,canonical_json(provenance)))
+                        self._ensure_relationship_pair(con,"P16","P10",relationship_type="spouse")
+                        self._ensure_relationship_pair(con,"P15","P10",relationship_type="affinal_kin")
+                        self._ensure_relationship_pair(con,"P9","P16",relationship_type="affinal_kin")
+                        con.execute("UPDATE relationships SET relationship_type='spouse',kin_degree='spouse',last_contact_day=? WHERE (from_person_id='P16' AND to_person_id='P10') OR (from_person_id='P10' AND to_person_id='P16')",(day,))
+                        self._adjust_relationship(con,"P16","P10",trust=.05,respect=.03)
+                        self._adjust_relationship(con,"P10","P16",trust=.05,respect=.03)
+                        mover="P10" if residence == "H-WIDOW" else "P16"
+                        old_house=self._household_for_person(mover)
+                        if old_house != residence:
+                            con.execute("UPDATE household_memberships SET until_day=? WHERE person_id=? AND until_day IS NULL",(day,mover))
+                            con.execute("INSERT INTO household_memberships VALUES (?,?,?,?,?)",(residence,mover,"married_in_adult",day,None))
+                            home=con.execute("SELECT home_place_id FROM households WHERE household_id=?",(residence,)).fetchone()[0]
+                            con.execute("UPDATE persons SET current_place_id=? WHERE person_id=?",(home,mover))
+                        care_oid=None
+                        if care:
+                            care_oid=stable_id("O",self.run_id,"continuing_kin_care","P16","P15",marriage_id)
+                            if not con.execute("SELECT 1 FROM obligations WHERE obligation_id=?",(care_oid,)).fetchone():
+                                con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                                            (care_oid,"P16",residence,"P15","H-WIDOW","continuing_kin_care",
+                                             "Kothar retains a continuing support obligation toward Bat-Rapiu after marriage/residence settlement.",
+                                             None,"active",canonical_json({"assumption_id":"ASM-FIXTURE-020","marriage_id":marriage_id,
+                                                                          "notice":"bounded simulation care term, not universal Ugaritic elder-care law"})))
+                        final_eid=self._event(con,day,"marriage_concluded",scene_id=job["scene_id"],decision_id=decision_id,
+                                              actors=["P16","P10","P15","P9"],causes=[x for x in [scene_stakes.get("initiator_consent_event_id"),eid] if x],
+                                              rules=["ASM-FIXTURE-019","ASM-FIXTURE-020","RULE-MARRIAGE-NEGOTIATION-001"],
+                                              payload={"marriage_id":marriage_id,"residence_household_id":residence,"moved_person_id":mover,
+                                                       "continuing_care_obligation_id":care_oid,"no_material_transfer_modeled":True},
+                                              discriminator=marriage_id)
+                        for pid in ("P16","P10","P15","P9"):
+                            self._memory(con,pid,day,f"P16 and P10 concluded marriage after individual and household agreement; residence is {residence}.",
+                                         event_id=final_eid,memory_type="marriage",salience=.95,relationship_relevance=.95,goal_relevance=.9,
+                                         provenance=provenance)
+
+                elif typ == "decline_marriage_consent":
+                    partner=scene_stakes["partner_person_id"]
+                    eid=self._event(con,day,"marriage_consent_declined",scene_id=job["scene_id"],decision_id=decision_id,
+                                    actors=[actor_id,partner],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-019","ASM-FIXTURE-020","RULE-MARRIAGE-NEGOTIATION-001"],
+                                    payload={"action_id":aid,"reason":action.get("reason"),"final":True},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Declined final marriage consent: {action.get('reason','did not consent')}.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.9,relationship_relevance=.9,goal_relevance=.85)
+                    self._memory(con,partner,day,f"{actor_id} declined final marriage consent; no marriage was created.",event_id=eid,
+                                 memory_type="marriage_negotiation",salience=.9,relationship_relevance=.9,goal_relevance=.8)
+
+                elif typ == "preserve_seasonal_surplus":
+                    amount=float(action["amount"])
+                    ratio=float(scene_stakes.get("preservation_output_ratio",.9))
+                    stored=amount*ratio
+                    self._change_resource(con,actor_household,"seasonal_produce",-amount,assumption_id="ASM-FIXTURE-021")
+                    self._change_resource(con,actor_household,"stored_seasonal_goods",stored,assumption_id="ASM-FIXTURE-021")
+                    eid=self._event(con,day,"seasonal_surplus_preserved",scene_id=job["scene_id"],decision_id=decision_id,
+                                    actors=[actor_id],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                                    rules=["ASM-FIXTURE-021","RULE-SEASONAL-SURPLUS-STORAGE-001"],
+                                    material={actor_household:{"seasonal_produce":-amount,"stored_seasonal_goods":stored}},
+                                    payload={"action_id":aid,"input_amount":amount,"stored_amount":stored,"output_ratio":ratio,
+                                             "reason":action.get("reason"),"staple_grain_changed":False},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Preserved {amount:g} seasonal produce into {stored:g} stored seasonal goods in fixture units.",
+                                 event_id=eid,memory_type="seasonal_storage",salience=.72,relationship_relevance=.2,goal_relevance=.82,
+                                 provenance={"assumption_id":"ASM-FIXTURE-021"})
+
                 elif typ == "request_household_reserve_agreement":
                     target_person = action["target_person_id"]
                     reserve_floor = float(action["reserve_floor"])
@@ -2505,6 +2900,8 @@ class WorldEngine:
                                     allowed=["grant_apprenticeship_progression","enter_obligation","communicate","refuse_proposal"]
                                 elif source_trigger == "resource_request":
                                     allowed=["transfer_resource","enter_obligation","communicate","refuse_proposal"]
+                                elif source_trigger == "marriage_household_terms_review":
+                                    allowed=["accept_marriage_household_terms","enter_obligation","communicate","refuse_proposal"]
                                 else:
                                     allowed=["enter_obligation","communicate","refuse_proposal"]
                                 followups.append((mediation_scene,review_actor,allowed))

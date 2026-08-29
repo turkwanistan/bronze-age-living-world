@@ -1,81 +1,56 @@
 # NEXT SESSION
 
-Start from the accepted strict v005 day-140 checkpoint in `STATUS.md` and `runs/ACCEPTED_DAY140_V005_HOUSEHOLD_LIFECYCLE.md`.
+Start from the accepted strict v006 day-180 checkpoint in `STATUS.md` and `runs/ACCEPTED_DAY180_V006_MARRIAGE_STORAGE.md`.
 
-1. Verify Git/repository state, authority hashes, `state/current.json`, and host-local `state/ugarit_living_v005.sqlite`.
-2. Run the full **43-test** suite and exact recorded-decision replay to day 140. Required gate: 40 stored decisions, 0 new cognition calls, hash `959421734528a6c59c0cfe84494c4d9556d29988d9df7424ef773b217056d0df`.
-3. Preserve v002-v005 accepted histories. If scene generation, fixture initialization, role workflows or canonical assumptions change, build a fresh v006 candidate from seed instead of mutating v005.
+1. Verify Git/repository state, authority hashes, `state/current.json`, and host-local `state/ugarit_living_v006.sqlite` before changing behavior.
+2. Run the full **48-test** suite and exact recorded-decision replay of v006 to day 180. Replay must apply **59** stored decisions, make **0** new cognition calls, and reproduce hash `d8f87ff19699e22b4f2ad00da5139c08a0a1bed9356a0661105b6d9807d8fdfb`.
+3. Preserve v002-v006 as accepted histories. If scene-generation, schema, or fixture-baseline rules change, rebuild a fresh candidate from seed rather than mutating accepted DBs.
+4. Highest-value next system: make **care/property consequences** active rather than passive hooks.
+   - continuing elder/kin support requests and fulfillment;
+   - remembered care affecting later property/inheritance preference where locally supported;
+   - property-use disagreement and private negotiation before mediation;
+   - inheritance/succession only with explicit evidence/fixture separation, not a universal Ugaritic rule.
+5. Make household composition more materially legible without reintroducing arbitrary poverty drift.
+   - design an explicitly engineered composition-responsive neutral provisioning method or another conservative representation;
+   - prove conservation/stability before using it in strict history;
+   - never smuggle dowry/bridewealth or household wealth transfer into marriage merely to create material consequences.
+6. Deepen the **early-rains/sowing agricultural layer** from day 180 onward:
+   - plowing/sowing labor bottlenecks;
+   - tools/draft-animal access as bounded resources or obligations;
+   - livestock care where evidence changes decisions;
+   - weather/water pressure with historical rates left unspecified;
+   - stored surplus influencing labor/trade/aid decisions;
+   - keep neutral staple grain separate until a validated crop-production model can replace it safely.
+7. Continue marriage/life-course mechanics cautiously:
+   - second independent candidate only when state/evidence justify it;
+   - new-household formation and residence alternatives;
+   - aging, birth/death, widowhood, migration, apprenticeship/work progression;
+   - final individual consent remains non-overridable by mediation.
+8. Seek naturally arising disputes rather than manufacturing one. Good candidates: property use, care obligations, storage/tool access, trade terms, damaged goods, or competing household labor. Preserve the informal-first ladder and exact replay.
+9. Deepen trade/information/language only where active rules need it: recurring counterparties, delayed/damaged cargo, scribal documentation, interpreter/language constraints, multiple network alternatives, provenance-preserving rumor.
+10. The 50-decision minimum has been crossed. Next behavioral target is **75–100 inspected decisions plus the full 360-day ordinary-year gate**, with paired/counterfactual packet tests where useful. Never interpret model choice frequency as historical prevalence.
+11. Do not add collapse/geopolitics, generic agent infrastructure, model APIs, microservices, a new database, or a new SBC generation without evidence that ordinary-life substrate or tooling actually requires it.
+12. At every coherent accepted checkpoint, update evidence mappings, tests, protocol docs, `STATUS.md`, `NEXT_SESSION.md`, `state/current.json`, and an acceptance manifest. Exact replay with zero new cognition calls remains mandatory.
 
-## Highest-value next development
+Current accepted v006 gate facts:
 
-### 1. Marriage / household formation / property strategy
-
-Build the next life-course layer without assuming one universal patrilocal or inheritance model. Use evidence-labeled alternatives and household-specific circumstances. Needed capabilities:
-
-- marriage/partnership proposal as negotiation between people and affected households;
-- household membership change, property/resource contributions and obligations as canonical consequences;
-- support for staying, joining, fissioning or other locally plausible household arrangements without making one model default destiny;
-- widowhood/remarriage/property-claim implications only where evidence supports the rule;
-- inheritance/property succession first as bounded household/property claims, not a complete universal legal code.
-
-### 2. Naturally generated disputes over actual state
-
-Keep `I-MEDIATION` abstract unless local research supports a named procedure. Generate disagreements from real state rather than fixed drama:
-
-- scarce workshop or household input allocation;
-- damaged/missing goods;
-- water/property use;
-- debt/favor performance;
-- labor commitments;
-- inheritance/property claims;
-- marriage/household strategy;
-- reputation/testimony.
-
-Do **not** force a refusal merely so mediation appears in strict history. Let actor choices determine whether a disagreement settles privately or escalates.
-
-### 3. Agriculture / livestock / storage depth
-
-Replace more of the stable provisioning abstraction with explicit causal household production while maintaining a stable no-shock baseline:
-
-- crop stages tied to the existing calendar;
-- household labor allocated to field, vine/olive, livestock, processing and storage work;
-- tools/animals/water/weather affecting output qualitatively before attempting historical quantitative calibration;
-- storage and spoilage as explicit state;
-- avoid reintroducing guaranteed poverty drift.
-
-### 4. Port / trade / multilingual information depth
-
-- multiple recurring counterparties rather than one supplier/contact path;
-- damaged/delayed cargo and alternate network routes;
-- market purchase vs reciprocal credit vs patron support as different choices;
-- scribe/interpreter involvement when records/language matter;
-- literacy/language constraints in packets;
-- reserve renegotiation when household capital or obligations materially change.
-
-### 5. Continue toward behavioral and ordinary-year gates
-
-- reach **50–100 inspected cognition decisions** without raising cognition merely for the metric;
-- continue strict time toward a full 360-day ordinary year;
-- audit character differentiation, repeated-context behavior, memory causality, relationship/conflict consequences and household strategies;
-- use paired/counterfactual packet tests where useful; never treat LLM decision frequency as historical prevalence.
-
-## Current accepted v005 facts
-
-- day 140 / seed 1701 / scenario 0.3.0;
-- hash `959421734528a6c59c0cfe84494c4d9556d29988d9df7424ef773b217056d0df`;
-- 1,966 canonical events;
-- 43/43 tests passing;
-- 40 accepted cognition decisions / 0 rejected / 0 pending / 0 open scenes;
-- exact replay with 40 decisions and 0 new cognition;
-- 0 resource-shortfall scenes;
-- 0 message temporal violations;
-- household reserve accepted day 91 and visibly binds Yabninu at day 126;
-- Niqmepa progressed day 91 from apprentice to attached recognized craft worker;
-- informal refusal→mediation ladder is regression-tested but was not invoked in strict history;
-- Urtenu/Yabninu have completed two reciprocal workshop-credit cycles and opened a third at day 140;
-- Arhalbu deferred during the intensity-1.00 harvest bottleneck but accepted palace service during the later intensity-0.88 processing/field-preparation phase;
-- seasonal rescheduling now searches the full modeled calendar for a genuinely lower-intensity phase.
-
-Do not add generic agent infrastructure, new databases, model APIs, microservices, or a new SBC generation without a demonstrated reusable deficiency.
+- day 180, seed 1701, scenario 0.4.0, schema 2;
+- hash `d8f87ff19699e22b4f2ad00da5139c08a0a1bed9356a0661105b6d9807d8fdfb`;
+- 2,540 events;
+- 48/48 tests;
+- 59 accepted cognition decisions / 0 rejected or pending;
+- exact 59-decision replay / 0 new cognition;
+- 26 trigger types;
+- 400 occupation cycles / 200 household labor allocations / 48 household rituals / 25 port cycles;
+- normalized marriage/kinship is canonical and schema-hashed;
+- P16/P10 marriage concluded only after both households and both principals agreed;
+- P10 moved to H-WIDOW while retaining ritual/healing roles;
+- P16 retains active continuing-care obligation to P15;
+- seasonal surplus/storage is separate from neutral staple grain;
+- H-FARM and H-DEPEND both hold preserved seasonal goods;
+- Yabninu's household reserve remains binding;
+- three P7↔P3 reciprocal workshop-credit cycles are fulfilled;
+- zero false shortfalls and zero message temporal/containment violations;
+- current modeled phase is `early_rains_and_sowing`.
 
 The governing principle remains: **The world is structured. The people are not scripted.**

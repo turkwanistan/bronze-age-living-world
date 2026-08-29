@@ -27,8 +27,10 @@ The simulation engine decides **when** cognition is useful. ChatGPT never receiv
 - relevant persistent dispositions;
 - current household-controlled resources;
 - relevant directed relationships;
+- normalized active marriage and kinship state when the run schema supports it;
 - admissible knowledge/belief/rumor IDs only;
 - relevant memories;
+- active obligations and debts touching the actor or household;
 - available institutions and constraints;
 - active stakes/goals;
 - allowed typed action families.
@@ -65,6 +67,12 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `accept_fixture_work` / `decline_fixture_work` — resolve that specific work opportunity; accepted work completes later through engine time
 - `request_water_access` — request bounded temporary access from the scene-designated private-access neighbor
 - `grant_water_access` — create a temporary institution-linked permission that expires deterministically
+- `request_household_reserve_agreement` / `accept_household_reserve` — negotiate a household-controlled reserve that later material actions must obey
+- `request_apprenticeship_progression` / `grant_apprenticeship_progression` — negotiate a work/life-course role transition grounded in accumulated occupational history
+- `request_marriage_discussion` / `accept_marriage_discussion` — open a bounded prospective-marriage negotiation without creating marriage state
+- `propose_marriage_household_terms` / `accept_marriage_household_terms` — negotiate residence/care terms between two households
+- `give_marriage_consent` / `decline_marriage_consent` — separate final individual consent; a decline creates no marriage and is not overridden by mediation
+- `preserve_seasonal_surplus` — convert bounded exposed seasonal produce into stored seasonal goods under explicit fixture calibration
 - `seek_mediation`
 - `perform_ritual`
 - `accept_proposal`

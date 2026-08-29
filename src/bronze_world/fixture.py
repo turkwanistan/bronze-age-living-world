@@ -94,10 +94,10 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
     scenario = json.loads((root / "scenarios/ugarit_1350/scenario.json").read_text(encoding="utf-8"))
     run_id = stable_id("RUN", scenario["scenario_id"], seed)
     with db.transaction() as con:
-        con.execute("INSERT OR REPLACE INTO simulation_versions VALUES (?,?,?,?,?)", ("SIM-0.1.0","0.1.0",1,"cognition-v1","evidence-v0.1"))
+        con.execute("INSERT OR REPLACE INTO simulation_versions VALUES (?,?,?,?,?)", ("SIM-0.2.0","0.2.0",scenario["schema_version"],"cognition-v1","evidence-v0.1"))
         con.execute("INSERT OR REPLACE INTO scenarios VALUES (?,?,?,?,?)", (scenario["scenario_id"],scenario["scenario_version"],scenario["year_bce"],scenario["local_period_label"],canonical_json(scenario)))
         con.execute("INSERT OR REPLACE INTO runs(run_id,scenario_id,scenario_version,evidence_model_version,simulation_code_version,rng_seed,cognition_protocol_version,schema_version,current_day,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (run_id,scenario["scenario_id"],scenario["scenario_version"],scenario["evidence_model_version"],"0.1.0",seed,scenario["cognition_protocol_version"],1,0,"active","2026-08-28T00:00:00Z"))
+                    (run_id,scenario["scenario_id"],scenario["scenario_version"],scenario["evidence_model_version"],"0.2.0",seed,scenario["cognition_protocol_version"],scenario["schema_version"],0,"active","2026-08-28T00:00:00Z"))
         for pid,name,ptype,parent,attrs in PLACES:
             con.execute("INSERT OR REPLACE INTO places VALUES (?,?,?,?,?)", (pid,name,ptype,parent,canonical_json(attrs)))
         route_pairs = [
@@ -143,6 +143,16 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
         for a,b,typ,aff,trust,fear,respect in RELATIONSHIPS:
             con.execute("INSERT OR REPLACE INTO relationships VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(
                 stable_id("REL",a,b),a,b,typ,None,aff,trust,fear,respect,0,0,0,0,"{}",0))
+        if int(scenario["schema_version"]) >= 2:
+            initial_spouses = [("P1","P2","H-FARM"),("P3","P4","H-MERCH"),("P5","P6","H-SCRIBE"),("P11","P12","H-HARBOR"),("P13","P14","H-DEPEND")]
+            for a,b,residence in initial_spouses:
+                mid=stable_id("MAR",run_id,"initial",a,b)
+                prov=canonical_json({"origin":"initial fixture spouse relationship","notice":"simulation starting relationship; not a claim about historical individuals"})
+                con.execute("INSERT OR REPLACE INTO marriages VALUES (?,?,?,?,?,?,?,?,?,?)",
+                            (mid,run_id,a,b,0,None,"active",residence,canonical_json({"residence_household_id":residence}),prov))
+                kid=stable_id("KIN",run_id,a,b,"spouse",0)
+                con.execute("INSERT OR REPLACE INTO kinship_edges VALUES (?,?,?,?,?,?,?,?)",
+                            (kid,run_id,a,b,"spouse",0,None,prov))
         # Initial cross-household obligations make later choices causally interesting without forcing a crisis.
         con.execute("INSERT OR REPLACE INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",(
             "O-FAVOR-001","P15","H-WIDOW","P2","H-FARM","reciprocal_aid","Bat-Rapiu remembers prior food aid from Ahatmilku's household; reciprocal help is expected if feasible.",21,"active",canonical_json({"basis":"SIT-002","uncertainty":"fixture social setup"})))
@@ -174,6 +184,10 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
              ["P3","P4","P5","P11","P12"]),
             ("PROP-LOCAL-DISPUTE-001", "Household and economic disagreements can be negotiated privately and, where socially available, through kin, patrons, elders, compensation, or obligations before more formal escalation.",
              [p["id"] for p in PEOPLE]),
+            ("PROP-LOCAL-MARRIAGE-001", "Marriage can join households and alter residence, care, property expectations, and kin relationships; exact terms must be negotiated rather than assumed universal.",
+             [p["id"] for p in PEOPLE]),
+            ("PROP-LOCAL-STORAGE-001", "Seasonal household produce requires processing and storage; exposed surplus can be vulnerable before it is preserved, while exact rates depend on circumstance.",
+             ["P1","P2","P13","P14","P15","P16"]),
         ]
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",

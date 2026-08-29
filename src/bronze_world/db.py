@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Iterator
 
-CANONICAL_HASH_TABLES = [
+CANONICAL_HASH_TABLES_V1 = [
     "runs", "places", "routes", "institutions", "households", "persons",
     "character_traits", "household_memberships", "roles", "person_roles",
     "relationships", "resource_stocks", "debts", "obligations", "propositions",
@@ -51,9 +51,20 @@ class WorldDB:
             raise
 
     def migrate(self) -> None:
-        migration = Path(__file__).with_name("migrations") / "0001_initial.sql"
-        self.conn.executescript(migration.read_text(encoding="utf-8"))
+        migrations = Path(__file__).with_name("migrations")
+        for migration in sorted(migrations.glob("[0-9][0-9][0-9][0-9]_*.sql")):
+            self.conn.executescript(migration.read_text(encoding="utf-8"))
         self.conn.commit()
+
+    def schema_version(self) -> int:
+        row = self.one("SELECT value FROM schema_meta WHERE key='schema_version'")
+        return int(row[0]) if row else 1
+
+    def canonical_hash_tables(self) -> list[str]:
+        tables = list(CANONICAL_HASH_TABLES_V1)
+        if self.schema_version() >= 2:
+            tables.extend(["marriages", "kinship_edges"])
+        return tables
 
     def one(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Row | None:
         return self.conn.execute(sql, params).fetchone()
@@ -67,10 +78,10 @@ class WorldDB:
 
     def canonical_state(self, run_id: str) -> dict[str, Any]:
         out: dict[str, Any] = {}
-        for table in CANONICAL_HASH_TABLES:
+        for table in self.canonical_hash_tables():
             cols = [r[1] for r in self.conn.execute(f"PRAGMA table_info({table})")]
             order = ",".join(cols) if cols else "rowid"
-            if table in {"runs", "scenes", "cognition_jobs", "events"}:
+            if table in {"runs", "scenes", "cognition_jobs", "events", "marriages", "kinship_edges"}:
                 where = " WHERE run_id = ?"
                 params: tuple[Any, ...] = (run_id,)
             elif table in {"decisions", "actions"}:

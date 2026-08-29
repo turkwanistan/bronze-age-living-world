@@ -31,6 +31,17 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
     institutions = [dict(db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))) for iid in institution_ids if db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))]
     obligations = [dict(r) for r in db.all("SELECT * FROM obligations WHERE status IN ('active','scheduled','granted') AND (obligor_person_id=? OR beneficiary_person_id=? OR obligor_household_id=? OR beneficiary_household_id=?) ORDER BY COALESCE(due_day,999999),obligation_id", (actor["person_id"],actor["person_id"],household["household_id"],household["household_id"]))]
     debts = [dict(r) for r in db.all("SELECT * FROM debts WHERE status='open' AND (debtor_household_id=? OR creditor_household_id=?) ORDER BY COALESCE(due_day,999999)", (household["household_id"],household["household_id"]))]
+    marriages: list[dict[str, Any]] = []
+    kinship_edges: list[dict[str, Any]] = []
+    if db.schema_version() >= 2:
+        marriages = [dict(r) for r in db.all(
+            "SELECT * FROM marriages WHERE run_id=? AND status='active' AND (person_a_id=? OR person_b_id=?) ORDER BY marriage_id",
+            (job["run_id"], actor["person_id"], actor["person_id"]),
+        )]
+        kinship_edges = [dict(r) for r in db.all(
+            "SELECT * FROM kinship_edges WHERE run_id=? AND end_day IS NULL AND (person_a_id=? OR person_b_id=?) ORDER BY kinship_edge_id",
+            (job["run_id"], actor["person_id"], actor["person_id"]),
+        )]
     scenario_row = db.one(
         "SELECT s.config_json FROM scenarios s JOIN runs r ON r.scenario_id=s.scenario_id WHERE r.run_id=? ORDER BY s.scenario_version DESC LIMIT 1",
         (job["run_id"],),
@@ -66,6 +77,8 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
         "relevant_memories": memories,
         "active_obligations": obligations,
         "active_debts": debts,
+        "active_marriages": marriages,
+        "kinship_edges": kinship_edges,
         "available_institutions": institutions,
         "seasonal_context": seasonal,
         "allowed_actions": _json(job["allowed_actions_json"]),
