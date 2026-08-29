@@ -6,6 +6,7 @@ from typing import Any
 
 from .db import WorldDB, canonical_json
 from .lifeways import calendar_context
+from .provisioning import effective_household_provisioning
 
 
 def _json(value: str) -> Any:
@@ -53,6 +54,21 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
         except (TypeError, ValueError):
             start_doy = 120
     seasonal = calendar_context(int(scene["day"]), start_day_of_year=start_doy)
+    provisioning = effective_household_provisioning(db, job["run_id"], household["household_id"])
+    property_preferences: list[dict[str, Any]] = []
+    if db.schema_version() >= 3:
+        property_preferences = [dict(r) for r in db.all(
+            "SELECT * FROM property_preferences WHERE run_id=? AND status='active' AND (household_id=? OR holder_person_id=? OR beneficiary_person_id=?) ORDER BY preference_id",
+            (job["run_id"], household["household_id"], actor["person_id"], actor["person_id"]),
+        )]
+    routine_expectations = {
+        "daily_grain_need": provisioning["daily_need"],
+        "weekly_grain_receipt": provisioning["weekly_receipt"],
+        "next_weekly_receipt_day": ((int(scene["day"]) // 7) + 1) * 7,
+        "notice": "Deterministic fixture routine under ASM-FIXTURE-002; not a historical ration/wage claim."
+    }
+    if provisioning["mode"] == "composition_neutral_per_person_share":
+        routine_expectations["provisioning_mode"] = provisioning["mode"]
     packet = {
         "protocol_version": job["protocol_version"],
         "job_id": job_id,
@@ -64,12 +80,7 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
             "name":household["name"],
             "status":_json(household["status_json"]),
             "resources":resources,
-            "routine_expectations": {
-                "daily_grain_need": household["fixture_daily_food_need"],
-                "weekly_grain_receipt": household["fixture_weekly_receipt"],
-                "next_weekly_receipt_day": ((int(scene["day"]) // 7) + 1) * 7,
-                "notice": "Deterministic fixture routine under ASM-FIXTURE-002; not a historical ration/wage claim."
-            },
+            "routine_expectations": routine_expectations,
             "fixture_notice":household["fixture_notice"]
         },
         "relationships": rels,
@@ -84,6 +95,8 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
         "allowed_actions": _json(job["allowed_actions_json"]),
         "containment_rule": "Reason only from this packet. Do not use external/web/future-history facts. Cite decisive knowledge/belief IDs from admissible_knowledge.",
     }
+    if db.schema_version() >= 3:
+        packet["active_property_preferences"] = property_preferences
     return packet
 
 

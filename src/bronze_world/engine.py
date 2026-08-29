@@ -8,6 +8,7 @@ from typing import Any
 from .cognition import _build_packet, packet_hash
 from .db import WorldDB, canonical_json
 from .ids import stable_id
+from .provisioning import effective_household_provisioning, scenario_config, scenario_has_assumption
 from .lifeways import (
     calendar_context, communal_feast_due, household_ritual_due, palace_labor_cycle_due,
     role_activity, weekly_cycle_due,
@@ -183,6 +184,17 @@ class WorldEngine:
         except (TypeError, ValueError, json.JSONDecodeError):
             return 141
 
+
+    def _v007_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v007_lifeways_start_day", 181))
+        except (TypeError, ValueError):
+            return 181
+
+    def _has_assumption(self, assumption_id: str) -> bool:
+        return scenario_has_assumption(self.db, self.run_id, assumption_id)
+
     def _is_unmarried(self, person_id: str) -> bool:
         if self.db.schema_version() < 2:
             return True
@@ -233,6 +245,44 @@ class WorldEngine:
         transaction and become sealed cognition jobs rather than being resolved here.
         """
         seasonal = self._seasonal_context(day)
+
+        if self._has_assumption("ASM-FIXTURE-024"):
+            draft_due = con.execute(
+                "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_draft_team_service' "
+                "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+                (day,),
+            ).fetchall()
+            for o in draft_due:
+                beneficiary = o["beneficiary_household_id"]
+                holder = o["obligor_household_id"]
+                provenance=json.loads(o["provenance_json"])
+                progress=float(provenance.get("service_sowing_progress",0.10))
+                opportunity_cost=float(provenance.get("access_holder_opportunity_cost_progress",0.05))
+                self._change_resource(con, beneficiary, "sowing_progress", progress, assumption_id="ASM-FIXTURE-024")
+                holder_stock=con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='sowing_progress'",(holder,)).fetchone() if holder else None
+                actual_cost=min(float(holder_stock[0]),opportunity_cost) if holder_stock else 0.0
+                if holder and actual_cost>0:
+                    self._change_resource(con,holder,"sowing_progress",-actual_cost,assumption_id="ASM-FIXTURE-024")
+                con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?", (o["obligation_id"],))
+                material={beneficiary:{"sowing_progress":progress}}
+                if holder and actual_cost>0: material[holder]={"sowing_progress":-actual_cost}
+                eid = self._event(
+                    con, day, "draft_team_service_completed", actors=[x for x in [o["obligor_person_id"],o["beneficiary_person_id"]] if x],
+                    rules=["ASM-FIXTURE-024","RULE-SOWING-DRAFT-ACCESS-001"],
+                    material=material,
+                    payload={"obligation_id":o["obligation_id"],"beneficiary_household_id":beneficiary,
+                             "sowing_progress":progress,"access_holder_opportunity_cost_progress":actual_cost,
+                             "notice":"fixture service/progress transfer, not a historical plowing rate"},
+                    discriminator=o["obligation_id"],
+                )
+                if o["beneficiary_person_id"]:
+                    self._memory(con,o["beneficiary_person_id"],day,"Received the negotiated draft-team service during the sowing window.",
+                                 event_id=eid,memory_type="agricultural_access",salience=.82,relationship_relevance=.82,goal_relevance=.9,
+                                 provenance={"assumption_id":"ASM-FIXTURE-024"})
+                if o["obligor_person_id"]:
+                    self._memory(con,o["obligor_person_id"],day,"Provided the negotiated draft-team service to the dependent field household.",
+                                 event_id=eid,memory_type="agricultural_access",salience=.72,relationship_relevance=.78,goal_relevance=.62,
+                                 provenance={"assumption_id":"ASM-FIXTURE-024"})
 
         # Resolve scheduled external trade exchanges. Silver left the household when the
         # commitment was made; imported trade goods appear only after the modeled delay.
@@ -351,6 +401,14 @@ class WorldEngine:
                     self._change_resource(con, person["household_id"], "seasonal_produce", produced, assumption_id="ASM-FIXTURE-021")
                     material.setdefault(person["household_id"], {})["seasonal_produce"] = (
                         material.setdefault(person["household_id"], {}).get("seasonal_produce", 0.0) + produced
+                    )
+                if (self._has_assumption("ASM-FIXTURE-024") and day >= self._v007_start_day()
+                        and seasonal["phase"] == "early_rains_and_sowing"
+                        and any(r in roles for r in ("farmer", "dependent_field_worker"))):
+                    sowing = 0.10 if "farmer" in roles else 0.05
+                    self._change_resource(con, person["household_id"], "sowing_progress", sowing, assumption_id="ASM-FIXTURE-024")
+                    material.setdefault(person["household_id"], {})["sowing_progress"] = (
+                        material.setdefault(person["household_id"], {}).get("sowing_progress", 0.0) + sowing
                     )
                 self._event(
                     con, day, "occupation_work_cycle", actors=[person["person_id"]],
@@ -480,33 +538,40 @@ class WorldEngine:
             target_day = self.day + 1
             rng = random.Random(f"{seed}:{target_day}:routine")
             with self.db.transaction() as con:
-                for h in con.execute(
-                    "SELECT household_id,fixture_daily_food_need,fixture_weekly_receipt FROM households ORDER BY household_id"
-                ).fetchall():
+                for h in con.execute("SELECT household_id FROM households ORDER BY household_id").fetchall():
+                    provisioning = effective_household_provisioning(self.db, self.run_id, h["household_id"])
                     stock = con.execute(
                         "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='grain'",
                         (h["household_id"],),
                     ).fetchone()[0]
-                    consume = min(float(stock), float(h["fixture_daily_food_need"]))
+                    daily_need = float(provisioning["daily_need"])
+                    consume = min(float(stock), daily_need)
                     con.execute(
                         "UPDATE resource_stocks SET amount=amount-? WHERE household_id=? AND resource_type='grain'",
                         (consume, h["household_id"]),
                     )
+                    routine_rules=["ASM-FIXTURE-002"] + (["ASM-FIXTURE-022","RULE-COMPOSITION-NEUTRAL-PROVISIONING-001"] if provisioning["mode"] == "composition_neutral_per_person_share" else [])
+                    consumption_payload={"notice":"abstract fixture unit"}
+                    if provisioning["mode"] == "composition_neutral_per_person_share":
+                        consumption_payload.update({"effective_daily_need":daily_need,"provisioning_mode":provisioning["mode"]})
                     self._event(
-                        con, target_day, "routine_consumption", rules=["ASM-FIXTURE-002"],
+                        con, target_day, "routine_consumption", rules=routine_rules,
                         material={h["household_id"]: {"grain": -consume}},
-                        payload={"notice": "abstract fixture unit"}, discriminator=h["household_id"],
+                        payload=consumption_payload, discriminator=h["household_id"],
                     )
                     if target_day % 7 == 0:
-                        receipt = float(h["fixture_weekly_receipt"])
+                        receipt = float(provisioning["weekly_receipt"])
                         con.execute(
                             "UPDATE resource_stocks SET amount=amount+? WHERE household_id=? AND resource_type='grain'",
                             (receipt, h["household_id"]),
                         )
+                        receipt_payload={"notice":"abstract fixture unit"}
+                        if provisioning["mode"] == "composition_neutral_per_person_share":
+                            receipt_payload.update({"effective_weekly_receipt":receipt,"provisioning_mode":provisioning["mode"]})
                         self._event(
-                            con, target_day, "routine_weekly_receipt", rules=["ASM-FIXTURE-002"],
+                            con, target_day, "routine_weekly_receipt", rules=routine_rules,
                             material={h["household_id"]: {"grain": receipt}},
-                            payload={"notice": "abstract fixture unit"}, discriminator=h["household_id"],
+                            payload=receipt_payload, discriminator=h["household_id"],
                         )
 
                 self._apply_recurring_lifeways(con, target_day)
@@ -641,16 +706,15 @@ class WorldEngine:
         before a scheduled receipt is applied on some day inside the horizon.
         """
         row = self.db.one(
-            "SELECT h.fixture_daily_food_need,h.fixture_weekly_receipt,rs.amount "
-            "FROM households h JOIN resource_stocks rs USING(household_id) "
-            "WHERE h.household_id=? AND rs.resource_type='grain'",
+            "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='grain'",
             (household_id,),
         )
         if not row:
             raise KeyError(household_id)
+        provisioning = effective_household_provisioning(self.db, self.run_id, household_id)
         current = float(row["amount"])
-        daily_need = float(row["fixture_daily_food_need"])
-        weekly_receipt = float(row["fixture_weekly_receipt"])
+        daily_need = float(provisioning["daily_need"])
+        weekly_receipt = float(provisioning["weekly_receipt"])
         next_receipt_day = ((int(day) // 7) + 1) * 7
         horizon_day = int(day) + int(horizon_days)
         projected = current
@@ -976,6 +1040,67 @@ class WorldEngine:
                         self._event(con,day,"marriage_discussion_opportunity",scene_id=sid,actors=["P16","P10"],
                                     rules=["ASM-FIXTURE-019","RULE-MARRIAGE-NEGOTIATION-001"],payload=stakes,discriminator=sid)
                     created.append(self.enqueue_job(sid,"P16",["request_marriage_discussion","wait","communicate"]))
+
+        # The accepted P16->P15 continuing-care term becomes a concrete recurring support
+        # need rather than passive prose. Exact timing/task are v007 fixture calibration.
+        if (self._has_assumption("ASM-FIXTURE-023") and day >= self._v007_start_day() + 3
+                and (day - (self._v007_start_day() + 3)) % 30 == 0):
+            care = self.db.one(
+                "SELECT * FROM obligations WHERE status='active' AND obligation_type='continuing_kin_care' "
+                "AND obligor_person_id='P16' AND beneficiary_person_id='P15' ORDER BY obligation_id LIMIT 1"
+            )
+            if care:
+                sid=stable_id("SCENE",self.run_id,"continuing_kin_care_need",care["obligation_id"],day)
+                if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,)):
+                    actor=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P16'")
+                    beneficiary=self.db.one("SELECT current_place_id,alive FROM persons WHERE person_id='P15'")
+                    if actor and beneficiary and actor["alive"] and actor["available"] and beneficiary["alive"]:
+                        prior=int(self.db.scalar("SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='kin_care_fulfilled' AND json_extract(payload_json,'$.care_obligation_id')=?",(self.run_id,care["obligation_id"])) or 0)
+                        stakes={"situation_id":"SIT-017","care_obligation_id":care["obligation_id"],"beneficiary_person_id":"P15",
+                                "support_kind":"household_property_support_day","prior_fulfilled_care_episodes":prior,
+                                "seasonal_context":self._seasonal_context(day),
+                                "fixture_notice":"Concrete care timing/task are ASM-FIXTURE-023; the continuing obligation came from negotiated marriage terms and no inheritance transfer is implied."}
+                        with self.db.transaction() as con:
+                            con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                        (sid,self.run_id,day,actor["current_place_id"],"household","continuing_kin_care_need",canonical_json(stakes),
+                                         canonical_json({"support_day_has_opportunity_cost":True}),
+                                         canonical_json({"continuing_care_obligation":True,"property_consequence_not_automatic":True}),
+                                         canonical_json(["I-MEDIATION"]),"open"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P16","decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P15","care_beneficiary"))
+                            self._event(con,day,"kin_care_need",scene_id=sid,actors=["P16","P15"],rules=["ASM-FIXTURE-023","RULE-KIN-CARE-PROPERTY-001"],payload=stakes,discriminator=sid)
+                        created.append(self.enqueue_job(sid,"P16",["fulfill_kin_care","defer_kin_care","communicate"]))
+
+        # During the first v007 sowing window, H-DEPEND can seek bounded draft-team help
+        # from H-FARM. Access asymmetry and exact service are explicit fixture assumptions.
+        seasonal_now=self._seasonal_context(day)
+        if (self._has_assumption("ASM-FIXTURE-024") and day >= self._v007_start_day()+1
+                and seasonal_now["phase"] == "early_rains_and_sowing"):
+            sid=stable_id("SCENE",self.run_id,"sowing_draft_access_pressure","H-DEPEND","H-FARM",self._v007_start_day())
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,)):
+                p13=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P13'")
+                p1=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P1'")
+                hs13=self.db.one("SELECT status_json FROM households WHERE household_id='H-DEPEND'")
+                hs1=self.db.one("SELECT status_json FROM households WHERE household_id='H-FARM'")
+                if p13 and p1 and p13["alive"] and p13["available"] and p1["alive"] and p1["available"]:
+                    dep=json.loads(hs13[0]) if hs13 else {}
+                    farm=json.loads(hs1[0]) if hs1 else {}
+                    if dep.get("draft_access")=="requires_negotiation" and farm.get("draft_access")=="controls_fixture_team":
+                        stakes={"situation_id":"SIT-018","requester_person_id":"P13","requester_household_id":"H-DEPEND",
+                                "access_holder_person_id":"P1","access_holder_household_id":"H-FARM","service_days":1,
+                                "service_sowing_progress":0.10,"access_holder_opportunity_cost_progress":0.05,
+                                "seasonal_context":seasonal_now,
+                                "fixture_notice":"The draft-team access asymmetry, household pairing, one-day service, and progress effect are ASM-FIXTURE-024 calibration."}
+                        with self.db.transaction() as con:
+                            con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                        (sid,self.run_id,day,p13["current_place_id"],"economic","sowing_draft_access_pressure",canonical_json(stakes),
+                                         canonical_json({"sowing_window":True,"draft_access":"not_controlled"}),
+                                         canonical_json({"negotiation_not_entitlement":True,"grant_has_household_opportunity_cost":True}),
+                                         canonical_json(["I-MEDIATION"]),"open"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P13","decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P1","draft_access_holder"))
+                            self._event(con,day,"sowing_draft_access_pressure",scene_id=sid,actors=["P13","P1"],rules=["ASM-FIXTURE-024","RULE-SOWING-DRAFT-ACCESS-001"],payload=stakes,discriminator=sid)
+                        created.append(self.enqueue_job(sid,"P13",["request_draft_access","wait","communicate"]))
 
         # Seasonal surplus becomes a cognition boundary only once enough exposed produce
         # has accumulated to make preservation materially consequential. It is separate
@@ -1651,6 +1776,64 @@ class WorldEngine:
                 stock = self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='seasonal_produce'", (actor_household,)) if actor_household else None
                 if not stock or not isinstance(amount, (int, float)) or amount > float(stock["amount"]) + 1e-9:
                     errors.append(f"action_{i}:insufficient_seasonal_produce")
+            elif typ == "fulfill_kin_care":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "continuing_kin_care_need":
+                    errors.append(f"action_{i}:invalid_scene_for_kin_care")
+                oid=action.get("care_obligation_id")
+                obligation=self.db.one("SELECT * FROM obligations WHERE obligation_id=?",(oid,)) if oid else None
+                if not obligation or obligation["status"]!="active" or obligation["obligation_type"]!="continuing_kin_care" or obligation["obligor_person_id"]!=job["actor_person_id"]:
+                    errors.append(f"action_{i}:invalid_kin_care_obligation")
+                if oid != stakes.get("care_obligation_id") or action.get("support_kind") != stakes.get("support_kind"):
+                    errors.append(f"action_{i}:kin_care_terms_mismatch")
+            elif typ == "defer_kin_care":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "continuing_kin_care_need":
+                    errors.append(f"action_{i}:invalid_scene_for_kin_care_defer")
+                oid=action.get("care_obligation_id")
+                obligation=self.db.one("SELECT * FROM obligations WHERE obligation_id=?",(oid,)) if oid else None
+                if not obligation or obligation["status"]!="active" or obligation["obligation_type"]!="continuing_kin_care" or obligation["obligor_person_id"]!=job["actor_person_id"]:
+                    errors.append(f"action_{i}:invalid_kin_care_obligation")
+                if oid != stakes.get("care_obligation_id"):
+                    errors.append(f"action_{i}:kin_care_obligation_mismatch")
+            elif typ == "record_property_preference":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "property_preference_review":
+                    errors.append(f"action_{i}:invalid_scene_for_property_preference")
+                if self.db.schema_version() < 3:
+                    errors.append(f"action_{i}:property_preference_schema_unavailable")
+                if job["actor_person_id"] != stakes.get("holder_person_id") or action.get("beneficiary_person_id") != stakes.get("beneficiary_person_id"):
+                    errors.append(f"action_{i}:property_preference_party_mismatch")
+                if action.get("preference_type") != "care_informed_priority" or action.get("scope") != "household_property_if_later_negotiated":
+                    errors.append(f"action_{i}:invalid_property_preference_scope")
+                if self.db.one("SELECT 1 FROM property_preferences WHERE run_id=? AND household_id=? AND status='active'",(self.run_id,stakes.get("household_id"))):
+                    errors.append(f"action_{i}:property_preference_already_active")
+            elif typ == "request_draft_access":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "sowing_draft_access_pressure":
+                    errors.append(f"action_{i}:invalid_scene_for_draft_request")
+                if action.get("target_person_id") != stakes.get("access_holder_person_id") or int(action.get("service_days",0) or 0) != int(stakes.get("service_days",0) or 0):
+                    errors.append(f"action_{i}:draft_request_terms_mismatch")
+                if job["actor_person_id"] != stakes.get("requester_person_id"):
+                    errors.append(f"action_{i}:draft_requester_mismatch")
+                target=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?",(action.get("target_person_id"),)) if action.get("target_person_id") else None
+                if not target or not target["alive"] or not target["available"]:
+                    errors.append(f"action_{i}:draft_holder_unavailable")
+                elif actor and target["current_place_id"] != actor["current_place_id"]:
+                    errors.append(f"action_{i}:draft_holder_not_colocated")
+            elif typ == "grant_draft_access":
+                scene_packet=packet.get("scene",{})
+                stakes=scene_packet.get("stakes",{})
+                effective=stakes.get("source_stakes",stakes) if scene_packet.get("trigger")=="informal_mediation_review" else stakes
+                source_trigger=stakes.get("source_trigger") if scene_packet.get("trigger")=="informal_mediation_review" else scene_packet.get("trigger")
+                if source_trigger != "draft_access_request":
+                    errors.append(f"action_{i}:invalid_scene_for_draft_grant")
+                if job["actor_person_id"] != effective.get("access_holder_person_id"):
+                    errors.append(f"action_{i}:draft_grantor_mismatch")
+                if action.get("requester_person_id") != effective.get("requester_person_id") or int(action.get("service_days",0) or 0) != int(effective.get("service_days",0) or 0):
+                    errors.append(f"action_{i}:draft_grant_terms_mismatch")
+                if self.db.one("SELECT 1 FROM obligations WHERE status='scheduled' AND obligation_type='fixture_draft_team_service'"):
+                    errors.append(f"action_{i}:draft_service_already_scheduled")
             elif typ == "request_household_reserve_agreement":
                 stakes = packet.get("scene", {}).get("stakes", {})
                 if packet.get("scene", {}).get("trigger") != "household_trade_reserve_priority":
@@ -2534,6 +2717,133 @@ class WorldEngine:
                                  event_id=eid,memory_type="seasonal_storage",salience=.72,relationship_relevance=.2,goal_relevance=.82,
                                  provenance={"assumption_id":"ASM-FIXTURE-021"})
 
+                elif typ == "fulfill_kin_care":
+                    oid=action["care_obligation_id"]
+                    beneficiary=scene_stakes["beneficiary_person_id"]
+                    relationship_delta={
+                        f"{actor_id}->{beneficiary}":self._adjust_relationship(con,actor_id,beneficiary,trust=.02,respect=.02),
+                        f"{beneficiary}->{actor_id}":self._adjust_relationship(con,beneficiary,actor_id,trust=.03,respect=.03),
+                    }
+                    eid=self._event(
+                        con,day,"kin_care_fulfilled",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,beneficiary],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-023","RULE-KIN-CARE-PROPERTY-001"],
+                        relationships=relationship_delta,payload={"action_id":aid,"care_obligation_id":oid,
+                            "support_kind":action["support_kind"],"reason":action.get("reason"),
+                            "notice":"support-day timing/task are fixture calibration; continuing obligation remains active"},discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,f"Fulfilled a concrete support day for {beneficiary} under my continuing care obligation.",
+                                 event_id=eid,memory_type="kin_care",salience=.82,relationship_relevance=.9,goal_relevance=.78,
+                                 provenance={"assumption_id":"ASM-FIXTURE-023"})
+                    self._memory(con,beneficiary,day,f"{actor_id} fulfilled another concrete support need under the continuing care arrangement.",
+                                 event_id=eid,memory_type="kin_care",salience=.88,relationship_relevance=.94,goal_relevance=.9,
+                                 provenance={"assumption_id":"ASM-FIXTURE-023"})
+                    fulfilled=int(con.execute(
+                        "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='kin_care_fulfilled' "
+                        "AND json_extract(payload_json,'$.care_obligation_id')=?",(self.run_id,oid)).fetchone()[0])
+                    if self.db.schema_version() >= 3 and fulfilled >= 2:
+                        existing_pref=con.execute("SELECT 1 FROM property_preferences WHERE run_id=? AND household_id='H-WIDOW' AND status='active'",(self.run_id,)).fetchone()
+                        existing_review=con.execute("SELECT 1 FROM scenes WHERE run_id=? AND trigger_type='property_preference_review'",(self.run_id,)).fetchone()
+                        if not existing_pref and not existing_review:
+                            review_scene=stable_id("SCENE",self.run_id,"property_preference_review","P15","P16",day)
+                            review_stakes={"situation_id":"SIT-019","holder_person_id":"P15","beneficiary_person_id":"P16",
+                                "household_id":"H-WIDOW","fulfilled_care_episodes":fulfilled,
+                                "preference_type":"care_informed_priority","scope":"household_property_if_later_negotiated",
+                                "fixture_notice":"Repeated care can inform a non-binding property preference under ASM-FIXTURE-023; no inheritance, ownership transfer, or Ugaritic succession rule is implied."}
+                            con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                        (review_scene,self.run_id,day,scene["place_id"],"household","property_preference_review",canonical_json(review_stakes),"{}",
+                                         canonical_json({"care_history_matters":True,"preference_nonbinding":True,"no_transfer":True}),
+                                         canonical_json(["I-MEDIATION"]),"open"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(review_scene,"P15","decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(review_scene,"P16","potential_beneficiary"))
+                            self._event(con,day,"property_preference_review_opened",scene_id=review_scene,actors=["P15","P16"],
+                                        rules=["ASM-FIXTURE-023","RULE-KIN-CARE-PROPERTY-001"],payload=review_stakes,discriminator=review_scene)
+                            followups.append((review_scene,"P15",["record_property_preference","wait","communicate"]))
+
+                elif typ == "defer_kin_care":
+                    oid=action["care_obligation_id"]
+                    beneficiary=scene_stakes["beneficiary_person_id"]
+                    relationship_delta={
+                        f"{actor_id}->{beneficiary}":self._adjust_relationship(con,actor_id,beneficiary,trust=-.01),
+                        f"{beneficiary}->{actor_id}":self._adjust_relationship(con,beneficiary,actor_id,trust=-.02),
+                    }
+                    eid=self._event(con,day,"kin_care_deferred",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,beneficiary],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-023","RULE-KIN-CARE-PROPERTY-001"],
+                                    relationships=relationship_delta,payload={"action_id":aid,"care_obligation_id":oid,"reason":action.get("reason")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Deferred a concrete support need for {beneficiary}: {action.get('reason','competing obligations')}.",
+                                 event_id=eid,memory_type="kin_care",salience=.72,relationship_relevance=.84,goal_relevance=.78,provenance={"assumption_id":"ASM-FIXTURE-023"})
+                    self._memory(con,beneficiary,day,f"{actor_id} deferred a concrete support need under the continuing care arrangement.",
+                                 event_id=eid,memory_type="kin_care",salience=.8,relationship_relevance=.9,goal_relevance=.82,provenance={"assumption_id":"ASM-FIXTURE-023"})
+
+                elif typ == "record_property_preference":
+                    pref_id=stable_id("PREF",self.run_id,scene_stakes["household_id"],actor_id,action["beneficiary_person_id"],day)
+                    basis={"fulfilled_care_episodes":scene_stakes["fulfilled_care_episodes"],"care_history":True,
+                           "notice":"preference only; later property/succession decision remains open"}
+                    provenance={"assumption_id":"ASM-FIXTURE-023","rule_id":"RULE-KIN-CARE-PROPERTY-001",
+                                "notice":"non-binding simulation preference, not a Ugaritic inheritance rule or property transfer"}
+                    con.execute("INSERT INTO property_preferences VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                                (pref_id,self.run_id,scene_stakes["household_id"],actor_id,action["beneficiary_person_id"],action["preference_type"],
+                                 action["scope"],day,None,"active",canonical_json(basis),canonical_json(provenance)))
+                    eid=self._event(con,day,"property_preference_recorded",scene_id=job["scene_id"],decision_id=decision_id,
+                                    actors=[actor_id,action["beneficiary_person_id"]],knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),
+                                    rules=["ASM-FIXTURE-023","RULE-KIN-CARE-PROPERTY-001"],
+                                    payload={"action_id":aid,"preference_id":pref_id,"preference_type":action["preference_type"],
+                                             "scope":action["scope"],"binding":False,"reason":action.get("reason")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Recorded a non-binding household property preference favoring {action['beneficiary_person_id']} if property is later negotiated, based on remembered care.",
+                                 event_id=eid,memory_type="property_preference",salience=.9,relationship_relevance=.9,goal_relevance=.94,provenance=provenance)
+                    self._memory(con,action["beneficiary_person_id"],day,f"{actor_id} recorded a non-binding future property preference in my favor based on fulfilled care; no property has transferred.",
+                                 event_id=eid,memory_type="property_preference",salience=.9,relationship_relevance=.94,goal_relevance=.9,provenance=provenance)
+
+                elif typ == "request_draft_access":
+                    holder=action["target_person_id"]
+                    request_scene=stable_id("SCENE",self.run_id,day,"draft_access_request",decision_id,idx)
+                    request_stakes={**scene_stakes,"requester_person_id":actor_id,"access_holder_person_id":holder,
+                                    "request_event_id":None,"request_reason":action.get("reason"),
+                                    "fixture_notice":"One bounded draft-team service request under ASM-FIXTURE-024; no ownership transfer or historical plowing contract is implied."}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (request_scene,self.run_id,day,scene["place_id"],"economic","draft_access_request",canonical_json(request_stakes),
+                                 canonical_json({"service_days":scene_stakes["service_days"]}),
+                                 canonical_json({"private_negotiation_first":True,"grant_has_opportunity_cost":True}),
+                                 canonical_json(["I-MEDIATION"]),"open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,actor_id,"requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,holder,"decision_actor"))
+                    eid=self._event(con,day,"draft_access_requested",scene_id=request_scene,decision_id=decision_id,actors=[actor_id,holder],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-024","RULE-SOWING-DRAFT-ACCESS-001"],
+                                    payload={"action_id":aid,"service_days":action["service_days"],"reason":action.get("reason")},discriminator=aid)
+                    request_stakes["request_event_id"]=eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?",(canonical_json(request_stakes),request_scene))
+                    self._memory(con,actor_id,day,f"Asked {holder} for one bounded draft-team service during the sowing window.",
+                                 event_id=eid,memory_type="agricultural_access",salience=.84,relationship_relevance=.84,goal_relevance=.92,provenance={"assumption_id":"ASM-FIXTURE-024"})
+                    self._memory(con,holder,day,f"{actor_id} asked for one bounded draft-team service during the sowing window.",
+                                 event_id=eid,memory_type="agricultural_access",salience=.8,relationship_relevance=.84,goal_relevance=.82,provenance={"assumption_id":"ASM-FIXTURE-024"})
+                    followups.append((request_scene,holder,["grant_draft_access","refuse_proposal","seek_mediation","communicate"]))
+
+                elif typ == "grant_draft_access":
+                    effective = scene_stakes.get("source_stakes", scene_stakes) if scene["trigger_type"] == "informal_mediation_review" else scene_stakes
+                    requester=action["requester_person_id"]
+                    requester_household=effective["requester_household_id"]
+                    due=day+int(action["service_days"])
+                    oid=stable_id("O",self.run_id,"fixture_draft_team_service",actor_id,requester,day)
+                    provenance={"assumption_id":"ASM-FIXTURE-024","rule_id":"RULE-SOWING-DRAFT-ACCESS-001",
+                                "request_event_id":effective.get("request_event_id"),
+                                "service_sowing_progress":float(effective.get("service_sowing_progress",0.10)),
+                                "access_holder_opportunity_cost_progress":float(effective.get("access_holder_opportunity_cost_progress",0.05)),
+                                "notice":"fixture service/progress transfer; not historical ownership/rate"}
+                    con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                                (oid,actor_id,actor_household,requester,requester_household,"fixture_draft_team_service",
+                                 "Provide one bounded draft-team service during the sowing window.",due,"scheduled",canonical_json(provenance)))
+                    relationship_delta={
+                        f"{actor_id}->{requester}":self._adjust_relationship(con,actor_id,requester,trust=.02,favors_given=1),
+                        f"{requester}->{actor_id}":self._adjust_relationship(con,requester,actor_id,trust=.03,respect=.01,favors_owed=1),
+                    }
+                    eid=self._event(con,day,"draft_access_granted",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,requester],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-024","RULE-SOWING-DRAFT-ACCESS-001"],
+                                    relationships=relationship_delta,payload={"action_id":aid,"obligation_id":oid,"service_due_day":due,
+                                    "reason":action.get("reason")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Agreed to provide {requester} one bounded draft-team service due on day {due}.",
+                                 event_id=eid,memory_type="agricultural_access",salience=.82,relationship_relevance=.9,goal_relevance=.72,provenance=provenance)
+                    self._memory(con,requester,day,f"{actor_id} agreed to provide my household one bounded draft-team service due on day {due}; I now owe a favor.",
+                                 event_id=eid,memory_type="agricultural_access",salience=.88,relationship_relevance=.94,goal_relevance=.94,provenance=provenance)
+
                 elif typ == "request_household_reserve_agreement":
                     target_person = action["target_person_id"]
                     reserve_floor = float(action["reserve_floor"])
@@ -2900,6 +3210,8 @@ class WorldEngine:
                                     allowed=["grant_apprenticeship_progression","enter_obligation","communicate","refuse_proposal"]
                                 elif source_trigger == "resource_request":
                                     allowed=["transfer_resource","enter_obligation","communicate","refuse_proposal"]
+                                elif source_trigger == "draft_access_request":
+                                    allowed=["grant_draft_access","enter_obligation","communicate","refuse_proposal"]
                                 elif source_trigger == "marriage_household_terms_review":
                                     allowed=["accept_marriage_household_terms","enter_obligation","communicate","refuse_proposal"]
                                 else:

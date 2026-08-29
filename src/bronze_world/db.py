@@ -57,6 +57,15 @@ class WorldDB:
         self.conn.commit()
 
     def schema_version(self) -> int:
+        # Canonical behavior follows the sealed run schema, not merely the newest
+        # physical migration present in the SQLite file. This preserves exact replay
+        # of older accepted runs inside a storage engine that knows newer tables.
+        try:
+            run = self.one("SELECT schema_version FROM runs ORDER BY created_at,run_id LIMIT 1")
+        except sqlite3.OperationalError:
+            run = None
+        if run:
+            return int(run[0])
         row = self.one("SELECT value FROM schema_meta WHERE key='schema_version'")
         return int(row[0]) if row else 1
 
@@ -64,6 +73,8 @@ class WorldDB:
         tables = list(CANONICAL_HASH_TABLES_V1)
         if self.schema_version() >= 2:
             tables.extend(["marriages", "kinship_edges"])
+        if self.schema_version() >= 3:
+            tables.append("property_preferences")
         return tables
 
     def one(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Row | None:
@@ -81,7 +92,7 @@ class WorldDB:
         for table in self.canonical_hash_tables():
             cols = [r[1] for r in self.conn.execute(f"PRAGMA table_info({table})")]
             order = ",".join(cols) if cols else "rowid"
-            if table in {"runs", "scenes", "cognition_jobs", "events", "marriages", "kinship_edges"}:
+            if table in {"runs", "scenes", "cognition_jobs", "events", "marriages", "kinship_edges", "property_preferences"}:
                 where = " WHERE run_id = ?"
                 params: tuple[Any, ...] = (run_id,)
             elif table in {"decisions", "actions"}:

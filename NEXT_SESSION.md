@@ -1,56 +1,48 @@
 # NEXT SESSION
 
-Start from the accepted strict v006 day-180 checkpoint in `STATUS.md` and `runs/ACCEPTED_DAY180_V006_MARRIAGE_STORAGE.md`.
+Start from the accepted strict v007 day-240 checkpoint in `STATUS.md` and `runs/ACCEPTED_DAY240_V007_CARE_SOWING.md`.
 
-1. Verify Git/repository state, authority hashes, `state/current.json`, and host-local `state/ugarit_living_v006.sqlite` before changing behavior.
-2. Run the full **48-test** suite and exact recorded-decision replay of v006 to day 180. Replay must apply **59** stored decisions, make **0** new cognition calls, and reproduce hash `d8f87ff19699e22b4f2ad00da5139c08a0a1bed9356a0661105b6d9807d8fdfb`.
-3. Preserve v002-v006 as accepted histories. If scene-generation, schema, or fixture-baseline rules change, rebuild a fresh candidate from seed rather than mutating accepted DBs.
-4. Highest-value next system: make **care/property consequences** active rather than passive hooks.
-   - continuing elder/kin support requests and fulfillment;
-   - remembered care affecting later property/inheritance preference where locally supported;
-   - property-use disagreement and private negotiation before mediation;
-   - inheritance/succession only with explicit evidence/fixture separation, not a universal Ugaritic rule.
-5. Make household composition more materially legible without reintroducing arbitrary poverty drift.
-   - design an explicitly engineered composition-responsive neutral provisioning method or another conservative representation;
-   - prove conservation/stability before using it in strict history;
-   - never smuggle dowry/bridewealth or household wealth transfer into marriage merely to create material consequences.
-6. Deepen the **early-rains/sowing agricultural layer** from day 180 onward:
-   - plowing/sowing labor bottlenecks;
-   - tools/draft-animal access as bounded resources or obligations;
-   - livestock care where evidence changes decisions;
-   - weather/water pressure with historical rates left unspecified;
-   - stored surplus influencing labor/trade/aid decisions;
-   - keep neutral staple grain separate until a validated crop-production model can replace it safely.
-7. Continue marriage/life-course mechanics cautiously:
-   - second independent candidate only when state/evidence justify it;
-   - new-household formation and residence alternatives;
-   - aging, birth/death, widowhood, migration, apprenticeship/work progression;
-   - final individual consent remains non-overridable by mediation.
-8. Seek naturally arising disputes rather than manufacturing one. Good candidates: property use, care obligations, storage/tool access, trade terms, damaged goods, or competing household labor. Preserve the informal-first ladder and exact replay.
-9. Deepen trade/information/language only where active rules need it: recurring counterparties, delayed/damaged cargo, scribal documentation, interpreter/language constraints, multiple network alternatives, provenance-preserving rumor.
-10. The 50-decision minimum has been crossed. Next behavioral target is **75–100 inspected decisions plus the full 360-day ordinary-year gate**, with paired/counterfactual packet tests where useful. Never interpret model choice frequency as historical prevalence.
-11. Do not add collapse/geopolitics, generic agent infrastructure, model APIs, microservices, a new database, or a new SBC generation without evidence that ordinary-life substrate or tooling actually requires it.
-12. At every coherent accepted checkpoint, update evidence mappings, tests, protocol docs, `STATUS.md`, `NEXT_SESSION.md`, `state/current.json`, and an acceptance manifest. Exact replay with zero new cognition calls remains mandatory.
+1. Verify Git/repository state, authority hashes, `state/current.json`, and `state/ugarit_living_v007.sqlite` before changing behavior.
+2. Run the full **53-test** suite and exact recorded-decision replay of v007 to day 240. Replay must apply **80** stored decisions, make **0** new cognition calls, and reproduce hash `7cd79256a5affcff0b65b8c98f22be5078e46ab0bd2b3e0ce014e778f4363f86`.
+3. Preserve v002-v007 as accepted histories. Rebuild a fresh candidate from seed whenever scene generation, canonical schema, or fixture-baseline semantics change.
+4. Highest-value next system: deepen **winter household economy + livestock/tool/property use** without converting fixture quantities into historical claims.
+   - winter animal care as recurring labor only where evidence supports decision relevance;
+   - bounded tool/seed/draft maintenance and access;
+   - stored seasonal goods influencing aid/trade/care choices;
+   - weather circumstances as explicitly uncalibrated runtime events unless a defensible historical rate is available;
+   - keep neutral staple grain separate until a validated production model can safely replace it.
+5. Make the new care/property substrate broader but conservative.
+   - vary concrete care needs rather than repeating one support task forever;
+   - allow fulfilled/deferred care to affect relationships and later property-use negotiation;
+   - add property-use disagreement/private negotiation before mediation;
+   - do **not** execute inheritance or transfer merely because a preference exists;
+   - succession requires a separately justified local procedure and a triggering life-course event.
+6. Close the new P13→P1 sowing favor through a naturally useful reciprocal opportunity rather than a fixed-price debt. Preserve the same rule used for specialist social credit: remembered help matters, but repayment form/timing is not historical equivalence.
+7. Continue workshop/merchant adaptation. The fifth reduced credit is active at day 240; do not stack new supply before it resolves. Let shrinking supplier stock alter request quantities or counterparties naturally.
+8. Add a second household/life-course transition only if state and evidence justify it. Prefer a different mechanism from P16/P10 marriage (migration, household formation, aging/work change, widowhood/death only when the triggering substrate exists).
+9. Seek naturally arising disputes rather than manufacturing one. Property use, reciprocal draft aid, tool access, stored surplus, care burden, and damaged/delayed trade are good candidates.
+10. Deepen trade/information/language only where active rules need it: multiple counterparties, documented obligations, interpreters, damaged/delayed cargo, provenance-preserving rumor, and alternate network routes.
+11. Behavioral target: progress from **80** toward **100 inspected decisions**, then prioritize the **full 360-day ordinary-year gate** over adding unrelated breadth. Never interpret model choice frequency as historical prevalence.
+12. Do not add collapse/geopolitics, generic agent infrastructure, model APIs, microservices, a new database, or a new SBC generation without demonstrated need.
+13. Every accepted checkpoint requires: evidence mappings, tests, protocol docs, `STATUS.md`, `NEXT_SESSION.md`, `state/current.json`, an acceptance manifest, exact replay with zero new cognition, and a clean diff.
 
-Current accepted v006 gate facts:
+Current v007 gate facts:
 
-- day 180, seed 1701, scenario 0.4.0, schema 2;
-- hash `d8f87ff19699e22b4f2ad00da5139c08a0a1bed9356a0661105b6d9807d8fdfb`;
-- 2,540 events;
-- 48/48 tests;
-- 59 accepted cognition decisions / 0 rejected or pending;
-- exact 59-decision replay / 0 new cognition;
-- 26 trigger types;
-- 400 occupation cycles / 200 household labor allocations / 48 household rituals / 25 port cycles;
-- normalized marriage/kinship is canonical and schema-hashed;
-- P16/P10 marriage concluded only after both households and both principals agreed;
-- P10 moved to H-WIDOW while retaining ritual/healing roles;
-- P16 retains active continuing-care obligation to P15;
-- seasonal surplus/storage is separate from neutral staple grain;
-- H-FARM and H-DEPEND both hold preserved seasonal goods;
-- Yabninu's household reserve remains binding;
-- three P7↔P3 reciprocal workshop-credit cycles are fulfilled;
+- day 240, seed 1701, scenario 0.5.0, schema 3;
+- hash `7cd79256a5affcff0b65b8c98f22be5078e46ab0bd2b3e0ce014e778f4363f86`;
+- 3,412 events;
+- 53/53 tests;
+- 80 accepted cognition decisions / 0 rejected or pending;
+- exact 80-decision replay / 0 new cognition;
+- 30 trigger types;
+- 544 occupation cycles / 272 household labor allocations / 64 household rituals / 34 port cycles;
+- composition-neutral provisioning total remains exactly 5.08/day after Šapšu's residence change;
+- two Kothar care episodes are fulfilled; Bat-Rapiu has a non-binding care-informed property preference; no property transferred;
+- one H-FARM→H-DEPEND draft service transferred modeled sowing capacity and created a social favor;
+- Arhalbu rescheduled day-210 palace labor through the 0.98 sowing bottleneck and completed it automatically at day 240 / intensity 0.55;
+- Yabninu's 16.5 silver reserve remains binding;
+- four P7↔P3 workshop-credit cycles are fulfilled; fifth reduced cycle is active;
 - zero false shortfalls and zero message temporal/containment violations;
-- current modeled phase is `early_rains_and_sowing`.
+- current modeled phase is `wet_winter_growth`.
 
-The governing principle remains: **The world is structured. The people are not scripted.**
+**The world is structured. The people are not scripted.**

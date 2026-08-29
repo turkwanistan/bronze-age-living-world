@@ -75,17 +75,17 @@ def test_schema1_accepted_v005_hash_remains_stable_under_schema2_code():
         assert db.state_hash(rid) == V005_HASH
 
 
-def test_fresh_fixture_uses_schema2_and_hashes_normalized_marriage_state(world):
+def test_fresh_fixture_uses_schema3_and_hashes_normalized_household_state(world):
     db, rid = world
-    assert db.schema_version() == 2
-    assert int(db.scalar("SELECT schema_version FROM runs WHERE run_id=?", (rid,))) == 2
-    assert {"marriages", "kinship_edges"}.issubset(set(db.canonical_hash_tables()))
+    assert db.schema_version() == 3
+    assert int(db.scalar("SELECT schema_version FROM runs WHERE run_id=?", (rid,))) == 3
+    assert {"marriages", "kinship_edges", "property_preferences"}.issubset(set(db.canonical_hash_tables()))
     assert int(db.scalar("SELECT COUNT(*) FROM marriages WHERE run_id=? AND status='active'", (rid,))) == 5
     before = db.state_hash(rid)
     with db.transaction() as con:
         con.execute(
             "INSERT INTO kinship_edges VALUES (?,?,?,?,?,?,?,?)",
-            ("KIN-TEST-SCHEMA2", rid, "P15", "P16", "test_only", 0, None, json.dumps({"test": True})),
+            ("KIN-TEST-SCHEMA3", rid, "P15", "P16", "test_only", 0, None, json.dumps({"test": True})),
         )
     assert db.state_hash(rid) != before
 

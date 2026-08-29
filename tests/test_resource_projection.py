@@ -44,6 +44,10 @@ def test_projected_shortfall_uses_receipt_amount_and_triggers(world):
             "UPDATE resource_stocks SET amount=1.0 WHERE household_id='H-WIDOW' AND resource_type='grain'"
         )
         con.execute("UPDATE households SET fixture_weekly_receipt=0.1 WHERE household_id='H-WIDOW'")
+        row=con.execute("SELECT scenario_id,scenario_version FROM runs WHERE run_id=?",(rid,)).fetchone()
+        cfg=json.loads(con.execute("SELECT config_json FROM scenarios WHERE scenario_id=? AND scenario_version=?",row).fetchone()[0])
+        cfg["active_assumptions"]=[x for x in cfg.get("active_assumptions",[]) if x != "ASM-FIXTURE-022"]
+        con.execute("UPDATE scenarios SET config_json=? WHERE scenario_id=? AND scenario_version=?",(json.dumps(cfg,sort_keys=True,separators=(',',':')),row[0],row[1]))
     projection = eng._project_household_grain_security("H-WIDOW", 5)
     assert projection["first_shortfall_day"] == 8
     jobs = eng.detect_situations(5)

@@ -28,6 +28,7 @@ The simulation engine decides **when** cognition is useful. ChatGPT never receiv
 - current household-controlled resources;
 - relevant directed relationships;
 - normalized active marriage and kinship state when the run schema supports it;
+- active non-binding property preferences when the run schema supports them;
 - admissible knowledge/belief/rumor IDs only;
 - relevant memories;
 - active obligations and debts touching the actor or household;
@@ -73,6 +74,9 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `propose_marriage_household_terms` / `accept_marriage_household_terms` — negotiate residence/care terms between two households
 - `give_marriage_consent` / `decline_marriage_consent` — separate final individual consent; a decline creates no marriage and is not overridden by mediation
 - `preserve_seasonal_surplus` — convert bounded exposed seasonal produce into stored seasonal goods under explicit fixture calibration
+- `fulfill_kin_care` / `defer_kin_care` — resolve a concrete episode under an already-active continuing-care term without automatically ending that term
+- `record_property_preference` — record a non-binding living property preference after supported care history; never transfers ownership by itself
+- `request_draft_access` / `grant_draft_access` — negotiate a bounded sowing-season service whose delayed completion transfers modeled field capacity and records social obligation
 - `seek_mediation`
 - `perform_ritual`
 - `accept_proposal`

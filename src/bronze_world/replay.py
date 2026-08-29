@@ -78,11 +78,18 @@ def replay_recorded_decisions(
         recorded_order = {str(r["job_id"]): int(r["decision_rowid"]) for r in decision_rows}
         source_hash = source.state_hash(run_id) if replay_day == source_day else None
         seed = int(source_run["rng_seed"])
+        scenario_row = source.one(
+            "SELECT config_json FROM scenarios WHERE scenario_id=? AND scenario_version=?",
+            (source_run["scenario_id"], source_run["scenario_version"]),
+        )
+        if not scenario_row:
+            raise RecordedReplayError("source_scenario_config_missing")
+        source_scenario_config = json.loads(scenario_row["config_json"])
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     applied: list[str] = []
     with WorldDB(output_path) as dest:
-        rebuilt_run_id = init_fixture(dest, root, seed)
+        rebuilt_run_id = init_fixture(dest, root, seed, scenario_override=source_scenario_config)
         if rebuilt_run_id != run_id:
             raise RecordedReplayError(f"run_id_mismatch:{rebuilt_run_id}:{run_id}")
         eng = WorldEngine(dest, rebuilt_run_id)

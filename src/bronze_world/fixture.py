@@ -88,16 +88,20 @@ RELATIONSHIPS = [
 ]
 
 
-def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
+def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override: dict[str, Any] | None = None) -> str:
     db.migrate()
     ingest_evidence(db, root)
-    scenario = json.loads((root / "scenarios/ugarit_1350/scenario.json").read_text(encoding="utf-8"))
+    scenario = (json.loads(json.dumps(scenario_override)) if scenario_override is not None
+                else json.loads((root / "scenarios/ugarit_1350/scenario.json").read_text(encoding="utf-8")))
     run_id = stable_id("RUN", scenario["scenario_id"], seed)
+    active_assumptions = set(scenario.get("active_assumptions", []))
+    simulation_code_version = "0.3.0" if "ASM-FIXTURE-022" in active_assumptions else "0.2.0"
+    simulation_version_id = "SIM-0.3.0" if simulation_code_version == "0.3.0" else "SIM-0.2.0"
     with db.transaction() as con:
-        con.execute("INSERT OR REPLACE INTO simulation_versions VALUES (?,?,?,?,?)", ("SIM-0.2.0","0.2.0",scenario["schema_version"],"cognition-v1","evidence-v0.1"))
+        con.execute("INSERT OR REPLACE INTO simulation_versions VALUES (?,?,?,?,?)", (simulation_version_id,simulation_code_version,scenario["schema_version"],"cognition-v1","evidence-v0.1"))
         con.execute("INSERT OR REPLACE INTO scenarios VALUES (?,?,?,?,?)", (scenario["scenario_id"],scenario["scenario_version"],scenario["year_bce"],scenario["local_period_label"],canonical_json(scenario)))
         con.execute("INSERT OR REPLACE INTO runs(run_id,scenario_id,scenario_version,evidence_model_version,simulation_code_version,rng_seed,cognition_protocol_version,schema_version,current_day,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (run_id,scenario["scenario_id"],scenario["scenario_version"],scenario["evidence_model_version"],"0.2.0",seed,scenario["cognition_protocol_version"],scenario["schema_version"],0,"active","2026-08-28T00:00:00Z"))
+                    (run_id,scenario["scenario_id"],scenario["scenario_version"],scenario["evidence_model_version"],simulation_code_version,seed,scenario["cognition_protocol_version"],scenario["schema_version"],0,"active","2026-08-28T00:00:00Z"))
         for pid,name,ptype,parent,attrs in PLACES:
             con.execute("INSERT OR REPLACE INTO places VALUES (?,?,?,?,?)", (pid,name,ptype,parent,canonical_json(attrs)))
         route_pairs = [
@@ -112,8 +116,14 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
             access = {"water_access_variants":["shared","private"]} if iid=="I-WATER" else {}
             con.execute("INSERT OR REPLACE INTO institutions VALUES (?,?,?,?,?,?,?,?,?,?,?)",(iid,name,itype,place,"{}",canonical_json(proc),"{}","{}",canonical_json(san),canonical_json(access),"{}"))
         for h in HOUSEHOLDS:
+            status = {"status":h["status"],"water_access":h["water"]}
+            if "ASM-FIXTURE-024" in active_assumptions:
+                if h["id"] == "H-FARM":
+                    status["draft_access"] = "controls_fixture_team"
+                elif h["id"] == "H-DEPEND":
+                    status["draft_access"] = "requires_negotiation"
             con.execute("INSERT OR REPLACE INTO households VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
-                h["id"],h["name"],h["home"],canonical_json({"form":h["form"]}),canonical_json({"pool":"household"}),canonical_json({"dependent_care":"expected"}),canonical_json({"household_cult":"active"}),canonical_json({"status":h["status"],"water_access":h["water"]}),h["need"],h["weekly"],FIXTURE_NOTICE))
+                h["id"],h["name"],h["home"],canonical_json({"form":h["form"]}),canonical_json({"pool":"household"}),canonical_json({"dependent_care":"expected"}),canonical_json({"household_cult":"active"}),canonical_json(status),h["need"],h["weekly"],FIXTURE_NOTICE))
             for r,amt in [("grain",h["food"]),("oil",h["oil"]),("silver",h["silver"]),("ritual_goods",2 if h["id"]!="H-RITUAL" else 7)]:
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",(h["id"],r,float(amt),"abstract_fixture_unit","ASM-FIXTURE-001"))
             # Specialist inputs/outputs make occupations materially dependent instead of
@@ -189,6 +199,18 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
             ("PROP-LOCAL-STORAGE-001", "Seasonal household produce requires processing and storage; exposed surplus can be vulnerable before it is preserved, while exact rates depend on circumstance.",
              ["P1","P2","P13","P14","P15","P16"]),
         ]
+        if "ASM-FIXTURE-023" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-CARE-001",
+                "Continuing kin care can require practical labor or support, and remembered care can matter in later household or property preference; exact succession consequences must be negotiated rather than assumed.",
+                ["P15","P16"],
+            ))
+        if "ASM-FIXTURE-024" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-SOWING-001",
+                "Early-rains plowing and sowing can create time-sensitive labor, tool, and draft-access needs; households without direct access may need to negotiate help.",
+                ["P1","P2","P13","P14"],
+            ))
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",
                         (prop_id,text,"true",canonical_json({"model_scope":"research-derived local norm representation"})))
