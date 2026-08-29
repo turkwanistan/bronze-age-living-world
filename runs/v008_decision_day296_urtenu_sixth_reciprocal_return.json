@@ -1,0 +1,25 @@
+{
+  "decision_id": "DEC-V008-D296-URTENU-SIXTH-RECIPROCAL-RETURN",
+  "actor_id": "P7",
+  "selected_intent": "clear the sixth minimum workshop reciprocity obligation using the conservatively capped return suggestion",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-MERCH",
+      "social_target_person_id": "P3",
+      "resource": "finished_metalwork",
+      "amount": 0.15,
+      "fulfills_obligation_id": "O-56415e3397344df1"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7"
+  ],
+  "decision_basis_tags": [
+    "reciprocal_return",
+    "scaled_fixture_cap",
+    "workshop_output",
+    "supplier_relationship"
+  ],
+  "declared_uncertainty": "The 0.15 finished-metalwork return is a conservative fixture cap based on the originating support amount, not a historical price or equivalence."
+}

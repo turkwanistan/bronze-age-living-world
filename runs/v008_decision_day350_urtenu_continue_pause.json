@@ -1,0 +1,21 @@
+{
+  "decision_id": "DEC-V008-D350-URTENU-CONTINUE-PAUSE",
+  "actor_id": "P7",
+  "selected_intent": "continue the workshop pause while the supplier’s scarcity boundary remains unchanged",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Yabninu’s stock remains only 0.15 metal and I have already chosen twice to respect his scarcity-based refusal; no changed supply condition justifies repeating the request."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7"
+  ],
+  "decision_basis_tags": [
+    "supplier_boundary",
+    "persistent_memory",
+    "relationship_preservation",
+    "workshop_pause"
+  ],
+  "declared_uncertainty": "The pause remains costly to the workshop and does not establish that the supplier relationship has ended permanently."
+}

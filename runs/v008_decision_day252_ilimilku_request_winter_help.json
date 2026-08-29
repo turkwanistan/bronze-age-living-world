@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D252-ILIMILKU-WINTER-HELP-REQUEST",
+  "actor_id": "P1",
+  "selected_intent": "call in the remembered sowing favor as one bounded winter maintenance labor service",
+  "proposed_actions": [
+    {
+      "type": "request_reciprocal_labor",
+      "target_person_id": "P13",
+      "service_days": 1,
+      "reason": "The draft-team condition has declined to 0.90 during winter maintenance, and Arhalbu still owes one remembered favor from the sowing service I provided; I am asking for one bounded labor day rather than assigning the favor a fixed price."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-WINTER-001-P1",
+    "K-LOCAL-P1"
+  ],
+  "decision_basis_tags": [
+    "winter_maintenance",
+    "remembered_favor",
+    "bounded_reciprocity",
+    "household_asset"
+  ],
+  "declared_uncertainty": "The condition threshold, one-day service, and restoration amount are fixture calibration; this does not assert a historical Ugaritic labor equivalence."
+}

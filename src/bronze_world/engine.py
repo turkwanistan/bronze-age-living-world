@@ -192,6 +192,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 181
 
+    def _v008_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v008_lifeways_start_day", 241))
+        except (TypeError, ValueError):
+            return 241
+
     def _has_assumption(self, assumption_id: str) -> bool:
         return scenario_has_assumption(self.db, self.run_id, assumption_id)
 
@@ -283,6 +290,46 @@ class WorldEngine:
                     self._memory(con,o["obligor_person_id"],day,"Provided the negotiated draft-team service to the dependent field household.",
                                  event_id=eid,memory_type="agricultural_access",salience=.72,relationship_relevance=.78,goal_relevance=.62,
                                  provenance={"assumption_id":"ASM-FIXTURE-024"})
+
+        if self._has_assumption("ASM-FIXTURE-025"):
+            winter_help_due = con.execute(
+                "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_winter_reciprocal_labor' "
+                "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+                (day,),
+            ).fetchall()
+            for o in winter_help_due:
+                provenance=json.loads(o["provenance_json"])
+                household_id=o["beneficiary_household_id"] or "H-FARM"
+                row=con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='draft_team_condition'",(household_id,)).fetchone()
+                current=float(row[0]) if row else 0.0
+                requested_restore=float(provenance.get("condition_restore",0.15))
+                restored=max(0.0,min(requested_restore,1.0-current))
+                if restored>0:
+                    self._change_resource(con,household_id,"draft_team_condition",restored,assumption_id="ASM-FIXTURE-025")
+                con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?",(o["obligation_id"],))
+                helper=o["obligor_person_id"]
+                beneficiary=o["beneficiary_person_id"]
+                relationship_delta={}
+                if helper and beneficiary:
+                    relationship_delta[f"{helper}->{beneficiary}"]=self._adjust_relationship(con,helper,beneficiary,trust=.02,respect=.01,favors_owed=-1)
+                    relationship_delta[f"{beneficiary}->{helper}"]=self._adjust_relationship(con,beneficiary,helper,trust=.02,respect=.01,favors_given=-1)
+                eid=self._event(
+                    con,day,"winter_reciprocal_labor_completed",actors=[x for x in [helper,beneficiary] if x],
+                    rules=["ASM-FIXTURE-025","RULE-WINTER-RECIPROCAL-LABOR-001"],
+                    material={household_id:{"draft_team_condition":restored}} if restored else {},
+                    relationships=relationship_delta,
+                    payload={"obligation_id":o["obligation_id"],"condition_restored":restored,
+                             "notice":"bounded reciprocal labor fixture; no fixed historical exchange equivalence"},
+                    discriminator=o["obligation_id"],
+                )
+                if helper:
+                    self._memory(con,helper,day,"Completed the bounded winter maintenance help requested in return for earlier sowing-season assistance.",
+                                 event_id=eid,memory_type="reciprocal_labor",salience=.84,relationship_relevance=.9,goal_relevance=.72,
+                                 provenance={"assumption_id":"ASM-FIXTURE-025"})
+                if beneficiary:
+                    self._memory(con,beneficiary,day,"Received the agreed winter maintenance help; the earlier sowing favor is now answered.",
+                                 event_id=eid,memory_type="reciprocal_labor",salience=.82,relationship_relevance=.9,goal_relevance=.76,
+                                 provenance={"assumption_id":"ASM-FIXTURE-025"})
 
         # Resolve scheduled external trade exchanges. Silver left the household when the
         # commitment was made; imported trade goods appear only after the modeled delay.
@@ -423,6 +470,27 @@ class WorldEngine:
                     payload={"household_id": household_id, "seasonal_context": seasonal, "allocations": allocations},
                     discriminator=household_id,
                 )
+
+            if (self._has_assumption("ASM-FIXTURE-025") and day >= self._v008_start_day()
+                    and seasonal["phase"] == "wet_winter_growth"):
+                maintained=con.execute(
+                    "SELECT 1 FROM events WHERE run_id=? AND event_type IN ('winter_reciprocal_labor_completed','winter_maintenance_handled_internally') LIMIT 1",
+                    (self.run_id,),
+                ).fetchone()
+                row=con.execute("SELECT amount FROM resource_stocks WHERE household_id='H-FARM' AND resource_type='draft_team_condition'").fetchone()
+                if row and not maintained:
+                    current=float(row[0])
+                    loss=min(current,0.05)
+                    if loss>0:
+                        self._change_resource(con,"H-FARM","draft_team_condition",-loss,assumption_id="ASM-FIXTURE-025")
+                        self._event(
+                            con,day,"winter_draft_team_condition_cycle",actors=["P1"],
+                            rules=["ASM-FIXTURE-025","RULE-WINTER-RECIPROCAL-LABOR-001"],
+                            material={"H-FARM":{"draft_team_condition":-loss}},
+                            payload={"seasonal_context":seasonal,"condition_loss":loss,
+                                     "notice":"abstract first-winter maintenance pressure; not an animal-health or foddering rate"},
+                            discriminator="H-FARM",
+                        )
 
             # A port is an occupational interface every week, even when no dramatic ship
             # event happens. No cargo outcome or foreign partner is invented here.
@@ -1056,10 +1124,17 @@ class WorldEngine:
                     beneficiary=self.db.one("SELECT current_place_id,alive FROM persons WHERE person_id='P15'")
                     if actor and beneficiary and actor["alive"] and actor["available"] and beneficiary["alive"]:
                         prior=int(self.db.scalar("SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='kin_care_fulfilled' AND json_extract(payload_json,'$.care_obligation_id')=?",(self.run_id,care["obligation_id"])) or 0)
+                        seasonal_care=self._seasonal_context(day)
+                        support_kind="household_property_support_day"
+                        care_notice="Concrete care timing/task are ASM-FIXTURE-023; the continuing obligation came from negotiated marriage terms and no inheritance transfer is implied."
+                        if self._has_assumption("ASM-FIXTURE-025"):
+                            if prior >= 3 and seasonal_care["phase"] == "wet_winter_growth":
+                                support_kind="winter_household_maintenance_and_errands"
+                            care_notice="Concrete care timing/task are ASM-FIXTURE-023; later episodes may vary by season, the continuing obligation remains active, and no inheritance transfer is implied."
                         stakes={"situation_id":"SIT-017","care_obligation_id":care["obligation_id"],"beneficiary_person_id":"P15",
-                                "support_kind":"household_property_support_day","prior_fulfilled_care_episodes":prior,
-                                "seasonal_context":self._seasonal_context(day),
-                                "fixture_notice":"Concrete care timing/task are ASM-FIXTURE-023; the continuing obligation came from negotiated marriage terms and no inheritance transfer is implied."}
+                                "support_kind":support_kind,"prior_fulfilled_care_episodes":prior,
+                                "seasonal_context":seasonal_care,
+                                "fixture_notice":care_notice}
                         with self.db.transaction() as con:
                             con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                                         (sid,self.run_id,day,actor["current_place_id"],"household","continuing_kin_care_need",canonical_json(stakes),
@@ -1101,6 +1176,39 @@ class WorldEngine:
                             con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P1","draft_access_holder"))
                             self._event(con,day,"sowing_draft_access_pressure",scene_id=sid,actors=["P13","P1"],rules=["ASM-FIXTURE-024","RULE-SOWING-DRAFT-ACCESS-001"],payload=stakes,discriminator=sid)
                         created.append(self.enqueue_job(sid,"P13",["request_draft_access","wait","communicate"]))
+
+        # Winter maintenance pressure can turn the remembered sowing favor into a
+        # concrete reciprocal-labor opportunity. Exact condition/timing are fixtures.
+        if (self._has_assumption("ASM-FIXTURE-025") and day >= self._v008_start_day()
+                and seasonal_now["phase"] == "wet_winter_growth"):
+            cond=self.db.one("SELECT amount FROM resource_stocks WHERE household_id='H-FARM' AND resource_type='draft_team_condition'")
+            rel=self.db.one("SELECT favors_given FROM relationships WHERE from_person_id='P1' AND to_person_id='P13'")
+            favor_available=bool(rel and float(rel["favors_given"]) >= 1.0)
+            if cond and float(cond["amount"]) <= 0.90 + 1e-9:
+                sid=stable_id("SCENE",self.run_id,"winter_draft_maintenance_pressure","P1",day//7)
+                if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,)):
+                    p1=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P1'")
+                    p13=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P13'")
+                    if p1 and p13 and p1["alive"] and p1["available"] and p13["alive"] and p13["available"]:
+                        stakes={"situation_id":"SIT-020","requester_person_id":"P1","helper_person_id":"P13",
+                                "beneficiary_household_id":"H-FARM","draft_team_condition":float(cond["amount"]),
+                                "service_days":1,"condition_restore":0.15,"remembered_favor_available":favor_available,
+                                "seasonal_context":seasonal_now,
+                                "fixture_notice":"Winter condition threshold, service duration and restoration are ASM-FIXTURE-025 calibration; the earlier sowing favor has no fixed exchange value."}
+                        with self.db.transaction() as con:
+                            con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                        (sid,self.run_id,day,p1["current_place_id"],"household","winter_draft_maintenance_pressure",canonical_json(stakes),
+                                         canonical_json({"draft_team_condition":float(cond["amount"]),"winter_maintenance":True}),
+                                         canonical_json({"reciprocity_is_open_ended":True,"request_not_entitlement":True}),
+                                         canonical_json(["I-MEDIATION"]),"open"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P1","decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P13","potential_helper"))
+                            self._event(con,day,"winter_draft_maintenance_pressure",scene_id=sid,actors=["P1","P13"],
+                                        rules=["ASM-FIXTURE-025","RULE-WINTER-RECIPROCAL-LABOR-001"],payload=stakes,discriminator=sid)
+                        allowed=["handle_winter_maintenance_internally","wait","communicate"]
+                        if favor_available:
+                            allowed.insert(0,"request_reciprocal_labor")
+                        created.append(self.enqueue_job(sid,"P1",allowed))
 
         # Seasonal surplus becomes a cognition boundary only once enough exposed produce
         # has accumulated to make preservation materially consequential. It is separate
@@ -1342,12 +1450,19 @@ class WorldEngine:
             beneficiary_household = o["beneficiary_household_id"]
             # Current first implementation uses the craft household's actual accumulated
             # output; other occupation-specific return forms can be added when evidence
-            # and workflows require them.
+            # and workflows require them. Older accepted histories retain the legacy 0.3
+            # suggestion exactly. From ASM-FIXTURE-026 onward, a sealed smaller support
+            # amount conservatively caps the suggestion without asserting equivalence.
+            suggested_amount = 0.3
+            if self._has_assumption("ASM-FIXTURE-026"):
+                origin_amount = provenance.get("origin_amount")
+                if isinstance(origin_amount, (int, float)) and float(origin_amount) > 0:
+                    suggested_amount = min(0.3, float(origin_amount))
             finished = self.db.scalar(
                 "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='finished_metalwork'",
                 (actor_household,),
             )
-            if finished is None or float(finished) < 0.3:
+            if finished is None or float(finished) + 1e-9 < suggested_amount:
                 continue
             actor = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?", (actor_id,))
             if not actor or not actor["alive"] or not actor["available"]:
@@ -1361,10 +1476,15 @@ class WorldEngine:
                 "beneficiary_person_id": beneficiary,
                 "beneficiary_household_id": beneficiary_household,
                 "suggested_resource": "finished_metalwork",
-                "suggested_amount": 0.3,
+                "suggested_amount": suggested_amount,
                 "available_finished_metalwork": float(finished),
                 "origin_scene_id": origin_scene_id,
-                "fixture_notice": "The reciprocal obligation is socially causal; 30-day review timing and 0.3 finished-metalwork return are ASM-FIXTURE-015 calibration, not a historical price/equivalence claim.",
+                "fixture_notice": (
+                    "The reciprocal obligation is socially causal; 30-day review timing and the return suggestion are fixture calibration. "
+                    "Under ASM-FIXTURE-026 a sealed smaller support amount caps the suggestion conservatively; no historical price/equivalence is claimed."
+                    if self._has_assumption("ASM-FIXTURE-026") else
+                    "The reciprocal obligation is socially causal; 30-day review timing and 0.3 finished-metalwork return are ASM-FIXTURE-015 calibration, not a historical price/equivalence claim."
+                ),
             }
             with self.db.transaction() as con:
                 con.execute(
@@ -1821,6 +1941,34 @@ class WorldEngine:
                     errors.append(f"action_{i}:draft_holder_unavailable")
                 elif actor and target["current_place_id"] != actor["current_place_id"]:
                     errors.append(f"action_{i}:draft_holder_not_colocated")
+            elif typ == "request_reciprocal_labor":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "winter_draft_maintenance_pressure":
+                    errors.append(f"action_{i}:invalid_scene_for_reciprocal_labor_request")
+                if job["actor_person_id"] != stakes.get("requester_person_id") or action.get("target_person_id") != stakes.get("helper_person_id"):
+                    errors.append(f"action_{i}:reciprocal_labor_party_mismatch")
+                if action.get("service_days") != stakes.get("service_days"):
+                    errors.append(f"action_{i}:reciprocal_labor_duration_mismatch")
+                rel=self.db.one("SELECT favors_given FROM relationships WHERE from_person_id=? AND to_person_id=?",(job["actor_person_id"],action.get("target_person_id")))
+                if not rel or float(rel["favors_given"]) < 1.0:
+                    errors.append(f"action_{i}:no_open_favor_for_reciprocal_labor")
+            elif typ == "handle_winter_maintenance_internally":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "winter_draft_maintenance_pressure" or job["actor_person_id"] != stakes.get("requester_person_id"):
+                    errors.append(f"action_{i}:invalid_internal_winter_maintenance")
+            elif typ == "fulfill_reciprocal_labor":
+                scene_packet=packet.get("scene",{})
+                stakes=scene_packet.get("stakes",{})
+                effective=stakes.get("source_stakes",stakes) if scene_packet.get("trigger")=="informal_mediation_review" else stakes
+                source_trigger=stakes.get("source_trigger") if scene_packet.get("trigger")=="informal_mediation_review" else scene_packet.get("trigger")
+                if source_trigger != "reciprocal_labor_request":
+                    errors.append(f"action_{i}:invalid_scene_for_reciprocal_labor_fulfillment")
+                if job["actor_person_id"] != effective.get("helper_person_id") or action.get("requester_person_id") != effective.get("requester_person_id"):
+                    errors.append(f"action_{i}:reciprocal_labor_fulfillment_party_mismatch")
+                if action.get("service_days") != effective.get("service_days"):
+                    errors.append(f"action_{i}:reciprocal_labor_fulfillment_duration_mismatch")
+                if self.db.one("SELECT 1 FROM obligations WHERE status='scheduled' AND obligation_type='fixture_winter_reciprocal_labor'"):
+                    errors.append(f"action_{i}:winter_reciprocal_labor_already_scheduled")
             elif typ == "grant_draft_access":
                 scene_packet=packet.get("scene",{})
                 stakes=scene_packet.get("stakes",{})
@@ -2083,15 +2231,20 @@ class WorldEngine:
                         description = action.get("reciprocal_obligation_description") or (
                             f"{target_person} and household owe a future reciprocal return for {amount:g} {resource} supplied by {actor_id}."
                         )
+                        reciprocal_provenance={
+                            "assumption_id":"ASM-FIXTURE-013",
+                            "rule_id":"RULE-RECIPROCAL-SOCIAL-CREDIT-001",
+                            "origin_scene_id":job["scene_id"],
+                            "notice":"Open-ended reciprocal social credit; no historical price, interest, or maturity rate claimed."
+                        }
+                        if self._has_assumption("ASM-FIXTURE-026"):
+                            reciprocal_provenance["origin_resource"]=resource
+                            reciprocal_provenance["origin_amount"]=amount
+                            reciprocal_provenance["return_cap_assumption_id"]="ASM-FIXTURE-026"
                         con.execute(
                             "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
                             (reciprocal_obligation_id,target_person,target,actor_id,actor_household,"reciprocal_exchange",
-                             description,None,"active",canonical_json({
-                                 "assumption_id":"ASM-FIXTURE-013",
-                                 "rule_id":"RULE-RECIPROCAL-SOCIAL-CREDIT-001",
-                                 "origin_scene_id":job["scene_id"],
-                                 "notice":"Open-ended reciprocal social credit; no historical price, interest, or maturity rate claimed."
-                             })),
+                             description,None,"active",canonical_json(reciprocal_provenance)),
                         )
                     transfer_payload = {"action_id": aid, "fulfills_obligation_id": obligation_id}
                     if reciprocal_obligation_id:
@@ -2793,6 +2946,65 @@ class WorldEngine:
                     self._memory(con,action["beneficiary_person_id"],day,f"{actor_id} recorded a non-binding future property preference in my favor based on fulfilled care; no property has transferred.",
                                  event_id=eid,memory_type="property_preference",salience=.9,relationship_relevance=.94,goal_relevance=.9,provenance=provenance)
 
+                elif typ == "request_reciprocal_labor":
+                    helper=action["target_person_id"]
+                    request_scene=stable_id("SCENE",self.run_id,day,"reciprocal_labor_request",decision_id,idx)
+                    request_stakes={**scene_stakes,"requester_person_id":actor_id,"helper_person_id":helper,
+                                    "request_event_id":None,"request_reason":action.get("reason"),
+                                    "fixture_notice":"One bounded winter labor request under ASM-FIXTURE-025; the earlier sowing favor has no fixed exchange price or historical equivalence."}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (request_scene,self.run_id,day,scene["place_id"],"household","reciprocal_labor_request",canonical_json(request_stakes),
+                                 canonical_json({"service_days":scene_stakes["service_days"],"draft_team_condition":scene_stakes["draft_team_condition"]}),
+                                 canonical_json({"private_negotiation_first":True,"reciprocity_open_ended":True}),
+                                 canonical_json(["I-MEDIATION"]),"open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,actor_id,"requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,helper,"decision_actor"))
+                    eid=self._event(con,day,"reciprocal_labor_requested",scene_id=request_scene,decision_id=decision_id,actors=[actor_id,helper],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-025","RULE-WINTER-RECIPROCAL-LABOR-001"],
+                                    payload={"action_id":aid,"service_days":action["service_days"],"reason":action.get("reason")},discriminator=aid)
+                    request_stakes["request_event_id"]=eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?",(canonical_json(request_stakes),request_scene))
+                    self._memory(con,actor_id,day,f"Asked {helper} for one bounded winter maintenance labor service in light of the earlier sowing help.",
+                                 event_id=eid,memory_type="reciprocal_labor",salience=.84,relationship_relevance=.9,goal_relevance=.8,provenance={"assumption_id":"ASM-FIXTURE-025"})
+                    self._memory(con,helper,day,f"{actor_id} asked me for one bounded winter maintenance labor service, invoking the remembered sowing-season favor without assigning it a fixed price.",
+                                 event_id=eid,memory_type="reciprocal_labor",salience=.86,relationship_relevance=.92,goal_relevance=.8,provenance={"assumption_id":"ASM-FIXTURE-025"})
+                    followups.append((request_scene,helper,["fulfill_reciprocal_labor","refuse_proposal","seek_mediation","communicate"]))
+
+                elif typ == "handle_winter_maintenance_internally":
+                    row=con.execute("SELECT amount FROM resource_stocks WHERE household_id='H-FARM' AND resource_type='draft_team_condition'").fetchone()
+                    current=float(row[0]) if row else 0.0
+                    restored=max(0.0,min(0.10,1.0-current))
+                    if restored>0:
+                        self._change_resource(con,"H-FARM","draft_team_condition",restored,assumption_id="ASM-FIXTURE-025")
+                    eid=self._event(con,day,"winter_maintenance_handled_internally",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-025","RULE-WINTER-RECIPROCAL-LABOR-001"],
+                                    material={"H-FARM":{"draft_team_condition":restored}} if restored else {},
+                                    payload={"action_id":aid,"condition_restored":restored,"reason":action.get("reason"),
+                                             "notice":"fixture internal maintenance effort; no historical animal-care rate"},discriminator=aid)
+                    self._memory(con,actor_id,day,"Kept the winter draft-team maintenance burden inside my own household rather than calling in the remembered favor.",
+                                 event_id=eid,memory_type="winter_maintenance",salience=.7,relationship_relevance=.5,goal_relevance=.76,provenance={"assumption_id":"ASM-FIXTURE-025"})
+
+                elif typ == "fulfill_reciprocal_labor":
+                    effective=scene_stakes.get("source_stakes",scene_stakes) if scene["trigger_type"]=="informal_mediation_review" else scene_stakes
+                    requester=action["requester_person_id"]
+                    requester_household=effective.get("beneficiary_household_id","H-FARM")
+                    due=day+int(action["service_days"])
+                    oid=stable_id("O",self.run_id,"fixture_winter_reciprocal_labor",actor_id,requester,day)
+                    provenance={"assumption_id":"ASM-FIXTURE-025","rule_id":"RULE-WINTER-RECIPROCAL-LABOR-001",
+                                "request_event_id":effective.get("request_event_id"),"condition_restore":float(effective.get("condition_restore",0.15)),
+                                "notice":"bounded reciprocal labor; no fixed historical equivalence to the sowing favor"}
+                    con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                                (oid,actor_id,actor_household,requester,requester_household,"fixture_winter_reciprocal_labor",
+                                 "Provide one bounded winter draft-team care/maintenance labor service in answer to earlier sowing help.",due,"scheduled",canonical_json(provenance)))
+                    eid=self._event(con,day,"reciprocal_labor_accepted",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,requester],
+                                    knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-025","RULE-WINTER-RECIPROCAL-LABOR-001"],
+                                    payload={"action_id":aid,"obligation_id":oid,"service_due_day":due,"reason":action.get("reason"),
+                                             "notice":"acceptance schedules labor; favor balances clear only on completed service"},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Agreed to provide {requester} one bounded winter maintenance labor service in answer to the earlier sowing help.",
+                                 event_id=eid,memory_type="reciprocal_labor",salience=.86,relationship_relevance=.92,goal_relevance=.8,provenance=provenance)
+                    self._memory(con,requester,day,f"{actor_id} agreed to answer the earlier sowing favor with one bounded winter maintenance labor service due on day {due}.",
+                                 event_id=eid,memory_type="reciprocal_labor",salience=.84,relationship_relevance=.92,goal_relevance=.82,provenance=provenance)
+
                 elif typ == "request_draft_access":
                     holder=action["target_person_id"]
                     request_scene=stable_id("SCENE",self.run_id,day,"draft_access_request",decision_id,idx)
@@ -3212,6 +3424,8 @@ class WorldEngine:
                                     allowed=["transfer_resource","enter_obligation","communicate","refuse_proposal"]
                                 elif source_trigger == "draft_access_request":
                                     allowed=["grant_draft_access","enter_obligation","communicate","refuse_proposal"]
+                                elif source_trigger == "reciprocal_labor_request":
+                                    allowed=["fulfill_reciprocal_labor","enter_obligation","communicate","refuse_proposal"]
                                 elif source_trigger == "marriage_household_terms_review":
                                     allowed=["accept_marriage_household_terms","enter_obligation","communicate","refuse_proposal"]
                                 else:

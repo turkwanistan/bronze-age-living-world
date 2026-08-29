@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D274-KOTHAR-WINTER-CARE",
+  "actor_id": "P16",
+  "selected_intent": "continue honoring the care term through a winter-specific household maintenance and errands need",
+  "proposed_actions": [
+    {
+      "type": "fulfill_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "support_kind": "winter_household_maintenance_and_errands",
+      "reason": "The care obligation remains active, winter agricultural intensity is low, and this varied maintenance/errands need is a bounded way to continue supporting Bat-Rapiu without implying any property transfer."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CARE-001-P16",
+    "K-LOCAL-P16"
+  ],
+  "decision_basis_tags": [
+    "continuing_care",
+    "winter_household_work",
+    "bounded_support",
+    "remembered_commitment"
+  ],
+  "declared_uncertainty": "The concrete winter maintenance/errands task is fixture calibration; fulfilling it does not change ownership or inheritance."
+}

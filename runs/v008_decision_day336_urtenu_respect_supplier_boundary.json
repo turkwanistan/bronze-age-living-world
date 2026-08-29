@@ -1,0 +1,21 @@
+{
+  "decision_id": "DEC-V008-D336-URTENU-RESPECT-SUPPLIER-BOUNDARY",
+  "actor_id": "P7",
+  "selected_intent": "continue respecting the recent supplier refusal instead of repeating the same request",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Yabninu’s scarcity-based refusal remains recent, the relationship is still strained, and his visible raw-metal stock remains only 0.15; repeating the request now would ignore the stated boundary."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7"
+  ],
+  "decision_basis_tags": [
+    "remembered_refusal",
+    "relationship_preservation",
+    "supplier_scarcity",
+    "workshop_pause"
+  ],
+  "declared_uncertainty": "Waiting preserves the relationship but does not solve the workshop supply problem or imply that no alternative source can emerge later."
+}

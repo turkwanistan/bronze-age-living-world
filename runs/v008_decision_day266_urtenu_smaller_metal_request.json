@@ -1,0 +1,25 @@
+{
+  "decision_id": "DEC-V008-D266-URTENU-SMALLER-METAL-REQUEST",
+  "actor_id": "P7",
+  "selected_intent": "ask for only one calibrated work-cycle of metal because the known supplier stock is now very low",
+  "proposed_actions": [
+    {
+      "type": "request_resource",
+      "target_person_id": "P3",
+      "resource": "metal",
+      "amount": 0.15,
+      "reason": "The workshop is stopped at 0.03 metal and the fifth reciprocal obligation is fully repaid, but Yabninu has only 0.30 visible metal remaining; I am asking for 0.15, enough for one calibrated master-work cycle while leaving half his known stock untouched."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7",
+    "K-LOCAL-DISPUTE-001-P7"
+  ],
+  "decision_basis_tags": [
+    "supplier_conservation",
+    "repaid_reciprocity",
+    "minimum_viable_request",
+    "workshop_continuity"
+  ],
+  "declared_uncertainty": "The 0.15 quantity is fixture calibration and does not assert a historical production minimum, price, or standing supply contract."
+}

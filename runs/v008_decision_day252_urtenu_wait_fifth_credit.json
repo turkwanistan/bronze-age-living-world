@@ -1,0 +1,22 @@
+{
+  "decision_id": "DEC-V008-D252-URTENU-WAIT-FIFTH-CREDIT",
+  "actor_id": "P7",
+  "selected_intent": "keep the workshop paused rather than stack another request before clearing the fifth reduced reciprocal obligation",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "The fifth reciprocal obligation to Yabninu remains active, his visible metal stock is only 0.3, and asking again before returning value would deepen dependence and risk exhausting the known supplier."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7",
+    "K-LOCAL-DISPUTE-001-P7"
+  ],
+  "decision_basis_tags": [
+    "open_reciprocity",
+    "supplier_conservation",
+    "workshop_pause",
+    "relationship_discipline"
+  ],
+  "declared_uncertainty": "Future supply may come from a different counterparty or after repayment; this decision does not assume Yabninu is the only historical supplier."
+}

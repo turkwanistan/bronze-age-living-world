@@ -1,0 +1,27 @@
+{
+  "decision_id": "DEC-V008-D266-YABNINU-SMALLER-METAL-CREDIT",
+  "actor_id": "P3",
+  "selected_intent": "continue the proven workshop relationship at the minimum reduced amount while retaining half of the remaining metal stock",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-CRAFT",
+      "social_target_person_id": "P7",
+      "resource": "metal",
+      "amount": 0.15,
+      "create_reciprocal_obligation": true,
+      "reciprocal_obligation_description": "Urtenu and the craft household owe Yabninu's household a future reciprocal return for the sixth, minimum workshop metal replenishment."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P3",
+    "K-LOCAL-TRADE-001-P3"
+  ],
+  "decision_basis_tags": [
+    "repaid_history",
+    "minimum_supply",
+    "supplier_conservation",
+    "bounded_social_credit"
+  ],
+  "declared_uncertainty": "The 0.15 metal amount and open reciprocal obligation are fixture mechanics; repeated successful exchange does not establish a historical standing contract, price, or entitlement."
+}

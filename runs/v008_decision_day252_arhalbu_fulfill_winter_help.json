@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D252-ARHALBU-FULFILL-WINTER-HELP",
+  "actor_id": "P13",
+  "selected_intent": "answer Ilimilku's remembered sowing help with one bounded winter maintenance labor service",
+  "proposed_actions": [
+    {
+      "type": "fulfill_reciprocal_labor",
+      "requester_person_id": "P1",
+      "service_days": 1,
+      "reason": "I still owe Ilimilku one favor for the sowing-season draft service, winter agricultural intensity is lower, and one bounded maintenance day can answer that help without treating the favor as a fixed-price debt."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-WINTER-001-P13",
+    "K-LOCAL-P13"
+  ],
+  "decision_basis_tags": [
+    "remembered_favor",
+    "winter_capacity",
+    "reciprocal_labor",
+    "neighbor_cooperation"
+  ],
+  "declared_uncertainty": "The labor day and condition restoration are simulation fixtures; fulfilling this favor does not establish a historical exchange rate."
+}

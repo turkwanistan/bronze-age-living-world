@@ -1,0 +1,21 @@
+{
+  "decision_id": "DEC-V008-D294-URTENU-WAIT-SIXTH-CREDIT",
+  "actor_id": "P7",
+  "selected_intent": "continue waiting rather than stack another request before clearing the sixth obligation",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "The sixth reciprocal obligation is still active and the known supplier has only 0.15 metal left; another request would both stack obligation and consume the last visible stock."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7",
+    "K-LOCAL-DISPUTE-001-P7"
+  ],
+  "decision_basis_tags": [
+    "open_reciprocity",
+    "supplier_conservation",
+    "workshop_pause"
+  ],
+  "declared_uncertainty": "This does not assume Yabninu is the only possible future supplier."
+}

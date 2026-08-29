@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V008-D308-YABNINU-REFUSE-LAST-METAL",
+  "actor_id": "P3",
+  "selected_intent": "decline another workshop advance because the household is down to its last usable raw-metal reserve",
+  "proposed_actions": [
+    {
+      "type": "refuse_proposal",
+      "reason": "Urtenu has repaid every prior workshop obligation and I trust him, but my household now has only 0.15 raw metal left. Supplying 0.12 would leave almost none for our own uncertain needs, so I will not make another advance from this stock."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P3",
+    "K-LOCAL-TRADE-001-P3",
+    "K-LOCAL-DISPUTE-001-P3"
+  ],
+  "decision_basis_tags": [
+    "supplier_scarcity",
+    "household_continuity",
+    "trusted_counterparty",
+    "bounded_refusal"
+  ],
+  "declared_uncertainty": "The 0.15 stock is a fixture quantity; refusal reflects current simulated scarcity and does not imply a historical merchant reserve rule or permanent end to exchange."
+}

@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D304-KOTHAR-SPRING-CARE",
+  "actor_id": "P16",
+  "selected_intent": "continue the standing care obligation during spring growth despite a moderate seasonal opportunity cost",
+  "proposed_actions": [
+    {
+      "type": "fulfill_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "support_kind": "household_property_support_day",
+      "reason": "The care obligation remains active after four fulfilled episodes, spring intensity is moderate rather than peak harvest, and no competing active obligation in my packet outweighs one bounded support day."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CARE-001-P16",
+    "K-LOCAL-LABOR-001-P16"
+  ],
+  "decision_basis_tags": [
+    "continuing_care",
+    "spring_opportunity_cost",
+    "household_kin",
+    "remembered_commitment"
+  ],
+  "declared_uncertainty": "The concrete support day remains fixture calibration; fulfillment does not change property ownership or inheritance."
+}

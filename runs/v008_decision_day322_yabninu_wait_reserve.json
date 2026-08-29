@@ -1,0 +1,21 @@
+{
+  "decision_id": "DEC-V008-D322-YABNINU-WAIT-RESERVE",
+  "actor_id": "P3",
+  "selected_intent": "preserve the negotiated household silver floor rather than reopen discretionary port exposure",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Household silver remains exactly at the agreed 16.5 reserve floor, so another discretionary port commitment would violate the household strategy."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-TRADE-001-P3",
+    "K-LOCAL-P3"
+  ],
+  "decision_basis_tags": [
+    "household_reserve",
+    "capital_preservation",
+    "trade_discipline"
+  ],
+  "declared_uncertainty": "The decision concerns the fixture trade opportunity only; it does not imply that all merchant activity has ceased."
+}

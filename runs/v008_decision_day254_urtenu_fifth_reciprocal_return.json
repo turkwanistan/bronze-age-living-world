@@ -1,0 +1,25 @@
+{
+  "decision_id": "DEC-V008-D254-URTENU-FIFTH-RECIPROCAL-RETURN",
+  "actor_id": "P7",
+  "selected_intent": "clear the fifth reduced workshop reciprocity obligation from accumulated output before seeking any new metal",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-MERCH",
+      "social_target_person_id": "P3",
+      "resource": "finished_metalwork",
+      "amount": 0.3,
+      "fulfills_obligation_id": "O-9d6f5c1aebee5d98"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7"
+  ],
+  "decision_basis_tags": [
+    "reciprocal_return",
+    "workshop_output",
+    "supplier_relationship",
+    "credit_discipline"
+  ],
+  "declared_uncertainty": "The 0.3 finished-metalwork return remains fixture calibration and does not assert a historical price or equivalence to the prior metal supply."
+}

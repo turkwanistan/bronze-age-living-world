@@ -139,6 +139,9 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
             for r,amt in specialist_resources:
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
                             (h["id"],r,float(amt),"abstract_fixture_unit","ASM-FIXTURE-009"))
+            if "ASM-FIXTURE-025" in scenario.get("active_assumptions", []) and h["id"] == "H-FARM":
+                con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
+                            ("H-FARM","draft_team_condition",1.0,"abstract_fixture_unit","ASM-FIXTURE-025"))
         for role,fam in ROLE_DEFS.items():
             con.execute("INSERT OR REPLACE INTO roles VALUES (?,?,?,?,?)",(f"R-{role.upper()}",role,fam,None,"{}"))
         for p in PEOPLE:
@@ -210,6 +213,12 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "PROP-LOCAL-SOWING-001",
                 "Early-rains plowing and sowing can create time-sensitive labor, tool, and draft-access needs; households without direct access may need to negotiate help.",
                 ["P1","P2","P13","P14"],
+            ))
+        if "ASM-FIXTURE-025" in scenario.get("active_assumptions", []):
+            local_norms.append((
+                "PROP-LOCAL-WINTER-001",
+                "Winter rain, animal care, and maintenance of agricultural assets can create household labor demands; remembered favors may be answered through bounded practical help rather than fixed-price repayment.",
+                ["P1","P13"],
             ))
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",

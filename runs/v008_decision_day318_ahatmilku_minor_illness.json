@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D318-AHATMILKU-MINOR-ILLNESS",
+  "actor_id": "P2",
+  "selected_intent": "respond proportionately to another minor episode without treating a distant recurrence as evidence of worsening illness",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "brief household protective observance",
+      "ritual_goods_cost": 0.15,
+      "practical_response": "rest briefly and reduce field/textile exertion while symptoms remain minor, then resume spring work if they settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RITUAL-001-P2",
+    "K-LOCAL-LABOR-001-P2"
+  ],
+  "decision_basis_tags": [
+    "recurrent_minor_illness",
+    "proportionate_ritual",
+    "spring_labor",
+    "practical_rest"
+  ],
+  "declared_uncertainty": "This recurrence is a simulation circumstance and does not establish a diagnosis or worsening disease; the rite and 0.15 cost are fixture abstractions."
+}

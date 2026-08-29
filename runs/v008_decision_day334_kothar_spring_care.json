@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V008-D334-KOTHAR-SPRING-CARE",
+  "actor_id": "P16",
+  "selected_intent": "continue the negotiated care commitment despite moderate spring labor pressure",
+  "proposed_actions": [
+    {
+      "type": "fulfill_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "support_kind": "household_property_support_day",
+      "reason": "The continuing care term is active, I have fulfilled it consistently, and no stronger competing obligation is present despite moderate spring work pressure."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CARE-001-P16"
+  ],
+  "decision_basis_tags": [
+    "continuing_care",
+    "family_loyalty",
+    "spring_labor_pressure",
+    "consistent_support"
+  ],
+  "declared_uncertainty": "The timing and concrete support task are fixture calibration; fulfilling this episode does not create or transfer property rights."
+}

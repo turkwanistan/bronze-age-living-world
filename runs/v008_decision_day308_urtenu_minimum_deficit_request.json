@@ -1,0 +1,25 @@
+{
+  "decision_id": "DEC-V008-D308-URTENU-MINIMUM-DEFICIT-REQUEST",
+  "actor_id": "P7",
+  "selected_intent": "ask only for the exact fixture deficit needed to reach one master-work cycle while recognizing the supplier is nearly exhausted",
+  "proposed_actions": [
+    {
+      "type": "request_resource",
+      "target_person_id": "P3",
+      "resource": "metal",
+      "amount": 0.12,
+      "reason": "The workshop has 0.03 metal and one calibrated master-work cycle needs 0.15; all six prior reciprocal obligations are fulfilled, so I am asking only for the 0.12 deficit rather than the supplier's full remaining 0.15."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7",
+    "K-LOCAL-DISPUTE-001-P7"
+  ],
+  "decision_basis_tags": [
+    "minimum_deficit",
+    "repaid_reciprocity",
+    "supplier_scarcity",
+    "workshop_continuity"
+  ],
+  "declared_uncertainty": "The 0.12 request is fixture arithmetic, not a historical workshop minimum, price, or entitlement to Yabninu's remaining stock."
+}

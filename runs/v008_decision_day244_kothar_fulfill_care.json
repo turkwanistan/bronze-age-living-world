@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D244-KOTHAR-FULFILL-CARE",
+  "actor_id": "P16",
+  "selected_intent": "continue honoring the negotiated care obligation during the lower-intensity winter phase",
+  "proposed_actions": [
+    {
+      "type": "fulfill_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "support_kind": "household_property_support_day",
+      "reason": "The care term remains active, I have fulfilled it twice already, and winter agricultural intensity is lower with no competing active obligation in this packet."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CARE-001-P16",
+    "K-LOCAL-P16"
+  ],
+  "decision_basis_tags": [
+    "continuing_care",
+    "winter_capacity",
+    "household_kin",
+    "remembered_commitment"
+  ],
+  "declared_uncertainty": "The support-day timing/task is fixture calibration; fulfilling it does not transfer property or settle inheritance."
+}

@@ -1,0 +1,21 @@
+{
+  "decision_id": "DEC-V008-D350-YABNINU-WAIT-RESERVE",
+  "actor_id": "P3",
+  "selected_intent": "continue protecting the household silver reserve rather than commit discretionary port capital",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Household silver remains exactly at the agreed 16.5 reserve floor; the port opportunity does not override that standing household commitment."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-TRADE-001-P3",
+    "K-LOCAL-P3"
+  ],
+  "decision_basis_tags": [
+    "household_reserve",
+    "trade_discipline",
+    "capital_preservation"
+  ],
+  "declared_uncertainty": "Waiting on this fixture opportunity does not imply cessation of all merchant or brokerage activity."
+}

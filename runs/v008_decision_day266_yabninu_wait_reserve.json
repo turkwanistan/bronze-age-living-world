@@ -1,0 +1,22 @@
+{
+  "decision_id": "DEC-V008-D266-YABNINU-WAIT-RESERVE",
+  "actor_id": "P3",
+  "selected_intent": "continue protecting the household silver reserve rather than reopen discretionary port exposure",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Current silver remains exactly at the 16.5 household reserve floor agreed with Pidduya, so another discretionary port commitment would violate that household strategy."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-TRADE-001-P3",
+    "K-LOCAL-P3"
+  ],
+  "decision_basis_tags": [
+    "household_reserve",
+    "trade_discipline",
+    "credit",
+    "winter"
+  ],
+  "declared_uncertainty": "Future trade may resume if household capital changes; this only addresses the current packet."
+}

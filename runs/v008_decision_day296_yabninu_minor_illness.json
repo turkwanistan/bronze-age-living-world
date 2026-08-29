@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V008-D296-YABNINU-MINOR-ILLNESS",
+  "actor_id": "P3",
+  "selected_intent": "use a modest household protective observance and brief practical rest while keeping the response proportionate to minor uncertainty",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household protective observance",
+      "ritual_goods_cost": 0.2,
+      "practical_response": "rest briefly, reduce unnecessary travel and bargaining exertion, and resume ordinary work if the minor symptoms settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RITUAL-001-P3",
+    "K-LOCAL-P3"
+  ],
+  "decision_basis_tags": [
+    "minor_illness",
+    "moderate_ritual_commitment",
+    "practical_rest",
+    "household_continuity"
+  ],
+  "declared_uncertainty": "The exact rite, cost, diagnosis, and recovery are simulation abstractions; no specific Ugaritic treatment is asserted."
+}

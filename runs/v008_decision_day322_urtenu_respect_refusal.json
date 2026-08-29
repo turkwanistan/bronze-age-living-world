@@ -1,0 +1,21 @@
+{
+  "decision_id": "DEC-V008-D322-URTENU-RESPECT-REFUSAL",
+  "actor_id": "P7",
+  "selected_intent": "respect Yabninu’s recent scarcity-based refusal and pause rather than immediately re-requesting his last visible metal",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Yabninu refused the day-308 request because his remaining raw-metal stock was too low; I will respect that boundary and pause rather than immediately repeat the request."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-P7"
+  ],
+  "decision_basis_tags": [
+    "recent_refusal",
+    "supplier_scarcity",
+    "relationship_preservation",
+    "workshop_pause"
+  ],
+  "declared_uncertainty": "The workshop remains supply-constrained; waiting does not assume when or whether another source will become available."
+}

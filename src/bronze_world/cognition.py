@@ -6,7 +6,7 @@ from typing import Any
 
 from .db import WorldDB, canonical_json
 from .lifeways import calendar_context
-from .provisioning import effective_household_provisioning
+from .provisioning import effective_household_provisioning, scenario_config
 
 
 def _json(value: str) -> Any:
@@ -28,6 +28,19 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
     rels = [dict(r) for r in db.all("SELECT * FROM relationships WHERE from_person_id=? ORDER BY to_person_id", (actor["person_id"],))]
     knowledge = [dict(r) for r in db.all("SELECT k.*, p.canonical_text FROM knowledge k JOIN propositions p USING(proposition_id) WHERE k.person_id=? AND k.learned_day<=? ORDER BY k.learned_day DESC, k.knowledge_id", (actor["person_id"], scene["day"]))]
     memories = [dict(r) for r in db.all("SELECT * FROM memories WHERE person_id=? ORDER BY salience DESC, created_day DESC LIMIT 12", (actor["person_id"],))]
+    # From v008 onward, recent refusal/decision memory must not disappear behind a long
+    # backlog of older high-salience events once a relationship has an active conflict.
+    # Older accepted scenarios keep their original packet serialization exactly.
+    packet_cfg = scenario_config(db, job["run_id"])
+    v008_packet_start = int(packet_cfg.get("v008_lifeways_start_day", 10**9))
+    if int(scene["day"]) >= v008_packet_start and any(int(r.get("conflicts", 0)) > 0 for r in rels):
+        recent_decisions = [dict(r) for r in db.all(
+            "SELECT * FROM memories WHERE person_id=? AND memory_type='decision' AND created_day>=? "
+            "ORDER BY created_day DESC,salience DESC LIMIT 4",
+            (actor["person_id"], max(0, int(scene["day"]) - 30)),
+        )]
+        seen={m["memory_id"] for m in memories}
+        memories.extend(m for m in recent_decisions if m["memory_id"] not in seen)
     institution_ids = _json(scene["institution_ids_json"])
     institutions = [dict(db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))) for iid in institution_ids if db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))]
     obligations = [dict(r) for r in db.all("SELECT * FROM obligations WHERE status IN ('active','scheduled','granted') AND (obligor_person_id=? OR beneficiary_person_id=? OR obligor_household_id=? OR beneficiary_household_id=?) ORDER BY COALESCE(due_day,999999),obligation_id", (actor["person_id"],actor["person_id"],household["household_id"],household["household_id"]))]

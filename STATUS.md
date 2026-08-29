@@ -1,119 +1,121 @@
 # STATUS
 
-**Checkpoint:** accepted permanent OptiPlex implementation; strict day-240 Ugarit v007 care/property/sowing gate accepted.
+**Checkpoint:** accepted permanent OptiPlex implementation; strict day-360 Ugarit v008 full ordinary-year gate accepted.
 
 ## Authority
 
 - `bronze-age-simulation-encyclopedia.md` remains the primary supplied historical/research foundation; SHA-256 `a57ac7e2b1d1b89e8a041d982f0a3b3c59d175a1792df051958e81206997f937`.
-- `plan.md` remains the revised implementation plan; SHA-256 `f4bf0d497c7beceec5b9bdb1bf1425e5b890d377e9dc3c1fbc54a2189c36a54d`.
+- `plan.md` remains the revised research-driven implementation plan; SHA-256 `f4bf0d497c7beceec5b9bdb1bf1425e5b890d377e9dc3c1fbc54a2189c36a54d`.
 - Repository state, evidence mappings, tests, canonical SQLite, and acceptance manifests govern implementation details beneath those authorities.
 
 ## Accepted strict runtime
 
-Current canonical host-local DB: `state/ugarit_living_v007.sqlite`. v002-v006 remain prior accepted histories and must not be mutated.
+Current canonical host-local DB: `state/ugarit_living_v008.sqlite`. v002-v007 remain prior accepted histories and must not be mutated.
 
 - run_id: `RUN-3dda7920595c1748`
 - seed: `1701`
-- scenario version: `0.5.0`
+- scenario version: `0.6.0`
 - schema version: **3**
-- accepted day: **240**
-- state hash: `7cd79256a5affcff0b65b8c98f22be5078e46ab0bd2b3e0ce014e778f4363f86`
-- events: **3,412**
-- cognition: **80 accepted / 0 rejected / 0 pending**
+- accepted day: **360**
+- state hash: `66afa78360be1ba12b67639e844aee71079480d1df562df45f450e514796f6ce`
+- events: **5,073**
+- cognition: **106 accepted / 0 rejected / 0 pending**
 - open scenes: **0**
-- full tests: **53/53 passing**
-- recorded-decision replay to day 240: **exact hash match**, 80 stored decisions, **0 new cognition calls**
-- message temporal/containment violations: **0**
+- full tests: **58/58 passing**
+- recorded-decision replay to day 360: **exact hash match**, 106 stored decisions, **0 new cognition calls**
+- message delivery-before-arrival violations: **0**
+- knowledge-before-delivery violations: **0**
 - resource-shortfall scenes/events: **0**
-- trigger types observed: **30**
+- negative resource stocks: **0**
+- overdue scheduled obligations: **0**
+- global composition-neutral provisioning: **5.08/day**, exactly equal to the configured neutral baseline
 
-Acceptance evidence: `runs/ACCEPTED_DAY240_V007_CARE_SOWING.md`.
+Acceptance evidence is summarized in `runs/ACCEPTED_DAY360_V008_FULL_YEAR.md`.
 
-## v007 additions
+## Full ordinary-year gate
 
-### Replay and schema compatibility
+v008 is the first accepted run to traverse a complete modeled 360-day year and return to the starting seasonal phase:
 
-Recorded replay now initializes from the source database's sealed scenario configuration rather than whatever scenario happens to be newest in the repository. Canonical behavior follows `runs.schema_version`; physical SQLite migrations may be newer without silently changing an accepted run's canonical hash surface or packet serialization.
+- day 0: cereal harvest/threshing, intensity 1.00;
+- day 60: dry-summer storage/vines, 0.68;
+- day 120: grape/olive/field preparation, 0.88;
+- day 180: early rains/sowing, 0.98;
+- day 240: wet-winter growth, 0.55;
+- day 300: spring growth/weeding, 0.80;
+- day 360: cereal harvest/threshing, 1.00.
 
-Regression coverage proves the accepted v006 schema-2 day-180 history still rebuilds exactly under current v007 code with its original hash `d8f87ff19699e22b4f2ad00da5139c08a0a1bed9356a0661105b6d9807d8fdfb`.
+Routine deterministic life still dominates the record: 2,880 consumption events, 816 occupation work cycles, 408 household labor allocations, 408 neutral weekly receipts, 96 routine household rituals, and 51 port/market cycles. Consequential cognition remains sparse at 106 accepted decisions across 32 trigger types.
 
-### Composition-neutral household provisioning
+## v008 additions and observed consequences
 
-`ASM-FIXTURE-022` makes neutral routine provisioning follow current household composition without introducing historical ration claims. Each living current member carries the per-person share implied by their day-0 fixture household. Daily neutral consumption and weekly neutral receipt move together.
+### Winter draft-team maintenance and reciprocal labor
 
-After Šapšu's day-150 move:
+`ASM-FIXTURE-025` extends the already-explicit H-FARM draft-team fixture into one bounded wet-winter maintenance episode. Two weekly winter condition cycles reduce abstract condition from 1.00 to 0.90. Ilimilku can either absorb the maintenance internally or ask Arhalbu to answer the remembered sowing favor through one practical labor day.
 
-- H-RITUAL effective daily need/receipt: **0.25 / 1.75 weekly**;
-- H-WIDOW effective daily need/receipt: **0.73 / 5.11 weekly**;
-- global effective daily neutral need remains exactly **5.08**, equal to the original total;
-- no artificial household shortfall appears.
+Strict history chooses the reciprocal path:
 
-### Active kin care and property preference
+1. Ilimilku remembers the day-183 draft help and P13's outstanding social favor;
+2. on day 252 he asks Arhalbu for one winter maintenance labor service;
+3. Arhalbu independently accepts from his sealed packet;
+4. the service completes on day 253, restoring condition to 1.00;
+5. both P1↔P13 favor balances return to zero only after completion;
+6. trust/respect rise modestly in both directions;
+7. the resolved winter episode stops further automatic condition degradation for the remainder of that modeled winter.
 
-The accepted P16→P15 continuing-care term now generates concrete support episodes under `ASM-FIXTURE-023`.
+Exact condition values, cadence, service duration, and household pairing are engineering fixtures, not historical animal-care rates or exchange values.
 
-Strict history:
+### Workshop social credit adapts to shrinking supply
 
-- day 184: Kothar fulfills the first bounded household/property support episode;
-- day 214: Kothar fulfills the second;
-- Bat-Rapiu then receives her own sealed `property_preference_review` packet;
-- she records canonical preference `PREF-96dc12714e107631`, favoring P16 under `care_informed_priority` / `household_property_if_later_negotiated`.
+The P7↔P3 workshop relationship reaches six fully repaid reciprocal metal cycles. v008 fixes two long-horizon problems:
 
-The preference is deliberately **non-binding**. No property transfers, no inheritance executes, and the original continuing-care obligation remains active. This is living household strategy informed by remembered care, not a claimed Ugaritic inheritance rule.
+- `ASM-FIXTURE-026` seals the originating support amount on new v008 reciprocal obligations and caps a later finished-metalwork return suggestion at the smaller originating amount. A 0.15 metal advance therefore suggests at most 0.15 finished metalwork rather than the legacy 0.30 fixture amount.
+- Urtenu adapts request size as Yabninu's raw metal stock shrinks: 0.6 → 0.3 → 0.15 → a requested 0.12 deficit.
 
-### Early-rains sowing and draft access
+On day 308, Yabninu naturally refuses the 0.12 request because only 0.15 raw metal remains and there is no standing obligation to continue financing the workshop. This is the first strict naturally arising workshop/supplier refusal after six completed cooperative credit cycles. It produces modest bilateral relationship strain (`conflicts=1`) without destroying the exchange relationship.
 
-`ASM-FIXTURE-024` makes the early-rains/sowing bottleneck materially and socially causal while keeping all quantities explicit fixtures.
+The refusal remains causally visible: Urtenu's later day-322/336/350 packets retain the recent refusal/decision history and he repeatedly pauses rather than immediately re-requesting unchanged scarce stock. This packet-memory policy is an engineering containment rule, not a historical behavioral claim.
 
-Strict history:
+At day 360 P3↔P7 have no open reciprocal obligation or favor balance. Yabninu retains 0.15 raw metal; Urtenu remains supply-constrained at 0.03 metal rather than obtaining infinite fixture credit.
 
-- day 182: H-DEPEND has only 0.05 modeled sowing progress and lacks direct fixture draft access;
-- Arhalbu asks Ilimilku for one bounded service;
-- Ilimilku grants it after seeing the real household opportunity cost;
-- day 183 service completion gives H-DEPEND **+0.10 sowing progress** and costs H-FARM **−0.05 sowing progress**;
-- P13→P1 records one favor owed and trust/respect improve;
-- by day 240 H-DEPEND has 0.55 modeled sowing progress and H-FARM 1.75.
+### Care / property persistence
 
-A refusal→informal mediation→review path for the same draft request is regression-tested but was not forced into strict history.
+Kothar fulfills six concrete continuing-care episodes for Bat-Rapiu over the accepted year. The task varies in winter (`winter_household_maintenance_and_errands`) rather than repeating one identical support task forever. Bat-Rapiu's day-214 `care_informed_priority` property preference remains active and non-binding. No ownership, inheritance, or resource transfer occurs, and the continuing-care obligation remains active.
 
-### Seasonal institutional behavior
+### Earlier systems remain causal
 
-At day 210 the agricultural intensity is **0.98**. Arhalbu has recently relied on borrowed draft capacity and chooses to move his palace labor obligation to day 240 rather than abandon the narrow sowing window. On day 240 the modeled phase becomes `wet_winter_growth`, intensity **0.55**, and the palace service completes deterministically. No palace-labor obligation remains open.
+- Pidduya's 16.5-silver household reserve remains active and repeatedly prevents Yabninu from committing new discretionary port capital.
+- The P16/P10 marriage remains canonical; Šapšu stays resident in H-WIDOW while retaining ritual/healing roles.
+- H-FARM/H-DEPEND seasonal surplus and stored goods remain separate from staple grain.
+- Arhalbu's sowing draft-access favor is fully reciprocated in winter rather than becoming a priced debt.
+- Palace labor continues to reschedule only across high-intensity agricultural bottlenecks and complete when conditions permit.
+- Information messages still obey delayed delivery and character knowledge containment.
 
-### Persistent trade/craft constraints
+## Evidence / tests added for v008
 
-- Pidduya's 16.5-silver household reserve remains binding through repeated day-182/day-210/day-238 port opportunities; Yabninu does not violate it.
-- Urtenu/Yabninu complete the **fourth** full metal social-credit cycle by day 212.
-- On day 224 Urtenu sees Yabninu's visible metal has fallen to 0.6 and reduces his next request from 0.6 to **0.3**, rather than asking to exhaust the supplier.
-- Yabninu grants the reduced fifth credit while retaining 0.3 metal.
-- The fifth reciprocal obligation is intentionally still active at the day-240 checkpoint; Urtenu has already chosen to wait rather than stack another request.
-
-## Behavioral / ordinary-life gate
-
-The strict history now contains **80 inspected accepted cognition decisions** across **30 trigger types**. Deterministic routine life remains dominant:
-
-- 544 occupation work cycles;
-- 272 household labor allocations;
-- 64 routine household ritual observances;
-- 34 port/market cycles;
-- no false shortfalls;
-- no rejected/pending cognition;
-- no knowledge learned before message arrival.
+- `CLM-GEN-011` — winter weather/animal care/agricultural-asset maintenance can create household labor demands, without supplying a Ugaritic cadence or condition rate;
+- `ASM-FIXTURE-025` — bounded draft-team winter-maintenance/favor fixture;
+- `ASM-FIXTURE-026` — conservative reciprocal-return cap for smaller originating support;
+- `MAP-029` — winter reciprocal labor;
+- `MAP-030` — reciprocal-return cap;
+- `MAP-031` — recent conflict/refusal memory retention in sealed packets;
+- regression coverage in `tests/test_v008_winter_reciprocity.py`;
+- total suite: **58 tests**.
 
 ## Current weaknesses / not yet claimed
 
-- `property_preferences` are preferences only; no generalized property-use negotiation, succession execution, testament, inheritance share, death-triggered transfer, or legal adjudication exists yet.
-- Continuing care currently uses one bounded fixture support kind and 30-day cadence; more varied care needs require additional evidence/engineering work.
-- Sowing progress and draft-team access are engineering abstractions, not crop yield, animal ownership, plowing-rate, land-tenure, or Ugaritic livestock claims.
-- The P13→P1 draft favor is remembered but does not yet have a reciprocal-return situation.
-- Livestock lifecycle, weather variability, tool wear/repair, seed stocks, land parcels, and crop-specific production are not yet modeled.
-- No birth, death, divorce, widowhood transition, migration, or generalized household fission/formation system yet.
-- No full 360-day ordinary-year acceptance gate yet.
-- Broader multilingual contracting, damaged cargo, interpreter constraints, and network alternatives remain future work.
-- Collapse/geopolitics remains intentionally deferred until ordinary society is stable for a full modeled year.
+- neutral staple provisioning is still an engineering stability substrate rather than a crop-yield economy;
+- agriculture does not yet model crop-specific yields, seed stocks, quantified land tenure, broad tool inventories, weather distributions, herd demographics, births/deaths, fodder balances, or disease;
+- only one draft-team maintenance episode is modeled; this is not a general livestock simulator;
+- the workshop now has a genuine supply bottleneck but only one known metal supplier in the strict packet; recycling, alternate suppliers, substitute materials, and broader market routes are not yet implemented;
+- Bat-Rapiu's property preference remains non-binding; there is no succession procedure, inheritance transfer, death trigger, or universal Ugaritic inheritance rule;
+- no second generated marriage/household-formation transition, birth, death, widowhood transition, migration, or divorce yet;
+- language/interpreter constraints and alternate foreign trade routes remain shallow;
+- runtime illness frequency remains an explicit unhistorical fixture used to exercise response logic;
+- completing one ordinary year demonstrates stability for this seed and decision history, not historical prevalence or statistical validation across populations/seeds;
+- collapse/geopolitics remains intentionally out of scope until richer ordinary networks and shocks are ready.
 
 ## Guardrails
 
-All fixture quantities/cadences remain explicit `ASM-FIXTURE-*` abstractions and must not be presented as historical rates/events. Character cognition uses only sealed packet information available at that moment. Historical uncertainty, epistemic uncertainty, and runtime randomness remain distinct. Culture constrains institutions, roles, obligations, and affordances; it does not generate civilization-wide personality stereotypes.
+All fixture quantities/cadences remain explicit `ASM-FIXTURE-*` abstractions and must not be presented as historical rates/events. Character cognition may use only sealed packet information available at that moment. Historical uncertainty, epistemic uncertainty, runtime randomness, and engineering calibration remain distinct. Culture constrains institutions, roles, norms, obligations, and affordances; it does not create civilization-wide personality stereotypes.
 
 **The world is structured. The people are not scripted.**

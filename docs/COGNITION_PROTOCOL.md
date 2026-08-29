@@ -31,6 +31,7 @@ The simulation engine decides **when** cognition is useful. ChatGPT never receiv
 - active non-binding property preferences when the run schema supports them;
 - admissible knowledge/belief/rumor IDs only;
 - relevant memories;
+- from the v008 packet-policy boundary onward, recent refusal/decision memories are retained when an active relationship conflict exists so current strain cannot be hidden by older high-salience history;
 - active obligations and debts touching the actor or household;
 - available institutions and constraints;
 - active stakes/goals;
@@ -77,6 +78,8 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `fulfill_kin_care` / `defer_kin_care` — resolve a concrete episode under an already-active continuing-care term without automatically ending that term
 - `record_property_preference` — record a non-binding living property preference after supported care history; never transfers ownership by itself
 - `request_draft_access` / `grant_draft_access` — negotiate a bounded sowing-season service whose delayed completion transfers modeled field capacity and records social obligation
+- `request_reciprocal_labor` / `fulfill_reciprocal_labor` — call in and answer one bounded practical labor favor; the social favor clears only when the scheduled service actually completes
+- `handle_winter_maintenance_internally` — resolve the current fixture winter-maintenance episode without consuming an outstanding social favor
 - `seek_mediation`
 - `perform_ritual`
 - `accept_proposal`
