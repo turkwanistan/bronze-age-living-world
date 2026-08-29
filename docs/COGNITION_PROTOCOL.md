@@ -77,6 +77,8 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `preserve_seasonal_surplus` — convert bounded exposed seasonal produce into stored seasonal goods under explicit fixture calibration
 - `fulfill_kin_care` / `defer_kin_care` — resolve a concrete episode under an already-active continuing-care term without automatically ending that term
 - `record_property_preference` — record a non-binding living property preference after supported care history; never transfers ownership by itself
+- `propose_household_property_reserve` / `accept_household_property_reserve` / `counter_household_property_reserve` / `accept_household_property_counter` — negotiate current household property-use earmarking without changing ownership or inheritance
+- `accept_property_stewardship` / `decline_property_stewardship` — separate individual consent before a named steward can assume responsibility for an earmarked household maintenance reserve
 - `request_draft_access` / `grant_draft_access` — negotiate a bounded sowing-season service whose delayed completion transfers modeled field capacity and records social obligation
 - `request_reciprocal_labor` / `fulfill_reciprocal_labor` — call in and answer one bounded practical labor favor; the social favor clears only when the scheduled service actually completes
 - `handle_winter_maintenance_internally` — resolve the current fixture winter-maintenance episode without consuming an outstanding social favor

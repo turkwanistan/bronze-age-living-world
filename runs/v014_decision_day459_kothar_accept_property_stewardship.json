@@ -1,0 +1,15 @@
+{
+  "decision_id":"DEC-V014-D459-KOTHAR-ACCEPT-PROPERTY-STEWARDSHIP",
+  "actor_id":"P16",
+  "selected_intent":"accept bounded stewardship of the jointly approved maintenance reserve without treating Bat-Rapiu's preference or the reserve as ownership",
+  "proposed_actions":[{
+    "type":"accept_property_stewardship",
+    "reserve_amount":0.40,
+    "joint_approval_required":true,
+    "purpose":"household_property_maintenance",
+    "reason":"I have repeatedly supported Bat-Rapiu and I am willing to take responsibility for a bounded maintenance reserve. The reserve remains household property and Šapšu's joint approval condition means stewardship is responsibility, not sole ownership."
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-PROPERTY-USE-001-P16","K-LOCAL-CARE-001-P16","K-LOCAL-DISPUTE-001-P16"],
+  "decision_basis_tags":["stewardship","care_history","household_standing","no_ownership_transfer"],
+  "declared_uncertainty":"Stewardship, reserve amount and joint approval are ASM-FIXTURE-035 mechanics; acceptance does not establish a historical Ugaritic office, ownership right, or inheritance outcome."
+}

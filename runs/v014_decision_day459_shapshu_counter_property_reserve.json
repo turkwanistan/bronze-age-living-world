@@ -1,0 +1,16 @@
+{
+  "decision_id":"DEC-V014-D459-SHAPSHU-COUNTER-PROPERTY-RESERVE",
+  "actor_id":"P10",
+  "selected_intent":"support a maintenance reserve but reduce the amount and require shared approval so current household liquidity is not subordinated to a non-binding preference",
+  "proposed_actions":[{
+    "type":"counter_household_property_reserve",
+    "steward_person_id":"P16",
+    "reserve_amount":0.40,
+    "purpose":"household_property_maintenance",
+    "joint_approval_required":true,
+    "reason":"I support setting something aside for household maintenance and I do not object to Kothar being asked to steward it, but 0.80 would lock away a quarter of our liquid silver while ritual and care resources are already limited. Reserve 0.40 and require joint approval for its use."
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-PROPERTY-USE-001-P10","K-LOCAL-DISPUTE-001-P10","K-LOCAL-RITUAL-001-P10"],
+  "decision_basis_tags":["household_liquidity","property_maintenance","adult_household_voice","joint_approval"],
+  "declared_uncertainty":"The 0.40 counter and joint-approval structure are ASM-FIXTURE-035 calibration, not a historical Ugaritic co-ownership or veto rule."
+}

@@ -1,0 +1,15 @@
+{
+  "decision_id":"DEC-V014-D459-BAT-RAPIU-ACCEPT-PROPERTY-COUNTER",
+  "actor_id":"P15",
+  "selected_intent":"accept the smaller jointly approved maintenance reserve because it still protects household property without converting my preference into unilateral authority",
+  "proposed_actions":[{
+    "type":"accept_household_property_counter",
+    "steward_person_id":"P16",
+    "reserve_amount":0.40,
+    "joint_approval_required":true,
+    "reason":"A 0.40 reserve still protects maintenance capacity, while Šapšu's joint-approval condition recognizes that she is an adult member of this household. Kothar must still decide whether he accepts stewardship."
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-PROPERTY-USE-001-P15","K-LOCAL-DISPUTE-001-P15","K-LOCAL-CARE-001-P15"],
+  "decision_basis_tags":["private_compromise","property_preservation","adult_household_review","steward_consent_pending"],
+  "declared_uncertainty":"This compromise is a simulation household-use agreement, not a historical Ugaritic property, inheritance, or co-approval rule."
+}

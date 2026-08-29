@@ -256,6 +256,12 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "Metalworking depends on usable tools, molds and workshop equipment as well as metal and fuel; damaged equipment can require repair before production resumes.",
                 ["P7","P8"],
             ))
+        if "ASM-FIXTURE-035" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-PROPERTY-USE-001",
+                "Current household property use, household decision authority, residence, and later inheritance are distinct; adults may negotiate present resource use without transferring ownership or deciding succession.",
+                ["P10","P15","P16"],
+            ))
         if "ASM-FIXTURE-028" in active_assumptions:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
                 "PROP-METAL-ALT-001",

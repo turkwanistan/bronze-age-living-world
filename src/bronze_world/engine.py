@@ -227,6 +227,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 444
 
+    def _v014_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v014_lifeways_start_day", 459))
+        except (TypeError, ValueError):
+            return 459
+
     def _v008_start_day(self) -> int:
         cfg = scenario_config(self.db, self.run_id)
         try:
@@ -1409,6 +1416,39 @@ class WorldEngine:
                                 rules=["ASM-FIXTURE-021","RULE-SEASONAL-SURPLUS-STORAGE-001"],payload=stakes,discriminator=sid)
                 created.append(self.enqueue_job(sid,actor["person_id"],["preserve_seasonal_surplus","wait","communicate"]))
 
+        # v014: Bat-Rapiu's care-informed property preference can become a present-use
+        # household negotiation without becoming inheritance or ownership transfer.
+        # Adult co-resident P10 reviews the amount/approval structure, and P16 must
+        # separately consent before any liquid silver is earmarked for maintenance.
+        if self._has_assumption("ASM-FIXTURE-035") and day >= self._v014_start_day():
+            pref=self.db.one(
+                "SELECT * FROM property_preferences WHERE run_id=? AND household_id='H-WIDOW' AND holder_person_id='P15' "
+                "AND beneficiary_person_id='P16' AND status='active' ORDER BY start_day LIMIT 1",(self.run_id,))
+            reserve=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-WIDOW' AND resource_type='property_maintenance_reserve'")
+            existing=self.db.one("SELECT 1 FROM obligations WHERE obligation_type='household_property_stewardship' AND status='active' LIMIT 1")
+            p10_member=self.db.one("SELECT 1 FROM household_memberships WHERE household_id='H-WIDOW' AND person_id='P10' AND until_day IS NULL")
+            silver=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-WIDOW' AND resource_type='silver'")
+            sid=stable_id("SCENE",self.run_id,"household_property_reserve_proposal","H-WIDOW")
+            if (pref and p10_member and not existing and float(reserve or 0)<=1e-9 and silver is not None and float(silver)>=0.80
+                    and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,))):
+                actors={pid:self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?",(pid,)) for pid in ("P10","P15","P16")}
+                if all(x and x["alive"] and x["available"] for x in actors.values()) and len({x["current_place_id"] for x in actors.values()})==1:
+                    stakes={"situation_id":"SIT-032","household_id":"H-WIDOW","holder_person_id":"P15","reviewer_person_id":"P10",
+                            "proposed_steward_person_id":"P16","active_property_preference_id":pref["preference_id"],
+                            "current_silver":float(silver),"proposed_reserve_amount":0.80,"purpose":"household_property_maintenance",
+                            "joint_approval_required":False,
+                            "fixture_notice":"Present property use can be negotiated separately from ownership/inheritance. People, 0.80 proposal and approval structure are ASM-FIXTURE-035 calibration; the existing preference remains non-binding."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (sid,self.run_id,day,actors["P15"]["current_place_id"],"household","household_property_reserve_proposal",canonical_json(stakes),
+                             canonical_json({"liquid_silver":float(silver),"ownership_transfer":False,"inheritance_decided":False}),
+                             canonical_json({"private_negotiation_first":True,"steward_consent_required":True}),canonical_json(["I-MEDIATION"]),"open"))
+                        for pid,role in (("P15","decision_actor"),("P10","adult_household_reviewer"),("P16","proposed_steward")):
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,pid,role))
+                        self._event(con,day,"household_property_use_negotiation_opened",scene_id=sid,actors=["P15","P10","P16"],
+                            rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],payload=stakes,discriminator=sid)
+                    created.append(self.enqueue_job(sid,"P15",["propose_household_property_reserve","wait","communicate"]))
+
         # v013: one bounded local dry-summer moisture/rain exposure stresses only
         # exposed seasonal produce. Each household independently chooses whether to
         # commit one modeled labor day to protect/move the exposed stock or accept
@@ -2451,6 +2491,49 @@ class WorldEngine:
                     errors.append(f"action_{i}:weather_storage_household_mismatch")
                 if typ == "protect_exposed_stores" and action.get("labor_days") != stakes.get("protection_labor_days"):
                     errors.append(f"action_{i}:weather_storage_labor_mismatch")
+            elif typ == "propose_household_property_reserve":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "household_property_reserve_proposal" or job["actor_person_id"] != stakes.get("holder_person_id"):
+                    errors.append(f"action_{i}:invalid_property_reserve_proposal")
+                if action.get("reviewer_person_id") != stakes.get("reviewer_person_id") or action.get("steward_person_id") != stakes.get("proposed_steward_person_id"):
+                    errors.append(f"action_{i}:property_reserve_parties_mismatch")
+                if action.get("purpose") != stakes.get("purpose") or abs(float(action.get("reserve_amount",0))-float(stakes.get("proposed_reserve_amount",0)))>1e-9:
+                    errors.append(f"action_{i}:property_reserve_terms_mismatch")
+            elif typ in {"accept_household_property_reserve","counter_household_property_reserve"}:
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "household_property_reserve_review" or job["actor_person_id"] != stakes.get("reviewer_person_id"):
+                    errors.append(f"action_{i}:invalid_property_reserve_review")
+                amt=action.get("reserve_amount")
+                if not isinstance(amt,(int,float)) or amt<=0 or amt>float(stakes.get("proposed_reserve_amount",0))+1e-9:
+                    errors.append(f"action_{i}:invalid_property_reserve_amount")
+                if action.get("steward_person_id") != stakes.get("proposed_steward_person_id") or action.get("purpose") != stakes.get("purpose"):
+                    errors.append(f"action_{i}:property_reserve_review_terms_mismatch")
+                if typ=="accept_household_property_reserve" and isinstance(amt,(int,float)) and abs(float(amt)-float(stakes.get("proposed_reserve_amount",0)))>1e-9:
+                    errors.append(f"action_{i}:accepted_property_reserve_amount_changed")
+                if typ=="counter_household_property_reserve" and not isinstance(action.get("joint_approval_required"),bool):
+                    errors.append(f"action_{i}:property_reserve_counter_approval_missing")
+            elif typ == "accept_household_property_counter":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "household_property_reserve_counter_review" or job["actor_person_id"] != stakes.get("holder_person_id"):
+                    errors.append(f"action_{i}:invalid_property_counter_acceptance")
+                if (abs(float(action.get("reserve_amount",0))-float(stakes.get("counter_reserve_amount",0)))>1e-9
+                        or action.get("joint_approval_required") != stakes.get("joint_approval_required")
+                        or action.get("steward_person_id") != stakes.get("proposed_steward_person_id")):
+                    errors.append(f"action_{i}:property_counter_terms_mismatch")
+            elif typ in {"accept_property_stewardship","decline_property_stewardship"}:
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "household_property_stewardship_consent" or job["actor_person_id"] != stakes.get("proposed_steward_person_id"):
+                    errors.append(f"action_{i}:invalid_property_stewardship_consent")
+                if typ=="accept_property_stewardship":
+                    if (abs(float(action.get("reserve_amount",0))-float(stakes.get("final_reserve_amount",0)))>1e-9
+                            or action.get("joint_approval_required") != stakes.get("joint_approval_required")
+                            or action.get("purpose") != stakes.get("purpose")):
+                        errors.append(f"action_{i}:property_stewardship_terms_mismatch")
+                    stock=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-WIDOW' AND resource_type='silver'")
+                    if stock is None or float(stock)+1e-9<float(stakes.get("final_reserve_amount",0)):
+                        errors.append(f"action_{i}:insufficient_silver_for_property_reserve")
+                    if self.db.one("SELECT 1 FROM obligations WHERE obligation_type='household_property_stewardship' AND status='active' LIMIT 1"):
+                        errors.append(f"action_{i}:property_stewardship_already_active")
             elif typ == "preserve_seasonal_surplus":
                 stakes = packet.get("scene", {}).get("stakes", {})
                 if packet.get("scene", {}).get("trigger") != "seasonal_surplus_storage_pressure":
@@ -3439,6 +3522,107 @@ class WorldEngine:
                     self._memory(con,actor_id,day,
                         (f"Committed one household labor day to cover/move exposed seasonal produce during a local moisture episode; {loss:g} fixture units were still lost." if protected else f"Accepted the local moisture exposure without extra protection; {loss:g} fixture units of exposed seasonal produce were lost."),
                         event_id=eid,memory_type="weather_storage",salience=.82,relationship_relevance=.2,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-034"})
+
+                elif typ == "propose_household_property_reserve":
+                    reviewer=action["reviewer_person_id"]; steward=action["steward_person_id"]
+                    review_scene=stable_id("SCENE",self.run_id,day,"household_property_reserve_review",decision_id,idx)
+                    review_stakes={**scene_stakes,"requester_person_id":actor_id,"reviewer_person_id":reviewer,
+                                   "proposed_steward_person_id":steward,"proposed_reserve_amount":float(action["reserve_amount"]),
+                                   "purpose":action["purpose"],"joint_approval_required":False}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (review_scene,self.run_id,day,scene["place_id"],"household","household_property_reserve_review",canonical_json(review_stakes),
+                         canonical_json({"liquid_silver":scene_stakes.get("current_silver"),"ownership_transfer":False}),
+                         canonical_json({"private_negotiation_first":True,"reviewer_can_counter":True}),canonical_json(["I-MEDIATION"]),"open"))
+                    for pid,role in ((actor_id,"requester"),(reviewer,"decision_actor"),(steward,"proposed_steward")):
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(review_scene,pid,role))
+                    eid=self._event(con,day,"household_property_reserve_proposed",scene_id=review_scene,decision_id=decision_id,actors=[actor_id,reviewer,steward],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],
+                        payload={"action_id":aid,"reserve_amount":float(action["reserve_amount"]),"steward_person_id":steward,"purpose":action["purpose"],
+                                 "binding_inheritance":False,"ownership_transfer":False,"reason":action.get("reason")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Proposed earmarking {float(action['reserve_amount']):g} silver for household property maintenance with {steward} as proposed steward; no ownership transfer was proposed.",event_id=eid,memory_type="property_negotiation",salience=.9,relationship_relevance=.86,goal_relevance=.96,provenance={"assumption_id":"ASM-FIXTURE-035"})
+                    self._memory(con,reviewer,day,f"{actor_id} proposed a household property-maintenance reserve naming {steward}; I can accept, refuse, or counter the current-use terms.",event_id=eid,memory_type="property_negotiation",salience=.86,relationship_relevance=.88,goal_relevance=.82,provenance={"assumption_id":"ASM-FIXTURE-035"})
+                    followups.append((review_scene,reviewer,["accept_household_property_reserve","counter_household_property_reserve","refuse_proposal","communicate"]))
+
+                elif typ in {"accept_household_property_reserve","counter_household_property_reserve"}:
+                    holder=scene_stakes["requester_person_id"]; steward=scene_stakes["proposed_steward_person_id"]
+                    amount=float(action["reserve_amount"]); joint=bool(action.get("joint_approval_required",scene_stakes.get("joint_approval_required",False)))
+                    if typ=="counter_household_property_reserve":
+                        counter_scene=stable_id("SCENE",self.run_id,day,"household_property_reserve_counter_review",decision_id,idx)
+                        counter_stakes={**scene_stakes,"holder_person_id":holder,"countering_person_id":actor_id,"counter_reserve_amount":amount,
+                                        "joint_approval_required":joint,"counter_reason":action.get("reason")}
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (counter_scene,self.run_id,day,scene["place_id"],"household","household_property_reserve_counter_review",canonical_json(counter_stakes),
+                             canonical_json({"original_amount":scene_stakes["proposed_reserve_amount"],"counter_amount":amount,"ownership_transfer":False}),
+                             canonical_json({"private_negotiation_continues":True}),canonical_json(["I-MEDIATION"]),"open"))
+                        for pid,role in ((holder,"decision_actor"),(actor_id,"counterparty"),(steward,"proposed_steward")):
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(counter_scene,pid,role))
+                        eid=self._event(con,day,"household_property_terms_countered",scene_id=counter_scene,decision_id=decision_id,actors=[actor_id,holder,steward],
+                            knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],
+                            payload={"action_id":aid,"original_amount":scene_stakes["proposed_reserve_amount"],"counter_amount":amount,
+                                     "joint_approval_required":joint,"reason":action.get("reason")},discriminator=aid)
+                        self._memory(con,holder,day,f"{actor_id} countered the property-maintenance reserve at {amount:g} silver and {'required' if joint else 'did not require'} joint approval; the preference remains non-binding.",event_id=eid,memory_type="property_negotiation",salience=.9,relationship_relevance=.9,goal_relevance=.92,provenance={"assumption_id":"ASM-FIXTURE-035"})
+                        followups.append((counter_scene,holder,["accept_household_property_counter","refuse_proposal","communicate"]))
+                    else:
+                        consent_scene=stable_id("SCENE",self.run_id,day,"household_property_stewardship_consent",decision_id,idx)
+                        consent_stakes={**scene_stakes,"holder_person_id":holder,"reviewer_person_id":actor_id,"final_reserve_amount":amount,
+                                        "joint_approval_required":joint,"purpose":action["purpose"]}
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (consent_scene,self.run_id,day,scene["place_id"],"household","household_property_stewardship_consent",canonical_json(consent_stakes),
+                             canonical_json({"reserve_amount":amount,"ownership_transfer":False,"inheritance_decided":False}),
+                             canonical_json({"individual_steward_consent_required":True}),"[]","open"))
+                        for pid,role in ((holder,"household_senior"),(actor_id,"reviewer"),(steward,"decision_actor")):
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(consent_scene,pid,role))
+                        self._event(con,day,"household_property_terms_accepted",scene_id=consent_scene,decision_id=decision_id,actors=[holder,actor_id,steward],
+                            rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],payload={"reserve_amount":amount,"joint_approval_required":joint},discriminator=aid)
+                        followups.append((consent_scene,steward,["accept_property_stewardship","decline_property_stewardship","communicate"]))
+
+                elif typ == "accept_household_property_counter":
+                    steward=scene_stakes["proposed_steward_person_id"]; reviewer=scene_stakes["countering_person_id"]
+                    amount=float(action["reserve_amount"]); joint=bool(action["joint_approval_required"])
+                    consent_scene=stable_id("SCENE",self.run_id,day,"household_property_stewardship_consent",decision_id,idx)
+                    consent_stakes={**scene_stakes,"holder_person_id":actor_id,"reviewer_person_id":reviewer,"final_reserve_amount":amount,
+                                    "joint_approval_required":joint,"purpose":scene_stakes["purpose"]}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (consent_scene,self.run_id,day,scene["place_id"],"household","household_property_stewardship_consent",canonical_json(consent_stakes),
+                         canonical_json({"reserve_amount":amount,"ownership_transfer":False,"inheritance_decided":False}),
+                         canonical_json({"individual_steward_consent_required":True}),"[]","open"))
+                    for pid,role in ((actor_id,"household_senior"),(reviewer,"reviewer"),(steward,"decision_actor")):
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(consent_scene,pid,role))
+                    eid=self._event(con,day,"household_property_counter_accepted",scene_id=consent_scene,decision_id=decision_id,actors=[actor_id,reviewer,steward],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],
+                        payload={"action_id":aid,"reserve_amount":amount,"joint_approval_required":joint,"ownership_transfer":False},discriminator=aid)
+                    self._memory(con,reviewer,day,f"{actor_id} accepted my counterproposal for a {amount:g}-silver maintenance reserve; {steward} still must consent to stewardship.",event_id=eid,memory_type="property_negotiation",salience=.9,relationship_relevance=.9,goal_relevance=.88,provenance={"assumption_id":"ASM-FIXTURE-035"})
+                    followups.append((consent_scene,steward,["accept_property_stewardship","decline_property_stewardship","communicate"]))
+
+                elif typ == "accept_property_stewardship":
+                    amount=float(action["reserve_amount"]); holder=scene_stakes["holder_person_id"]; reviewer=scene_stakes["reviewer_person_id"]
+                    self._change_resource(con,"H-WIDOW","silver",-amount,assumption_id="ASM-FIXTURE-035")
+                    self._change_resource(con,"H-WIDOW","property_maintenance_reserve",amount,assumption_id="ASM-FIXTURE-035")
+                    oid=stable_id("O",self.run_id,"household_property_stewardship",actor_id,day)
+                    provenance={"assumption_id":"ASM-FIXTURE-035","rule_id":"RULE-HOUSEHOLD-PROPERTY-USE-001",
+                                "reserve_amount":amount,"resource":"property_maintenance_reserve","purpose":action["purpose"],
+                                "joint_approval_required":bool(action["joint_approval_required"]),"reviewer_person_id":reviewer,
+                                "notice":"current-use stewardship only; no ownership or inheritance transfer"}
+                    con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid,actor_id,"H-WIDOW",holder,"H-WIDOW","household_property_stewardship",
+                         "Steward the earmarked household property-maintenance reserve under the negotiated approval terms.",None,"active",canonical_json(provenance)))
+                    eid=self._event(con,day,"household_property_reserve_established",scene_id=job["scene_id"],decision_id=decision_id,actors=[holder,reviewer,actor_id],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],
+                        material={"H-WIDOW":{"silver":-amount,"property_maintenance_reserve":amount}},
+                        payload={"action_id":aid,"obligation_id":oid,"reserve_amount":amount,"steward_person_id":actor_id,
+                                 "reviewer_person_id":reviewer,"joint_approval_required":bool(action["joint_approval_required"]),
+                                 "binding_inheritance":False,"ownership_transfer":False},discriminator=aid)
+                    for pid,text in ((actor_id,f"Accepted stewardship of a {amount:g}-silver household maintenance reserve; this does not make the reserve my property."),
+                                     (holder,f"{actor_id} consented to steward the negotiated maintenance reserve; my future property preference remains non-binding."),
+                                     (reviewer,f"{actor_id} consented to the negotiated maintenance reserve under the agreed approval structure.")):
+                        self._memory(con,pid,day,text,event_id=eid,memory_type="property_negotiation",salience=.92,relationship_relevance=.9,goal_relevance=.92,provenance=provenance)
+
+                elif typ == "decline_property_stewardship":
+                    holder=scene_stakes["holder_person_id"]; reviewer=scene_stakes["reviewer_person_id"]
+                    eid=self._event(con,day,"household_property_stewardship_declined",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,holder,reviewer],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-035","RULE-HOUSEHOLD-PROPERTY-USE-001"],
+                        payload={"action_id":aid,"reason":action.get("reason"),"reserve_established":False,"ownership_transfer":False},discriminator=aid)
+                    self._memory(con,holder,day,f"{actor_id} declined the proposed stewardship; no maintenance reserve was established and the property preference remains only a preference.",event_id=eid,memory_type="property_negotiation",salience=.82,relationship_relevance=.86,goal_relevance=.88,provenance={"assumption_id":"ASM-FIXTURE-035"})
 
                 elif typ == "preserve_seasonal_surplus":
                     amount=float(action["amount"])

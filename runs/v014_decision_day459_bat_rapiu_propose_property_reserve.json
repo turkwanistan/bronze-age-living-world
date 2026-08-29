@@ -1,0 +1,16 @@
+{
+  "decision_id":"DEC-V014-D459-BAT-RAPIU-PROPOSE-PROPERTY-RESERVE",
+  "actor_id":"P15",
+  "selected_intent":"turn the long-standing non-binding care preference into a bounded present-use maintenance proposal without deciding ownership or inheritance",
+  "proposed_actions":[{
+    "type":"propose_household_property_reserve",
+    "reviewer_person_id":"P10",
+    "steward_person_id":"P16",
+    "reserve_amount":0.80,
+    "purpose":"household_property_maintenance",
+    "reason":"Kothar has repeatedly fulfilled the continuing care term and I want some household silver protected for property maintenance, but Šapšu is now an adult member of this household and should review the present-use terms before Kothar is asked to accept stewardship."
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-PROPERTY-USE-001-P15","K-LOCAL-CARE-001-P15","K-LOCAL-DISPUTE-001-P15"],
+  "decision_basis_tags":["property_preservation","remembered_care","private_negotiation","non_binding_preference"],
+  "declared_uncertainty":"The amount, reserve representation and household review procedure are ASM-FIXTURE-035 calibration; no Ugaritic inheritance, ownership, or household-veto rule is asserted."
+}

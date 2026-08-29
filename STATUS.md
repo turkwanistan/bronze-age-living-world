@@ -1,6 +1,6 @@
 # STATUS
 
-**Checkpoint:** accepted strict Ugarit v013 local-weather/storage resilience + recycling-restraint gate at day 458.
+**Checkpoint:** accepted strict Ugarit v014 household property-use negotiation gate at day 459.
 
 ## Authority
 
@@ -10,50 +10,36 @@
 
 ## Accepted strict runtime
 
-Canonical DB: `state/ugarit_living_v013.sqlite`; v002-v012 are immutable prior accepted histories.
+Canonical DB: `state/ugarit_living_v014.sqlite`; v002-v013 are immutable prior accepted histories.
 
 - run `RUN-3dda7920595c1748`, seed `1701`
-- scenario `0.11.0`, schema `3`
-- accepted day **458**
-- state hash `8254bd35f77fa492dc28c9d3b66cde982c0da08f5310f20a062ae6b14160906b`
-- **6,516 events**
-- **149 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
-- **77/77 tests**
-- exact replay: **149 decisions / 0 new cognition / exact hash**
-- zero negative stocks, false shortfalls, overdue scheduled obligations, delivery-before-arrival or knowledge-before-delivery violations
+- scenario `0.12.0`, schema `3`
+- accepted day **459**
+- state hash `6e92d7ab618cc014b5a6668b63753c46780745d4542e272b0ca8580f3dd1c5a2`
+- **6,537 events**
+- **153 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
+- **80/80 tests**
+- exact replay: **153 decisions / 0 new cognition / exact hash**
+- zero negative stocks, false shortfalls or overdue scheduled obligations
 
-Acceptance manifest: `runs/ACCEPTED_DAY458_V013_WEATHER_STORAGE.md`.
+Acceptance manifest: `runs/ACCEPTED_DAY459_V014_PROPERTY_USE_NEGOTIATION.md`.
 
-## v013 result
+## v014 result
 
-### Bounded local weather/storage shock
+Bat-Rapiu's care-informed property preference finally affects current household strategy without becoming ownership or inheritance.
 
-On day 444 one localized dry-summer moisture/rain exposure threatens only exposed `seasonal_produce` in H-FARM and H-DEPEND. It does **not** touch neutral staple grain or already-protected `stored_seasonal_goods`.
+On day 459 Bat-Rapiu proposes earmarking **0.80 silver** for H-WIDOW property maintenance with Kothar as proposed steward. Šapšu, now a married-in adult household member, independently counters at **0.40 silver with joint approval required**, preserving more liquid household silver while still supporting maintenance. Bat-Rapiu accepts the counter rather than escalating the disagreement. Kothar then receives a separate stewardship-consent decision and accepts.
 
-Both household seniors independently choose one modeled labor day of protection at agricultural intensity 0.68. Under explicit fixture calibration this reduces the extra-loss fraction from 0.30 to 0.05:
+Only after all three decisions does canonical state move **0.40 H-WIDOW silver → 0.40 `property_maintenance_reserve`** and create an active `household_property_stewardship` obligation for Kothar. H-WIDOW liquid silver falls from 3.20 to 2.80; total earmarked+liquid silver remains 3.20. The stewardship provenance records Šapšu as joint reviewer.
 
-- H-FARM exposed produce ~0.2313; protected loss ~0.0116 instead of ~0.0694 unprotected.
-- H-DEPEND exposed produce ~0.1223; protected loss ~0.0061 instead of ~0.0367 unprotected.
-
-The weather episode occurs exactly once per affected household. The larger unprotected path is regression-tested but was not forced into strict history.
-
-### Recycling restraint becomes decision-aware
-
-At day 444 H-CRAFT has only ~0.25 finished metalwork and ~0.01 raw metal. P7 decides **not** to destroy 0.20 finished output for another 0.12 raw-metal recovery because that would leave almost no finished stock and still would not support a full master cycle.
-
-That explicit wait now starts the same true fourteen-day reconsideration interval as a recycle. The unchanged choice does not reappear on day 448; it returns on day 458. With the material and market facts still unchanged, P7 waits again. This prevents repetitive prompts from overriding remembered economic restraint.
-
-### Existing systems remain causal
-
-Kothar returns to fulfilling the continuing-care obligation on day 454 after the prior illness-based deferment. The weather shock does not alter neutral provisioning, stored surplus, marriage/property state, market-message containment, or prior P7→P3 scarcity boundaries.
+The pre-existing `care_informed_priority` preference remains active and non-binding. No ownership, inheritance, marriage, or succession state changes. A regression separately proves that Kothar can decline after Bat-Rapiu and Šapšu agree, in which case no reserve is established and no silver moves.
 
 ## Current limitations / next priorities
 
-- The weather episode is one bounded fixture, not a stochastic climate model or historical Ugaritic rain event.
-- Protection is represented as one household labor day rather than a reconstructed storage technology inventory.
-- Bat-Rapiu's property preference remains non-binding; genuine shared-care/property-use disagreement should precede succession modeling.
-- A second independent life-course transition remains needed.
-- Second-seed / paired-counterfactual validation should begin before treating behavior frequency as meaningful.
-- P12's no-lot market state should recover only through new information, never automatically.
+- The reserve amount, joint approval structure and stewardship role are engineering fixtures, not a reconstructed Ugaritic property procedure.
+- No succession or inheritance transfer is modeled.
+- `property_maintenance_reserve` is an earmark abstraction; spending it should require a real future maintenance decision before deeper property machinery is added.
+- Highest-value next step is a **second independent life-course transition** or **second-seed / paired-counterfactual validation**, rather than another scripted household shock.
+- Language/interpreter or scribal-record constraints should be added only when they materially alter a multi-party transaction.
 
 **The world is structured. The people are not scripted.**
