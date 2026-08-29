@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V004-D35-ARHALBU-PALACE-RESCHEDULE",
+  "actor_id": "P13",
+  "selected_intent": "preserve the household's harvest labor now while keeping the palace obligation and completing it after the seasonal bottleneck",
+  "proposed_actions": [
+    {
+      "type": "reschedule_palace_labor",
+      "obligation_id": "O-f82ded54c5c6ed68",
+      "new_due_day": 60,
+      "reason": "Current cereal harvest and storage work is time-sensitive; moving the service preserves household labor without refusing the institutional obligation."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-LABOR-001-P13", "K-LOCAL-P13"],
+  "decision_basis_tags": ["seasonal_labor_bottleneck", "family_obligation", "palace_obligation", "deference", "reschedule_not_refuse"],
+  "declared_uncertainty": "The exact administrative rescheduling procedure is a bounded simulation fixture; the research-supported conflict is between institutional labor extraction and seasonal household labor."
+}

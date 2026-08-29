@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V004-D42-YABNINU-TRADE",
+  "actor_id": "P3",
+  "selected_intent": "keep participating in port trade with a deliberately small capital commitment rather than treating uncertain shipping reports as either certainty or paralysis",
+  "proposed_actions": [
+    {
+      "type": "commit_trade_exchange",
+      "silver_amount": 0.5,
+      "reason": "Household reserves are strong enough for bounded exposure, while prior reports remain incomplete enough to argue against a larger commitment."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-be7a1325615ef98a", "K-c532b957dc620738", "K-LOCAL-TRADE-001-P3"],
+  "decision_basis_tags": ["bounded_trade_risk", "credit_continuity", "trusted_counterparties", "information_uncertainty"],
+  "declared_uncertainty": "The exchange ratio, transit delay, and opportunity size are fixture calibration; the packet does not establish the actual outcome of the previously discussed vessel."
+}

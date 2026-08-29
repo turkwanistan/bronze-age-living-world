@@ -1,6 +1,6 @@
 {
   "scenario_id": "ugarit_1350_micro_v001",
-  "scenario_version": "0.1.0",
+  "scenario_version": "0.2.0",
   "year_bce": 1350,
   "local_period_label": "Late Bronze Age Ugarit",
   "evidence_model_version": "evidence-v0.1",
@@ -8,7 +8,10 @@
   "schema_version": 1,
   "calendar": {
     "unit": "day",
-    "start_day": 0
+    "start_day": 0,
+    "year_days": 360,
+    "start_day_of_year": 120,
+    "start_notice": "Simulation day 0 is placed at the start of a modeled cereal-harvest phase to exercise labor bottlenecks; exact Ugaritic date alignment is ASM-FIXTURE-008."
   },
   "fixture_resource_notice": "All numeric material stocks/rates are abstract simulation calibration units under ASM-FIXTURE-001/002, not historical quantities.",
   "runtime_randomness": {
@@ -25,6 +28,14 @@
     "ASM-FIXTURE-004",
     "ASM-FIXTURE-005",
     "ASM-FIXTURE-006",
-    "ASM-FIXTURE-007"
+    "ASM-FIXTURE-007",
+    "ASM-FIXTURE-008",
+    "ASM-FIXTURE-009",
+    "ASM-FIXTURE-010",
+    "ASM-FIXTURE-011",
+    "ASM-FIXTURE-012",
+    "ASM-FIXTURE-013",
+    "ASM-FIXTURE-014",
+    "ASM-FIXTURE-015"
   ]
 }

@@ -1331,6 +1331,25 @@ Model only enough material/social reality for choices to have consequences:
 - household disagreement;
 - minimal institutional obligations.
 
+### Research-driven ordinary-life realism substrate
+
+Before adding more isolated event templates, make ordinary Ugaritic life generate situations from recurring systems. The simulation should treat the following as the Phase-3 realism priority, because the encyclopedia repeatedly identifies household organization, multiplex labor, seasonal ecology, reciprocity, ritual obligation, slow information, and mixed household/palace/market exchange as the structures that make Bronze Age choices consequential.
+
+1. **Seasonal labor calendar.** Give the Ugaritic micro-world an explicit, evidence-labeled Mediterranean agricultural cycle. Exact day alignment and fixture quantities remain modeling assumptions, but work priorities must change across cereal harvest/threshing, dry-season storage/vine work, grape/olive and field preparation, sowing/early rains, winter maintenance, and spring weeding/livestock work. Ecological bottlenecks should change the cost of outside work, corvée, travel, illness, and household labor loss.
+2. **Occupation workflows, not job labels.** Every important role should generate recurring work, dependencies, and failure modes. Farmers need labor/field access; textile workers require fiber and produce labor-intensive goods; metalworkers require metal/fuel and can recycle; merchants depend on credit, partners, weights, routes, and information; sailors depend on vessels, crews, weather, cargo, and harbor news; scribes/interpreters mediate records, contracts, correspondence, and languages; ritual/healing specialists depend on trust, offerings, ingredients, and correct procedure.
+3. **Household labor allocation.** Treat the household as the primary production, care, property, ritual, and reputation unit. Multiple roles compete for the same people. Outside work, illness, dependent care, palace labor, craft quotas, harvest, and travel should therefore create opportunity costs rather than independent events.
+4. **Reciprocity/reputation/patronage propagation.** Resource aid, water access, work help, testimony, introductions, ritual service, feast participation, and credit accommodation must leave remembered social balances that can affect later willingness to help, terms of exchange, mediation, and household strategy.
+5. **Recurring household and communal religion.** Religion is not restricted to illness scenes. Household observance, seasonal rites, offerings, feast/festival participation, specialist consultation, dreams/omens, birth/health/crop/livestock concerns, and disagreement over ritual interpretation/cost should compete with practical responses and consume real fixture resources.
+6. **Port/market activity as a recurring system.** Ugarit should continuously produce harbor work, cargo handling, market exchange, accounting, credit, information brokerage, visiting contacts, and delayed reports. Trade opportunities should emerge from actual merchant/sailor/scribe relationships and material/information state rather than a generic market score.
+7. **Institutional extraction as an opportunity cost.** Palace/estate labor and resource requests should intersect with seasonal household work. State reach is not automatic: requests can be complied with, negotiated, delayed, evaded, mediated, or remembered as burdens depending on actor status and available institutions.
+8. **Dispute ladders.** Reusable conflicts over water, work, debt, property, damaged goods, animals, inheritance, and reputation should move through private negotiation, kin/patron mediation, compensation, ritual/oath mechanisms, or officials as locally supported. Do not spawn a modern court for every disagreement.
+
+Implementation order for this substrate:
+
+`seasonal calendar → recurring occupation cycles → household labor conflicts → material craft/textile dependencies → household/communal ritual calendar → port/market cycles → institutional labor pressure → reusable dispute/favor consequences`
+
+The engine should escalate only consequential conflicts to ChatGPT. Routine work, ordinary household observance, predictable craft progress, and non-contentious institutional activity remain deterministic canonical simulation.
+
 No full geopolitics.
 
 **Gate:** 30–90 ordinary simulated days run without resource magic, impossible schedules, constant crisis, uniform households, or meaningless occupations—and naturally generate situations that require judgment.
@@ -1432,6 +1451,19 @@ Add only the life-course/material mechanisms needed for an ordinary year:
 - ongoing debt;
 - migration.
 
+The first year must also demonstrate that the Phase-3 realism substrate scales across the entire calendar rather than merely producing benchmark scenes. Specifically verify:
+
+- agricultural labor intensity changes household decisions by season;
+- specialist work visibly depends on inputs, clients, institutional access, and transport;
+- textile and craft production does not appear from nowhere;
+- household ritual consumes resources and creates remembered obligations/participation;
+- communal feasts convert surplus/contribution into status, reciprocity, and memory;
+- merchant/sailor/scribe activity creates recurring trade and information chains;
+- palace labor/resource extraction sometimes collides with household work and has opportunity costs;
+- favors and refusals recur in later decisions rather than disappearing after one scene;
+- ordinary conversation/memory disproportionately concerns work, weather, animals, food, family, debt, neighbors, ritual, travel news, property, reputation, and invitations;
+- normal society remains stable enough that war/collapse is not required to make biographies interesting.
+
 **Gate:** one ordinary year creates coherent distinct biographies, relationship histories, household strategies, marriage/disputes, debt/favors, reputation changes, religious decisions, social mobility/decline, and believable institutional pressure without needing war or catastrophe to remain interesting.
 
 This is the **first canonical milestone**.
@@ -1465,6 +1497,17 @@ Add:
 - mixed households where appropriate;
 - foreign ritual exposure;
 - information from abroad.
+
+Build the port as interacting occupational and institutional workflows, not merely foreign-agent presence:
+
+- vessel preparation, loading/unloading, storage, porter labor, and seasonal sailing constraints;
+- cargo ownership/control, merchant capital, credit, weighed-metal payment, seals/records, and trusted counterparties;
+- shipowners/merchants/sailors/porters/market traders/scribes/interpreters with partially overlapping information;
+- freight or cargo delay, damaged goods, missing partners, route rumors, customs/administrative demands, and disputed terms;
+- multilingual written/oral mediation where language proficiency and literacy matter;
+- imported prestige goods versus bulk provisioning as different logistics problems;
+- recurring foreign contacts that can become trusted partners, patrons, debtors, marriage links, rivals, or rumor sources;
+- explicit trade-network alternatives so one disrupted contact does not automatically collapse commerce.
 
 **Gate:** unscripted trust, misunderstanding, brokerage, mixed partnerships, intermarriage where plausible, borrowing, conflict, patronage, and cultural transmission arise through actual people/relationships—never a generic `cultural_influence += 1` score.
 

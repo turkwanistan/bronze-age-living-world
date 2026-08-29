@@ -1,72 +1,118 @@
 # STATUS
 
-**Checkpoint:** accepted permanent OptiPlex implementation; strict day-60 Ugarit v003 ordinary-social gate accepted.
+**Checkpoint:** accepted permanent OptiPlex implementation; strict day-90 Ugarit v004 lifeways-realism gate accepted.
 
 ## Authority
 
-- `bronze-age-simulation-encyclopedia.md` preserved exactly; SHA-256 `a57ac7e2b1d1b89e8a041d982f0a3b3c59d175a1792df051958e81206997f937`.
-- `plan.md` preserved exactly; SHA-256 `2e713f1d1b72b1c58bc532de261a86ca00834aecd84645a95f9624e57bba766d`.
-- Current permanent repository, canonical SQLite state, tests, and accepted evidence govern implementation details after those authorities.
+- `bronze-age-simulation-encyclopedia.md` remains the primary supplied historical/research foundation; SHA-256 `a57ac7e2b1d1b89e8a041d982f0a3b3c59d175a1792df051958e81206997f937`.
+- `plan.md` was deliberately revised on 2026-08-29 to incorporate the research-driven ordinary-life realism substrate requested during development; current SHA-256 `f4bf0d497c7beceec5b9bdb1bf1425e5b890d377e9dc3c1fbc54a2189c36a54d`.
+- Current repository state, accepted evidence mappings, tests, and canonical SQLite govern implementation details after those authorities.
 
 ## Accepted strict runtime
 
-Current canonical DB: `state/ugarit_living_v003.sqlite`. The earlier accepted `state/ugarit_living_v002.sqlite` remains an immutable baseline history; v003 was rebuilt from seed after scene-generation changes.
+Current canonical host-local DB: `state/ugarit_living_v004.sqlite`. Earlier v002/v003 histories remain prior accepted checkpoints; v004 was rebuilt from seed after realism and baseline-calibration changes rather than mutating those accepted histories.
 
 - run_id: `RUN-3dda7920595c1748`
 - seed: `1701`
-- current/accepted day: **60**
-- state hash: `96994dcc063475fb2cc449d933d71510b6f99e6af23563bbfcbf393be7a9ce8c`
-- events: **593**
-- cognition: **12 accepted / 0 rejected / 0 pending**
+- scenario version: `0.2.0`
+- accepted day: **90**
+- state hash: `973f348742a5da1db23264b1485cd4e583ae951229976b40f25100f1bdd29890`
+- events: **1,225**
+- cognition: **21 accepted / 0 rejected / 0 pending**
 - open scenes: **0**
-- full tests: **30/30 passing**
-- recorded-decision replay to day 60: **exact hash match**, 12 stored decisions applied, **0 new cognition calls**
+- full tests: **39/39 passing**
+- recorded-decision replay to day 90: **exact hash match**, 21 stored decisions applied, **0 new cognition calls**
+- message temporal violations: **0**
+- resource-shortfall scenes: **0**
 
-Acceptance evidence is summarized in `runs/ACCEPTED_DAY60_V003_SOCIAL.md`. The prior gate remains in `runs/ACCEPTED_DAY60.md`.
+Acceptance evidence is summarized in `runs/ACCEPTED_DAY90_V004_REALISM.md`.
 
-## Implemented
+## Implemented realism substrate
 
-- exact authority copies and authority SHA checking;
-- historical-fidelity/evidence/model/cognition protocol documents;
-- source/claim/assumption/rule/test evidence mappings;
-- Ugarit research backlog and 12 behavioral evaluation situations;
-- SQLite canonical schema including FTS5 memory;
-- 8 households / 16 named important people with heterogeneous roles, status, relationships, beliefs, goals, and individual dispositions;
-- places, routes, four initial institutions, household materials, debt, obligations, knowledge, memories, messages, scenes, cognition jobs, decisions, actions, and causal events;
-- deterministic routine engine using explicitly abstract fixture quantities;
-- strict advancement that halts at unresolved/rejected cognition;
-- sealed temporal character packets;
-- fail-closed typed action validation including epistemic leakage, route availability, resource control, scene/target constraints, and atomic application;
-- delayed engine-owned message delivery and recipient knowledge only on delivery;
-- typed `send_message` cognition action with engine-selected route/delay and provenance;
-- merchant/harbor information-uncertainty chain using Yabninu, Abdi-Rashap, and Dagan-beli without specifying a historical shipment outcome;
-- forward-looking `RULE-RESOURCE-RUNWAY-001`, replacing the former absolute grain threshold with projection over current stock, configured daily need, receipt timing, and receipt amount;
-- household work negotiation: P16 can request household approval for a bounded fixture opportunity; acceptance schedules later engine-owned completion, resource receipt, memories, and relationship consequences;
-- unequal water-access negotiation: a shared-access household can request a bounded accommodation from the scene-designated private-access neighbor; grants create temporary `I-WATER`-linked permission, favor/relationship effects, memories, and deterministic expiry;
-- exact recorded replay now preserves **source decision application order**, including multiple cognition decisions on the same day and possible same-day follow-ups;
-- regressions for resource runway, delayed-message containment, route validation, ordinary social chains, replay ordering, replay exactness, and authority integrity.
+- explicit 360-day modeled seasonal calendar with research-constrained ordering and fixture-labeled exact alignment (`ASM-FIXTURE-008`);
+- seasonal context compiled into sealed cognition packets without exposing omniscient world state;
+- recurring role-specific occupation cycles for all 16 important people;
+- household labor-allocation events so multiple roles compete for the same people and seasonal bottlenecks alter opportunity cost;
+- material textile workflow: fiber consumption → textile goods;
+- material metalwork workflow: metal/charcoal consumption → finished metalwork;
+- neutral routine provisioning baseline (`ASM-FIXTURE-014`) so ordinary no-shock life is not structurally impoverished/enriched by arbitrary fixture receipts;
+- recurring household ritual observance outside illness scenes, with real ritual-goods cost;
+- bounded communal rite/feast contribution scene where participation/reputation competes with household stores;
+- recurring port/market cycles linking merchant, sailor/porter, market trader, scribe/interpreter roles;
+- delayed material trade commitments: silver is committed immediately and goods arrive only after engine-owned delay;
+- recurring palace labor requests, with cognition only when institutional extraction conflicts with a seasonal household bottleneck;
+- emergent craft-supply pressure from actual consumed workshop inputs rather than a hard-coded crisis date;
+- reciprocal social credit for socially mediated resource supply instead of resource magic, free anonymous gifts, or invented fixed-price contracts;
+- first consequential craft↔merchant exchange creates a persistent relationship and open obligation;
+- later workshop shortage packet includes that prior obligation, causing Urtenu to avoid deepening dependence while stock remains usable;
+- occupational output can later satisfy reciprocal social credit, clearing both the obligation and favor balance;
+- all prior delayed-message, household-work, water-access, debt, obligation, ritual, replay-order, atomicity, and epistemic-containment rules remain active.
 
-## Day-60 qualitative gate
+## Day-90 qualitative gate
 
-The accepted v003 run contains no `household_resource_shortfall` scenes. Cognition remains sparse at 12 decisions across 60 days while situation diversity expands to 10 trigger types. New work and water chains each occur once and leave persistent material/social/autobiographical consequences rather than flavor-only events.
+The 90-day history contains **16 cognition trigger types** while cognition remains sparse at 21 decisions. Routine life dominates history rather than crisis:
 
-The work chain records request → household decision → scheduled commitment → next-day completion/resource receipt. The water chain records pressure → request → grant → favor/relationship change → deterministic expiry. Later character packets reflect these memories and relationship changes. Unrelated P14 and P13 packets remained byte-identical to the previous accepted history at their cognition boundaries, supporting containment.
+- 720 routine consumption events;
+- 192 occupation work cycles;
+- 96 household labor-allocation events;
+- 96 weekly baseline receipts;
+- 24 routine household ritual observances;
+- 12 port/market cycles;
+- 4 messages sent and 4 delivered;
+- 2 delayed trade commitments and 2 completed exchanges;
+- 2 palace labor requests and 2 completed services;
+- 3 minor-illness circumstances / 3 ritual responses;
+- 2 workshop supply-pressure scenes;
+- 1 communal feast contribution;
+- 1 debt repayment;
+- 1 outside-work chain;
+- 1 water negotiation chain;
+- 1 reciprocal social-credit return.
 
-The old pre-runway day-56 candidate remains diagnostic evidence only. Its identity/hash and intentionally unresolved `JOB-576143bba3e7ae07` are preserved in `artifacts/diagnostic/day56_candidate/README.md`; its binary was never rewritten or transferred through Base64.
+Two modeled seasonal phases are actually observed in the accepted slice: `cereal_harvest_and_threshing` through the early history and `dry_summer_storage_and_vines` from day 63 onward. Arhalbu rescheduled palace labor during the harvest bottleneck and later completed it; a later palace request in the lower-intensity season completed without needing cognition.
+
+The strongest persistence chain is Urtenu↔Yabninu:
+
+1. repeated metalworking consumes workshop inputs;
+2. day 56 low metal creates a real supply-pressure decision;
+3. Urtenu requests a bounded amount from Yabninu;
+4. Yabninu supplies 0.6 metal as open reciprocal social credit;
+5. the exchange creates a new `exchange_contact` relationship and open obligation;
+6. by day 84, low metal recurs, but Urtenu remembers the obligation and chooses to stretch current stock rather than ask again;
+7. by day 86, accumulated finished metalwork creates a voluntary return opportunity;
+8. Urtenu returns 0.3 finished metalwork, fulfilling the obligation;
+9. by day 90 both directed favor balances are zero and trust/respect are higher than at relationship creation.
+
+No message-derived knowledge appears before delivery. No undelivered message has recipient knowledge. The accepted history contains no household-resource-shortfall scenes after neutral baseline calibration.
+
+## Evidence / tests added for v004
+
+- `MAP-011` — seasonal occupation workflow;
+- `MAP-012` — household labor allocation;
+- `MAP-013` — recurring household ritual;
+- `MAP-014` — seasonal institutional labor conflict;
+- `MAP-015` — recurring delayed port trade;
+- `MAP-016` — reciprocal social credit and occupational-output return;
+- `MAP-017` — neutral routine provisioning stability gate.
+
+New regression coverage is in `tests/test_lifeways_realism.py`; total suite is 39 tests.
 
 ## Not yet claimed / current weaknesses
 
-- historically calibrated household resource rates, work compensation, travel speeds, or water-access duration;
-- Ugarit-specific ordinary debt/legal/property/water procedure beyond bounded evidence-linked fixture mechanics;
-- generalized emergent situation generation: the new work/day-14 and water/day-18 situations are currently deterministic benchmark fixtures;
-- final verified ordinary-name pool by date/social context;
-- broad ordinary-life diversity across feast/status reciprocity, palace labor/resource requests, craft/work complications, household disputes, market exchange, kin/marriage issues, and other non-crisis life;
+- exact historical agricultural calendar dates, production rates, wages, ration rates, trade prices/profits, corvée cadence, ritual calendar, or reciprocal-return equivalence;
+- one full ordinary year across all modeled seasonal phases;
 - 50–100 inspected character cognition decisions;
-- richer reputation propagation beyond directed relationship/favor state and memories;
+- generalized crop/livestock yield and storage-loss mechanics rather than the current stable provisioning baseline plus selected specialist production chains;
+- deeper marriage, inheritance, birth/death, household fission/fusion, aging, apprenticeship completion, and migration;
+- reusable multi-step dispute ladders across property, damaged goods, animals, inheritance, reputation, and institutional mediation;
+- broader multilingual/literacy consequences and foreign-contact network development;
+- generalized reputation propagation beyond directed relationships, favors, obligations, memories, and specific scene effects;
 - observer UI;
 - geopolitics/collapse systems;
 - evidence that a new Self-Building Computer generation is needed.
 
 ## Guardrails
 
-All fixture quantities and benchmark circumstances remain explicit `ASM-FIXTURE-*` abstractions and must not be presented as historical rates or events. Character cognition may use only sealed packet information available to that character at that time. Historical uncertainty, epistemic uncertainty, and runtime stochasticity remain distinct. Culture constrains institutions/roles/affordances; it does not generate civilization-wide personality stereotypes.
+All fixture quantities/cadences remain explicit `ASM-FIXTURE-*` abstractions and must not be presented as historical rates or events. Character cognition may use only sealed packet information available to that character at that time. Historical uncertainty, epistemic uncertainty, and runtime stochasticity remain distinct. Culture constrains institutions, roles, norms, obligations, and affordances; it does not generate civilization-wide personality stereotypes.
+
+The governing principle remains: **The world is structured. The people are not scripted.**

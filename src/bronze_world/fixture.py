@@ -31,14 +31,14 @@ INSTITUTIONS = [
 ]
 
 HOUSEHOLDS = [
-    {"id":"H-FARM","name":"Field household","home":"P-NORTH-NEIGH","food":42,"oil":8,"silver":2,"need":0.80,"weekly":7.0,"water":"shared","status":"common agricultural","form":"multi-generation"},
-    {"id":"H-MERCH","name":"Merchant household","home":"P-NORTH-NEIGH","food":33,"oil":10,"silver":18,"need":0.65,"weekly":4.2,"water":"private","status":"prosperous merchant","form":"joint household"},
-    {"id":"H-SCRIBE","name":"Scribal household","home":"P-NORTH-NEIGH","food":27,"oil":7,"silver":7,"need":0.55,"weekly":3.8,"water":"private","status":"institution-connected specialist","form":"small household"},
+    {"id":"H-FARM","name":"Field household","home":"P-NORTH-NEIGH","food":42,"oil":8,"silver":2,"need":0.80,"weekly":5.6,"water":"shared","status":"common agricultural","form":"multi-generation"},
+    {"id":"H-MERCH","name":"Merchant household","home":"P-NORTH-NEIGH","food":33,"oil":10,"silver":18,"need":0.65,"weekly":4.55,"water":"private","status":"prosperous merchant","form":"joint household"},
+    {"id":"H-SCRIBE","name":"Scribal household","home":"P-NORTH-NEIGH","food":27,"oil":7,"silver":7,"need":0.55,"weekly":3.85,"water":"private","status":"institution-connected specialist","form":"small household"},
     {"id":"H-CRAFT","name":"Craft household","home":"P-NORTH-NEIGH","food":29,"oil":5,"silver":4,"need":0.70,"weekly":4.9,"water":"shared","status":"craft specialist","form":"nuclear-plus-apprentice"},
-    {"id":"H-RITUAL","name":"Ritual specialist household","home":"P-NORTH-NEIGH","food":24,"oil":12,"silver":3,"need":0.50,"weekly":3.4,"water":"shared","status":"ritual specialist","form":"small household"},
-    {"id":"H-HARBOR","name":"Harbor household","home":"P-HARBOR","food":31,"oil":5,"silver":6,"need":0.65,"weekly":4.0,"water":"shared","status":"mobile maritime labor","form":"nuclear"},
-    {"id":"H-DEPEND","name":"Dependent labor household","home":"P-NORTH-NEIGH","food":18,"oil":3,"silver":1,"need":0.75,"weekly":4.2,"water":"shared","status":"dependent labor","form":"couple with dependent"},
-    {"id":"H-WIDOW","name":"Widowed elder household","home":"P-NORTH-NEIGH","food":16,"oil":4,"silver":3,"need":0.48,"weekly":2.5,"water":"shared","status":"widowed property claimant","form":"widowed/younger kin"},
+    {"id":"H-RITUAL","name":"Ritual specialist household","home":"P-NORTH-NEIGH","food":24,"oil":12,"silver":3,"need":0.50,"weekly":3.5,"water":"shared","status":"ritual specialist","form":"small household"},
+    {"id":"H-HARBOR","name":"Harbor household","home":"P-HARBOR","food":31,"oil":5,"silver":6,"need":0.65,"weekly":4.55,"water":"shared","status":"mobile maritime labor","form":"nuclear"},
+    {"id":"H-DEPEND","name":"Dependent labor household","home":"P-NORTH-NEIGH","food":18,"oil":3,"silver":1,"need":0.75,"weekly":5.25,"water":"shared","status":"dependent labor","form":"couple with dependent"},
+    {"id":"H-WIDOW","name":"Widowed elder household","home":"P-NORTH-NEIGH","food":16,"oil":4,"silver":3,"need":0.48,"weekly":3.36,"water":"shared","status":"widowed property claimant","form":"widowed/younger kin"},
 ]
 
 # Display names are simulation identities. They are not claims about historical individuals.
@@ -115,6 +115,19 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
                 h["id"],h["name"],h["home"],canonical_json({"form":h["form"]}),canonical_json({"pool":"household"}),canonical_json({"dependent_care":"expected"}),canonical_json({"household_cult":"active"}),canonical_json({"status":h["status"],"water_access":h["water"]}),h["need"],h["weekly"],FIXTURE_NOTICE))
             for r,amt in [("grain",h["food"]),("oil",h["oil"]),("silver",h["silver"]),("ritual_goods",2 if h["id"]!="H-RITUAL" else 7)]:
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",(h["id"],r,float(amt),"abstract_fixture_unit","ASM-FIXTURE-001"))
+            # Specialist inputs/outputs make occupations materially dependent instead of
+            # decorative role labels. Quantities are engineering calibration only.
+            specialist_resources = {
+                "H-FARM": [("fiber", 3.5), ("textile_goods", 0.0)],
+                "H-SCRIBE": [("fiber", 2.5), ("textile_goods", 0.0)],
+                "H-DEPEND": [("fiber", 2.5), ("textile_goods", 0.0)],
+                "H-CRAFT": [("metal", 1.5), ("charcoal", 3.0), ("finished_metalwork", 0.0)],
+                "H-MERCH": [("metal", 3.0), ("trade_goods", 3.0)],
+                "H-HARBOR": [("trade_goods", 1.0)],
+            }.get(h["id"], [])
+            for r,amt in specialist_resources:
+                con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
+                            (h["id"],r,float(amt),"abstract_fixture_unit","ASM-FIXTURE-009"))
         for role,fam in ROLE_DEFS.items():
             con.execute("INSERT OR REPLACE INTO roles VALUES (?,?,?,?,?)",(f"R-{role.upper()}",role,fam,None,"{}"))
         for p in PEOPLE:
@@ -151,6 +164,21 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
         con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",("PROP-LOCAL-001","Household resource obligations and reputation can affect access to aid and cooperation.","true",canonical_json({"model_scope":"local norm representation"})))
         for p in PEOPLE:
             con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(f"K-LOCAL-{p['id']}",p["id"],"PROP-LOCAL-001",0,"cultural_socialization",None,"[]","belief",.75,"ordinary",None))
+        local_norms = [
+            ("PROP-LOCAL-LABOR-001", "Seasonal household field work can conflict with outside or institutional labor demands.",
+             ["P1","P2","P13","P14","P15","P16"]),
+            ("PROP-LOCAL-RITUAL-001", "Household and communal ritual participation can carry material costs, obligations, and reputation consequences.",
+             [p["id"] for p in PEOPLE]),
+            ("PROP-LOCAL-TRADE-001", "Trade and credit depend on trusted counterparties, information, transport access, and remembered obligations.",
+             ["P3","P4","P5","P11","P12"]),
+        ]
+        for prop_id,text,people in local_norms:
+            con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",
+                        (prop_id,text,"true",canonical_json({"model_scope":"research-derived local norm representation"})))
+            for person_id in people:
+                kid = f"K-{prop_id.replace('PROP-','')}-{person_id}"
+                con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (kid,person_id,prop_id,0,"cultural_socialization",None,"[]","belief",.75,"ordinary",None))
         con.execute("INSERT INTO events(event_id,run_id,day,event_type,model_rule_or_assumption_ids_json,payload_json) VALUES (?,?,?,?,?,?)",
                     (stable_id("EV",run_id,0,"fixture_initialized"),run_id,0,"fixture_initialized",canonical_json(["ASM-FIXTURE-001","ASM-FIXTURE-002"]),canonical_json({"households":len(HOUSEHOLDS),"persons":len(PEOPLE)})))
     return run_id

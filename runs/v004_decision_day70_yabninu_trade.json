@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V004-D70-YABNINU-TRADE",
+  "actor_id": "P3",
+  "selected_intent": "continue the recurring port exchange with another small commitment after the prior bounded exchange completed successfully",
+  "proposed_actions": [
+    {
+      "type": "commit_trade_exchange",
+      "silver_amount": 0.5,
+      "reason": "The previous small exchange completed, household reserves remain strong, and dry-season transport pressure is lower than the harvest bottleneck; keep exposure bounded because shipping information is still imperfect."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-be7a1325615ef98a", "K-c532b957dc620738", "K-LOCAL-TRADE-001-P3"],
+  "decision_basis_tags": ["repeat_trade", "bounded_exposure", "successful_prior_exchange", "counterparty_trust", "imperfect_information"],
+  "declared_uncertainty": "The modeled exchange ratio and transit delay remain fixture calibration, and the earlier vessel reports never established a canonical shipping outcome."
+}

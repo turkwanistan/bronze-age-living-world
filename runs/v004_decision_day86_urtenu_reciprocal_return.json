@@ -1,0 +1,18 @@
+{
+  "decision_id": "DEC-V004-D86-URTENU-RECIPROCAL-RETURN",
+  "actor_id": "P7",
+  "selected_intent": "return part of the workshop's accumulated output to Yabninu and clear the reciprocal obligation before seeking further supply",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-MERCH",
+      "social_target_person_id": "P3",
+      "resource": "finished_metalwork",
+      "amount": 0.3,
+      "fulfills_obligation_id": "O-69eaf26bc21f400d"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7"],
+  "decision_basis_tags": ["reciprocity", "craft_output", "clear_social_credit", "preserve_future_supplier_relationship"],
+  "declared_uncertainty": "The 0.3 return amount is fixture calibration and not a historical price equivalence; the canonical obligation itself is open-ended reciprocal social credit."
+}

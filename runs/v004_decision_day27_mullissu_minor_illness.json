@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V004-D27-MULLISSU-MINOR-ILLNESS",
+  "actor_id": "P14",
+  "selected_intent": "respond conservatively to minor illness with a modest household rite and short practical rest despite the current labor bottleneck",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household protective rite",
+      "ritual_goods_cost": 0.25,
+      "practical_response": "rest and ordinary household care while avoiding unnecessary exertion"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P14", "K-LOCAL-LABOR-001-P14"],
+  "decision_basis_tags": ["minor_illness", "ritual_obligation", "practical_care", "seasonal_labor_cost"],
+  "declared_uncertainty": "The exact rite, diagnosis, and recovery are not specified; the scene supports a mixed practical/ritual response rather than a named historical treatment."
+}

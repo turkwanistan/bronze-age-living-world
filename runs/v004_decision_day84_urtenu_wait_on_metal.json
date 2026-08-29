@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V004-D84-URTENU-WAIT-METAL",
+  "actor_id": "P7",
+  "selected_intent": "avoid deepening dependence on Yabninu while the workshop can still stretch its remaining metal through additional production cycles",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "The workshop still holds about two calibrated cycles of metal, and I already owe Yabninu a reciprocal return for the previous supply; use current stock before asking him again.",
+      "until_day": 98
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7"],
+  "decision_basis_tags": ["existing_reciprocal_obligation", "avoid_deeper_dependence", "remaining_workshop_stock", "specialist_continuity"],
+  "declared_uncertainty": "Production-cycle quantities are fixture calibration; the active reciprocal obligation and remaining stock are canonical packet state."
+}

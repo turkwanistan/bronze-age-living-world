@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-V004-D14-BAT-RAPIU-ACCEPT-WORK",
+  "actor_id": "P15",
+  "selected_intent": "allow the one-day outside work because its household benefit outweighs the bounded absence despite harvest-season labor pressure",
+  "proposed_actions": [
+    {
+      "type": "accept_fixture_work",
+      "work_id": "WORK-P16-PORTER-001"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-LABOR-001-P15", "K-LOCAL-P15"],
+  "decision_basis_tags": ["seasonal_labor", "household_resources", "reciprocal_obligation", "bounded_absence"],
+  "declared_uncertainty": "The packet establishes a harvest labor bottleneck but no specific urgent household task that requires Kothar on this one day; the compensation itself is an explicit fixture."
+}

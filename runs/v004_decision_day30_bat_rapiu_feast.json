@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V004-D30-BAT-RAPIU-FEAST",
+  "actor_id": "P15",
+  "selected_intent": "make a modest communal rite/feast contribution that supports participation and reputation without overcommitting household stores",
+  "proposed_actions": [
+    {
+      "type": "contribute_communal_feast",
+      "grain_amount": 0.4,
+      "ritual_goods_amount": 0.2,
+      "reason": "Participate visibly in the communal observance while keeping most household grain and ritual goods in reserve during harvest."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P15", "K-LOCAL-P15"],
+  "decision_basis_tags": ["ritual_participation", "reputation", "reciprocity", "household_reserves", "harvest"],
+  "declared_uncertainty": "The exact feast calendar and contribution norm are not reconstructed; the decision is bounded by the fixture maxima and current household resources."
+}

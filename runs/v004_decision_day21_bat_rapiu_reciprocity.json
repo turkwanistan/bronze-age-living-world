@@ -1,0 +1,18 @@
+{
+  "decision_id": "DEC-V004-D21-BAT-RAPIU-RECIPROCITY",
+  "actor_id": "P15",
+  "selected_intent": "honor the due reciprocal-aid obligation while preserving household security",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-FARM",
+      "social_target_person_id": "P2",
+      "resource": "grain",
+      "amount": 1.0,
+      "fulfills_obligation_id": "O-FAVOR-001"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P15"],
+  "decision_basis_tags": ["reciprocity", "household_security", "remembered_aid", "reputation"],
+  "declared_uncertainty": "The quantity is an abstract fixture unit; the obligation and household material state justify a bounded return, not a historical ration inference."
+}

@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V004-D14-KOTHAR-WORK-REQUEST",
+  "actor_id": "P16",
+  "selected_intent": "seek household agreement before taking outside porter work during a seasonal labor bottleneck",
+  "proposed_actions": [
+    {
+      "type": "request_household_work_agreement",
+      "target_person_id": "P15",
+      "reason": "The one-day work could add to household stores, but current harvest-season labor pressure makes my absence a household decision rather than mine alone."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-LABOR-001-P16", "K-LOCAL-P16"],
+  "decision_basis_tags": ["household_labor", "seasonal_bottleneck", "household_resources", "worker_agency"],
+  "declared_uncertainty": "The packet does not expose Bat-Rapiu's private preference about whether my labor is more valuable inside or outside the household today."
+}

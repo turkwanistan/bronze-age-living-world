@@ -1,0 +1,22 @@
+{
+  "decision_id": "DEC-V004-D07-YABNINU-INQUIRIES",
+  "actor_id": "P3",
+  "selected_intent": "seek independent confirmation before committing trade or credit decisions around an unconfirmed arrival report",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P11",
+      "sender_intent": "inquiry",
+      "content": "What report do you currently have about the expected arrival timing?"
+    },
+    {
+      "type": "send_message",
+      "target_person_id": "P12",
+      "sender_intent": "inquiry",
+      "content": "What report do you currently have about the expected arrival timing?"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-SHIP-P3", "K-LOCAL-TRADE-001-P3"],
+  "decision_basis_tags": ["information_provenance", "trade_credit", "trusted_counterparties", "seasonal_transport_pressure"],
+  "declared_uncertainty": "The existing vessel-delay report is hearsay and does not establish the actual arrival outcome or what either contact knows."
+}

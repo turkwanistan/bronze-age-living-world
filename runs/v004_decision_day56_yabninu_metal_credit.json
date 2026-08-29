@@ -1,0 +1,19 @@
+{
+  "decision_id": "DEC-V004-D56-YABNINU-METAL-CREDIT",
+  "actor_id": "P3",
+  "selected_intent": "support a useful local specialist through bounded reciprocal social credit rather than a free gift or invented fixed-price contract",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-CRAFT",
+      "social_target_person_id": "P7",
+      "resource": "metal",
+      "amount": 0.6,
+      "create_reciprocal_obligation": true,
+      "reciprocal_obligation_description": "Urtenu and the craft household owe Yabninu's household a future reciprocal return for workshop metal supplied when their stock ran low."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P3", "K-LOCAL-TRADE-001-P3"],
+  "decision_basis_tags": ["merchant_brokerage", "reciprocity", "specialist_network", "bounded_resource_exposure", "social_credit"],
+  "declared_uncertainty": "The simulation does not reconstruct a historical metal price, interest rate, or maturity; the transfer is represented as open reciprocal social credit."
+}

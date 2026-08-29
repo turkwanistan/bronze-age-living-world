@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V004-D78-TALMIYANU-ILLNESS",
+  "actor_id": "P6",
+  "selected_intent": "respond to the minor illness with a modest household rite and practical rest while the seasonal labor burden is relatively lower",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household protective rite",
+      "ritual_goods_cost": 0.25,
+      "practical_response": "rest and ordinary household care while temporarily reducing textile and household work"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P6"],
+  "decision_basis_tags": ["minor_illness", "household_ritual", "practical_rest", "lower_seasonal_pressure"],
+  "declared_uncertainty": "The exact diagnosis, rite, and recovery are unspecified; this is a bounded mixed practical/ritual response."
+}

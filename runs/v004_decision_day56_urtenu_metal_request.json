@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V004-D56-URTENU-METAL-REQUEST",
+  "actor_id": "P7",
+  "selected_intent": "secure a modest workshop metal reserve before the current stock stops supporting recurring production",
+  "proposed_actions": [
+    {
+      "type": "request_resource",
+      "target_person_id": "P3",
+      "resource": "metal",
+      "amount": 0.6,
+      "reason": "The workshop's recurring metalwork has reduced available metal to about two calibrated cycles; a modest replenishment would keep the workshop and apprentice working."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7"],
+  "decision_basis_tags": ["craft_dependency", "workshop_continuity", "specialist_skill", "market_request"],
+  "declared_uncertainty": "The metal quantities and production ratios are simulation calibration, not reconstructed Ugaritic workshop rates."
+}

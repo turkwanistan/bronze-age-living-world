@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V004-D18-AHATMILKU-WATER-REQUEST",
+  "actor_id": "P2",
+  "selected_intent": "ask a known neighbor for a short negotiated water accommodation while shared access is disrupted",
+  "proposed_actions": [
+    {
+      "type": "request_water_access",
+      "target_person_id": "P6",
+      "requested_days": 2,
+      "reason": "The shared neighborhood access is temporarily disrupted during a labor-intensive harvest period, so I am asking for a bounded accommodation rather than treating private access as an entitlement."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-LABOR-001-P2", "K-LOCAL-P2"],
+  "decision_basis_tags": ["water_access", "neighbor_negotiation", "harvest_labor", "household_security"],
+  "declared_uncertainty": "The exact historical access procedure is not reconstructed; the packet supports only a negotiated request."
+}

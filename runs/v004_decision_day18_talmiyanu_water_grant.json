@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-V004-D18-TALMIYANU-WATER-GRANT",
+  "actor_id": "P6",
+  "selected_intent": "grant the short neighbor accommodation while keeping the access temporary",
+  "proposed_actions": [
+    {
+      "type": "grant_water_access",
+      "requested_days": 2
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P6"],
+  "decision_basis_tags": ["neighbor_ties", "reciprocity", "bounded_access", "household_security"],
+  "declared_uncertainty": "The exact historical procedure is not reconstructed; this grants only the bounded permission requested in the scene."
+}

@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V004-D28-ARHALBU-REPAY",
+  "actor_id": "P13",
+  "selected_intent": "repay the due debt fully while household stores can absorb it and reduce dependence on the creditor",
+  "proposed_actions": [
+    {
+      "type": "repay_debt",
+      "debt_id": "D-DEPEND-001",
+      "creditor_person_id": "P3",
+      "amount": 4.0
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P13", "K-LOCAL-LABOR-001-P13"],
+  "decision_basis_tags": ["debt_repayment", "household_security", "reduce_dependence", "harvest_labor_pressure"],
+  "declared_uncertainty": "The grain amount and weekly receipts are simulation fixtures; the packet nevertheless shows the household can meet the full configured debt without approaching the next receipt insecurely."
+}

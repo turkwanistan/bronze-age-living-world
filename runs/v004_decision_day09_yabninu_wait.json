@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V004-D09-YABNINU-WAIT",
+  "actor_id": "P3",
+  "selected_intent": "avoid committing household credit or trade decisions as though incomplete discordant reports were settled facts",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "The two delivered reports remain incomplete and discordant, and current harvest transport pressure makes a premature commitment unnecessarily risky.",
+      "until_day": 14
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-be7a1325615ef98a", "K-c532b957dc620738", "K-LOCAL-TRADE-001-P3"],
+  "decision_basis_tags": ["information_uncertainty", "credit_preservation", "trade_trust", "seasonal_transport_pressure"],
+  "declared_uncertainty": "Neither delivered report establishes the canonical shipment outcome."
+}

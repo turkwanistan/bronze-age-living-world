@@ -5,6 +5,7 @@ import json
 from typing import Any
 
 from .db import WorldDB, canonical_json
+from .lifeways import calendar_context
 
 
 def _json(value: str) -> Any:
@@ -30,6 +31,17 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
     institutions = [dict(db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))) for iid in institution_ids if db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))]
     obligations = [dict(r) for r in db.all("SELECT * FROM obligations WHERE status IN ('active','scheduled','granted') AND (obligor_person_id=? OR beneficiary_person_id=? OR obligor_household_id=? OR beneficiary_household_id=?) ORDER BY COALESCE(due_day,999999),obligation_id", (actor["person_id"],actor["person_id"],household["household_id"],household["household_id"]))]
     debts = [dict(r) for r in db.all("SELECT * FROM debts WHERE status='open' AND (debtor_household_id=? OR creditor_household_id=?) ORDER BY COALESCE(due_day,999999)", (household["household_id"],household["household_id"]))]
+    scenario_row = db.one(
+        "SELECT s.config_json FROM scenarios s JOIN runs r ON r.scenario_id=s.scenario_id WHERE r.run_id=? ORDER BY s.scenario_version DESC LIMIT 1",
+        (job["run_id"],),
+    )
+    start_doy = 120
+    if scenario_row:
+        try:
+            start_doy = int(_json(scenario_row[0]).get("calendar", {}).get("start_day_of_year", 120))
+        except (TypeError, ValueError):
+            start_doy = 120
+    seasonal = calendar_context(int(scene["day"]), start_day_of_year=start_doy)
     packet = {
         "protocol_version": job["protocol_version"],
         "job_id": job_id,
@@ -55,6 +67,7 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
         "active_obligations": obligations,
         "active_debts": debts,
         "available_institutions": institutions,
+        "seasonal_context": seasonal,
         "allowed_actions": _json(job["allowed_actions_json"]),
         "containment_rule": "Reason only from this packet. Do not use external/web/future-history facts. Cite decisive knowledge/belief IDs from admissible_knowledge.",
     }

@@ -17,7 +17,7 @@ def test_low_stock_that_bridges_next_receipt_does_not_trigger(world):
     db, rid = world
     eng = WorldEngine(db, rid)
     # At day 5, 1.0 abstract grain units cover days 6 and 7 for H-WIDOW
-    # (0.48/day). The configured day-7 receipt of 2.5 then safely covers the
+    # (0.48/day). The configured day-7 receipt of 3.36 then safely covers the
     # remainder of the one-cycle projection horizon through day 12.
     with db.transaction() as con:
         con.execute("UPDATE runs SET current_day=5 WHERE run_id=?", (rid,))
@@ -26,7 +26,7 @@ def test_low_stock_that_bridges_next_receipt_does_not_trigger(world):
         )
     projection = eng._project_household_grain_security("H-WIDOW", 5)
     assert projection["next_receipt_day"] == 7
-    assert projection["expected_receipt"] == 2.5
+    assert projection["expected_receipt"] == 3.36
     assert projection["first_shortfall_day"] is None
     eng.detect_situations(5)
     assert _shortfall_scene_for(db, rid, "H-WIDOW") is None

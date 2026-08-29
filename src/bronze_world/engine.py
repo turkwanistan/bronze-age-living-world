@@ -8,6 +8,10 @@ from typing import Any
 from .cognition import _build_packet, packet_hash
 from .db import WorldDB, canonical_json
 from .ids import stable_id
+from .lifeways import (
+    calendar_context, communal_feast_due, household_ritual_due, palace_labor_cycle_due,
+    role_activity, weekly_cycle_due,
+)
 
 
 @dataclass(frozen=True)
@@ -102,6 +106,19 @@ class WorldEngine:
         )
         return mid
 
+    def _ensure_relationship_pair(self, con, person_a: str, person_b: str, *, relationship_type: str = "exchange_contact") -> None:
+        """Create a modest first-contact relationship only when a consequential interaction requires one."""
+        for from_person,to_person in ((person_a,person_b),(person_b,person_a)):
+            rid = stable_id("REL", from_person, to_person)
+            con.execute(
+                "INSERT OR IGNORE INTO relationships("
+                "relationship_id,from_person_id,to_person_id,relationship_type,kin_degree,affection,trust,fear,respect,"
+                "status_difference,favors_given,favors_owed,conflicts,attributes_json,last_contact_day"
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (rid,from_person,to_person,relationship_type,None,.45,.55,.03,.55,0.0,0.0,0.0,0,
+                 canonical_json({"origin":"first consequential exchange interaction"}),self.day),
+            )
+
     def _adjust_relationship(self, con, from_person: str, to_person: str, *, trust: float = 0,
                              respect: float = 0, favors_given: float = 0, favors_owed: float = 0) -> dict[str, float]:
         row = con.execute(
@@ -117,6 +134,238 @@ class WorldEngine:
             (new_trust, new_respect, favors_given, favors_owed, self.day, from_person, to_person),
         )
         return {"trust": new_trust, "respect": new_respect, "favors_given_delta": favors_given, "favors_owed_delta": favors_owed}
+
+    def _calendar_start_day_of_year(self) -> int:
+        row = self.db.one(
+            "SELECT s.config_json FROM scenarios s JOIN runs r ON r.scenario_id=s.scenario_id "
+            "WHERE r.run_id=? ORDER BY s.scenario_version DESC LIMIT 1",
+            (self.run_id,),
+        )
+        if not row:
+            return 120
+        try:
+            return int(json.loads(row[0]).get("calendar", {}).get("start_day_of_year", 120))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return 120
+
+    def _seasonal_context(self, day: int) -> dict[str, Any]:
+        return calendar_context(day, start_day_of_year=self._calendar_start_day_of_year())
+
+    def _change_resource(self, con, household_id: str, resource: str, delta: float, *, assumption_id: str) -> float:
+        row = con.execute(
+            "SELECT amount,unit_label FROM resource_stocks WHERE household_id=? AND resource_type=?",
+            (household_id, resource),
+        ).fetchone()
+        current = float(row["amount"]) if row else 0.0
+        new_amount = current + float(delta)
+        if new_amount < -1e-9:
+            raise ValueError(f"negative resource transition:{household_id}:{resource}:{current}:{delta}")
+        new_amount = max(0.0, new_amount)
+        if row:
+            con.execute(
+                "UPDATE resource_stocks SET amount=? WHERE household_id=? AND resource_type=?",
+                (new_amount, household_id, resource),
+            )
+        else:
+            con.execute(
+                "INSERT INTO resource_stocks VALUES (?,?,?,?,?)",
+                (household_id, resource, new_amount, "abstract_fixture_unit", assumption_id),
+            )
+        return new_amount
+
+    def _apply_recurring_lifeways(self, con, day: int) -> None:
+        """Apply routine work/religion/port/institution cycles without cognition.
+
+        The shape of work is research-constrained; exact cadence and quantities are
+        explicitly fixture calibration. Consequential conflicts are detected after the
+        transaction and become sealed cognition jobs rather than being resolved here.
+        """
+        seasonal = self._seasonal_context(day)
+
+        # Resolve scheduled external trade exchanges. Silver left the household when the
+        # commitment was made; imported trade goods appear only after the modeled delay.
+        trade_due = con.execute(
+            "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_trade_exchange' "
+            "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+            (day,),
+        ).fetchall()
+        for o in trade_due:
+            provenance = json.loads(o["provenance_json"])
+            goods = float(provenance.get("trade_goods_amount", 0.0))
+            household_id = o["obligor_household_id"]
+            if household_id and goods > 0:
+                self._change_resource(con, household_id, "trade_goods", goods, assumption_id="ASM-FIXTURE-012")
+            con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?", (o["obligation_id"],))
+            eid = self._event(
+                con, day, "fixture_trade_exchange_completed", actors=[o["obligor_person_id"]] if o["obligor_person_id"] else [],
+                rules=["ASM-FIXTURE-012", "RULE-PORT-TRADE-CYCLE-001"],
+                material={household_id: {"trade_goods": goods}} if household_id and goods else {},
+                payload={"obligation_id": o["obligation_id"], "trade_goods_amount": goods,
+                         "notice": "abstract external exchange; no historical price/profit rate claimed"},
+                discriminator=o["obligation_id"],
+            )
+            if o["obligor_person_id"]:
+                self._memory(
+                    con, o["obligor_person_id"], day,
+                    f"The committed port exchange completed and brought {goods:g} trade_goods in fixture units.",
+                    event_id=eid, memory_type="trade", salience=.7, relationship_relevance=.35, goal_relevance=.8,
+                    provenance={"assumption_id": "ASM-FIXTURE-012"},
+                )
+
+        # A postponed palace labor request becomes routine once the intense agricultural
+        # bottleneck has passed. It remains an institutional obligation, not a magical
+        # disappearance of state demands.
+        if seasonal["agricultural_intensity"] < 0.85:
+            palace_due = con.execute(
+                "SELECT * FROM obligations WHERE status='active' AND obligation_type='palace_labor' "
+                "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+                (day,),
+            ).fetchall()
+            for o in palace_due:
+                con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?", (o["obligation_id"],))
+                eid = self._event(
+                    con, day, "palace_labor_completed", actors=[o["obligor_person_id"]] if o["obligor_person_id"] else [],
+                    rules=["ASM-FIXTURE-011", "RULE-SEASONAL-LABOR-CONFLICT-001"],
+                    institutions={"I-PALACE": {"labor_obligation": "fulfilled"}},
+                    payload={"obligation_id": o["obligation_id"], "seasonal_context": seasonal,
+                             "notice": "service cadence/duration are fixture mechanics; not a historical corvee rate"},
+                    discriminator=o["obligation_id"],
+                )
+                if o["obligor_person_id"]:
+                    self._memory(con, o["obligor_person_id"], day, "Completed the recorded palace labor obligation after the seasonal bottleneck.",
+                                 event_id=eid, memory_type="institutional_labor", salience=.7, relationship_relevance=.2, goal_relevance=.75,
+                                 provenance={"assumption_id": "ASM-FIXTURE-011"})
+
+        if weekly_cycle_due(day):
+            people = con.execute(
+                "SELECT p.person_id,p.display_name,hm.household_id FROM persons p "
+                "JOIN household_memberships hm USING(person_id) WHERE p.alive=1 AND p.available=1 AND hm.until_day IS NULL "
+                "ORDER BY p.person_id"
+            ).fetchall()
+            household_work: dict[str, list[dict[str, Any]]] = {}
+            for person in people:
+                roles = [r[0] for r in con.execute(
+                    "SELECT roles.name FROM roles JOIN person_roles USING(role_id) "
+                    "WHERE person_roles.person_id=? AND person_roles.end_day IS NULL ORDER BY person_roles.priority",
+                    (person["person_id"],),
+                ).fetchall()]
+                activities = [{"role": role, **role_activity(role, seasonal)} for role in roles]
+                household_work.setdefault(person["household_id"], []).append(
+                    {"person_id": person["person_id"], "roles": roles, "activities": activities}
+                )
+                material: dict[str, Any] = {}
+                # Material specialist chains: no free textiles or metalwork.
+                if "textile_worker" in roles:
+                    fiber = con.execute(
+                        "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='fiber'",
+                        (person["household_id"],),
+                    ).fetchone()
+                    if fiber and float(fiber[0]) >= 0.12:
+                        self._change_resource(con, person["household_id"], "fiber", -0.12, assumption_id="ASM-FIXTURE-009")
+                        self._change_resource(con, person["household_id"], "textile_goods", 0.08, assumption_id="ASM-FIXTURE-009")
+                        material = {person["household_id"]: {"fiber": -0.12, "textile_goods": 0.08}}
+                if "metal_craft_worker" in roles:
+                    metal = con.execute(
+                        "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='metal'",
+                        (person["household_id"],),
+                    ).fetchone()
+                    charcoal = con.execute(
+                        "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='charcoal'",
+                        (person["household_id"],),
+                    ).fetchone()
+                    if metal and charcoal and float(metal[0]) >= 0.15 and float(charcoal[0]) >= 0.20:
+                        self._change_resource(con, person["household_id"], "metal", -0.15, assumption_id="ASM-FIXTURE-009")
+                        self._change_resource(con, person["household_id"], "charcoal", -0.20, assumption_id="ASM-FIXTURE-009")
+                        self._change_resource(con, person["household_id"], "finished_metalwork", 0.08, assumption_id="ASM-FIXTURE-009")
+                        material = {person["household_id"]: {"metal": -0.15, "charcoal": -0.20, "finished_metalwork": 0.08}}
+                self._event(
+                    con, day, "occupation_work_cycle", actors=[person["person_id"]],
+                    rules=["ASM-FIXTURE-008", "ASM-FIXTURE-009", "RULE-OCCUPATION-WORKFLOW-001"],
+                    material=material,
+                    payload={"roles": roles, "activities": activities, "seasonal_context": seasonal},
+                    discriminator=person["person_id"],
+                )
+            for household_id, allocations in sorted(household_work.items()):
+                self._event(
+                    con, day, "household_labor_allocation", rules=["ASM-FIXTURE-008", "RULE-HOUSEHOLD-LABOR-ALLOCATION-001"],
+                    payload={"household_id": household_id, "seasonal_context": seasonal, "allocations": allocations},
+                    discriminator=household_id,
+                )
+
+            # A port is an occupational interface every week, even when no dramatic ship
+            # event happens. No cargo outcome or foreign partner is invented here.
+            self._event(
+                con, day, "port_market_cycle", actors=["P3", "P5", "P11", "P12"],
+                rules=["ASM-FIXTURE-012", "RULE-PORT-TRADE-CYCLE-001"],
+                institutions={"I-MARKET": {"routine_exchange": True}},
+                payload={"seasonal_context": seasonal,
+                         "activities": ["cargo/porter coordination", "market exchange", "accounting/records", "harbor information brokerage"],
+                         "notice": "recurring Ugaritic port-work model; exact transaction volume is unspecified"},
+                discriminator="weekly-port",
+            )
+
+        if household_ritual_due(day):
+            households = con.execute("SELECT household_id FROM households ORDER BY household_id").fetchall()
+            for h in households:
+                stock = con.execute(
+                    "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='ritual_goods'",
+                    (h["household_id"],),
+                ).fetchone()
+                if not stock or float(stock[0]) < 0.05:
+                    continue
+                self._change_resource(con, h["household_id"], "ritual_goods", -0.05, assumption_id="ASM-FIXTURE-010")
+                senior = con.execute(
+                    "SELECT p.person_id FROM persons p JOIN household_memberships hm USING(person_id) "
+                    "WHERE hm.household_id=? AND hm.until_day IS NULL AND p.alive=1 "
+                    "ORDER BY CASE hm.membership_role WHEN 'senior' THEN 0 ELSE 1 END,p.person_id LIMIT 1",
+                    (h["household_id"],),
+                ).fetchone()
+                actors = [senior[0]] if senior else []
+                eid = self._event(
+                    con, day, "household_ritual_observance", actors=actors,
+                    rules=["ASM-FIXTURE-010", "ASM-UGA-003", "RULE-RECURRING-HOUSEHOLD-RITUAL-001"],
+                    material={h["household_id"]: {"ritual_goods": -0.05}}, institutions={"I-SHRINE": {"household_cult": "observed"}},
+                    payload={"household_id": h["household_id"], "seasonal_context": seasonal,
+                             "notice": "recurring observance/cost cadence is fixture calibration; household religion itself is research-supported"},
+                    discriminator=h["household_id"],
+                )
+                if senior:
+                    self._memory(con, senior[0], day, "My household maintained its ordinary ritual observance.", event_id=eid,
+                                 memory_type="ritual_household", salience=.42, relationship_relevance=.15, goal_relevance=.45,
+                                 provenance={"assumption_id": "ASM-FIXTURE-010"})
+
+        if communal_feast_due(day, start_day_of_year=self._calendar_start_day_of_year()):
+            self._event(
+                con, day, "communal_feast_calendar_due", actors=["P9", "P10"],
+                rules=["ASM-FIXTURE-010", "RULE-COMMUNAL-FEAST-001"],
+                institutions={"I-SHRINE": {"communal_feast": "due"}},
+                payload={"seasonal_context": seasonal,
+                         "notice": "communal ritual/feasting is research-supported; exact date/contribution scale are fixture calibration"},
+                discriminator="communal-feast",
+            )
+
+        if palace_labor_cycle_due(day):
+            existing = con.execute(
+                "SELECT 1 FROM obligations WHERE obligation_type='palace_labor' AND json_extract(provenance_json,'$.cycle_day')=?",
+                (day,),
+            ).fetchone()
+            if not existing:
+                oid = stable_id("O", self.run_id, "palace_labor", "P13", day)
+                con.execute(
+                    "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (oid, "P13", "H-DEPEND", None, None, "palace_labor",
+                     "Palace administrative labor request recorded for Arhalbu's household.", day, "active",
+                     canonical_json({"assumption_id": "ASM-FIXTURE-011", "institution_id": "I-PALACE", "cycle_day": day,
+                                     "notice": "cadence/duration are fixture mechanics, not a historical corvee rate"})),
+                )
+                self._event(
+                    con, day, "palace_labor_requested", actors=["P13"],
+                    rules=["ASM-FIXTURE-011", "RULE-SEASONAL-LABOR-CONFLICT-001"],
+                    institutions={"I-PALACE": {"labor_request": "issued"}},
+                    payload={"obligation_id": oid, "seasonal_context": seasonal,
+                             "notice": "institutional labor is research-supported; exact request cadence is fixture calibration"},
+                    discriminator=oid,
+                )
 
     def advance(self, days: int, *, allow_unresolved: bool = False) -> int:
         """Advance up to ``days`` while no cognition job is unresolved.
@@ -168,6 +417,8 @@ class WorldEngine:
                             material={h["household_id"]: {"grain": receipt}},
                             payload={"notice": "abstract fixture unit"}, discriminator=h["household_id"],
                         )
+
+                self._apply_recurring_lifeways(con, target_day)
 
                 # Complete fixture outside-work commitments only after the agreed delay.
                 scheduled_work = con.execute(
@@ -562,8 +813,207 @@ class WorldEngine:
                             sid, "P2", ["request_water_access", "seek_mediation", "wait", "communicate"]
                         ))
 
+        # Communal ritual/feasting becomes a social/material decision for one
+        # non-specialist household rather than a free flavor event for everyone.
+        if self.db.one(
+            "SELECT 1 FROM events WHERE run_id=? AND day=? AND event_type='communal_feast_calendar_due'",
+            (self.run_id, day),
+        ):
+            sid = stable_id("SCENE", self.run_id, "communal_feast_contribution", day)
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                candidate = self.db.one(
+                    "SELECT p.person_id,p.current_place_id,hm.household_id,rg.amount AS ritual_goods,g.amount AS grain,"
+                    "COALESCE(rt.value,0)+COALESCE(st.value,0) AS social_ritual_salience "
+                    "FROM persons p JOIN household_memberships hm USING(person_id) "
+                    "JOIN resource_stocks rg ON rg.household_id=hm.household_id AND rg.resource_type='ritual_goods' "
+                    "JOIN resource_stocks g ON g.household_id=hm.household_id AND g.resource_type='grain' "
+                    "LEFT JOIN character_traits rt ON rt.person_id=p.person_id AND rt.trait_name='ritual_commitment' "
+                    "LEFT JOIN character_traits st ON st.person_id=p.person_id AND st.trait_name='status_sensitivity' "
+                    "WHERE hm.until_day IS NULL AND p.alive=1 AND p.available=1 AND hm.membership_role='senior' "
+                    "AND p.person_id NOT IN ('P9') AND rg.amount>=0.1 ORDER BY social_ritual_salience DESC,p.person_id LIMIT 1"
+                )
+                if candidate:
+                    seasonal = self._seasonal_context(day)
+                    stakes = {
+                        "situation_id": "SIT-008",
+                        "household_id": candidate["household_id"],
+                        "grain_available": float(candidate["grain"]),
+                        "ritual_goods_available": float(candidate["ritual_goods"]),
+                        "max_grain_contribution": 1.0,
+                        "max_ritual_goods_contribution": 0.5,
+                        "ritual_hosts": ["P9", "P10"],
+                        "seasonal_context": seasonal,
+                        "fixture_notice": "Communal ritual/feasting is research-supported; exact date and contribution quantities are ASM-FIXTURE-010 calibration.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute(
+                            "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (sid,self.run_id,day,candidate["current_place_id"],"religious","communal_feast_contribution",
+                             canonical_json(stakes),canonical_json({"household_resources_are_finite":True}),
+                             canonical_json({"participation_reputation":True,"contribution_is_not_forced":True}),
+                             canonical_json(["I-SHRINE"]),"open"),
+                        )
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,candidate["person_id"],"decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P9","ritual_host"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P10","ritual_host"))
+                    created.append(self.enqueue_job(sid,candidate["person_id"],["contribute_communal_feast","decline_feast_contribution","communicate","wait"]))
+
+        # Palace labor becomes a cognition boundary only while it collides with an
+        # ecological labor bottleneck. Outside that bottleneck it is completed by the
+        # deterministic institutional routine above.
+        seasonal = self._seasonal_context(day)
+        palace_due = self.db.all(
+            "SELECT * FROM obligations WHERE status='active' AND obligation_type='palace_labor' "
+            "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+            (day,),
+        )
+        if seasonal["agricultural_intensity"] >= 0.85:
+            for o in palace_due:
+                actor = self.db.one("SELECT current_place_id FROM persons WHERE person_id=? AND alive=1 AND available=1", (o["obligor_person_id"],))
+                if not actor:
+                    continue
+                doy = int(seasonal["day_of_year"])
+                days_to_lower_intensity = max(1, 180 - doy) if doy < 180 else 7
+                suggested = day + days_to_lower_intensity
+                sid = stable_id("SCENE", self.run_id, "institutional_labor_conflict", o["obligation_id"], o["due_day"])
+                if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                    stakes = {
+                        "situation_id": "SIT-009", "obligation_id": o["obligation_id"],
+                        "institution_id": "I-PALACE", "current_due_day": o["due_day"],
+                        "suggested_reschedule_day": suggested, "seasonal_context": seasonal,
+                        "fixture_notice": "Institutional labor is research-supported; cadence, service duration and rescheduling mechanism are ASM-FIXTURE-011 calibration.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute(
+                            "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (sid,self.run_id,day,actor["current_place_id"],"institutional","institutional_labor_conflict",
+                             canonical_json(stakes),canonical_json({"household_labor_bottleneck":seasonal["farm_activity"]}),
+                             canonical_json({"palace_obligation":True,"household_opportunity_cost":True}),
+                             canonical_json(["I-PALACE"]),"open"),
+                        )
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,o["obligor_person_id"],"decision_actor"))
+                    created.append(self.enqueue_job(sid,o["obligor_person_id"],["accept_palace_labor","reschedule_palace_labor","seek_mediation"]))
+
+        # Recurrent port activity becomes a material commitment decision only after the
+        # merchant has already experienced the information-provenance chain.
+        if day >= 42 and day % 28 == 14 and self.db.one(
+            "SELECT 1 FROM events WHERE run_id=? AND day=? AND event_type='port_market_cycle'", (self.run_id,day)
+        ):
+            cycle = day // 28
+            sid = stable_id("SCENE",self.run_id,"port_trade_opportunity","P3",cycle)
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,)):
+                actor = self.db.one("SELECT current_place_id FROM persons WHERE person_id='P3' AND alive=1 AND available=1")
+                silver = self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-MERCH' AND resource_type='silver'")
+                if actor and silver is not None and float(silver) >= 0.25:
+                    stakes = {
+                        "situation_id":"SIT-010","trade_cycle":cycle,"silver_available":float(silver),
+                        "max_silver_commitment":0.5,"transit_days":7,"exchange_goods_ratio":1.0,
+                        "contacts":["P11","P12"],"seasonal_context":seasonal,
+                        "fixture_notice":"Exchange amount, ratio and delay are ASM-FIXTURE-012 calibration; the Ugaritic port/trade/credit interface is research-supported.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                    (sid,self.run_id,day,actor["current_place_id"],"economic","port_trade_opportunity",
+                                     canonical_json(stakes),canonical_json({"capital_at_risk":True,"transport_delay":7}),
+                                     canonical_json({"trust_credit_and_information_matter":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P3","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P11","harbor_contact"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P12","market_contact"))
+                    created.append(self.enqueue_job(sid,"P3",["commit_trade_exchange","send_message","wait"]))
+
+        # Workshop supply pressure emerges from the material workflow consuming metal.
+        craft_metal = self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='metal'")
+        if craft_metal is not None and float(craft_metal) < 0.31:
+            prior_craft_scene = self.db.one(
+                "SELECT scene_id FROM scenes WHERE run_id=? AND trigger_type='craft_supply_pressure' ORDER BY day DESC,scene_id DESC LIMIT 1",
+                (self.run_id,),
+            )
+            # Preserve the first accepted episode ID for replay compatibility; later low-stock
+            # episodes are bucketed so replenishment can matter and a new shortage can recur.
+            sid = (stable_id("SCENE",self.run_id,"craft_supply_pressure","H-CRAFT","metal")
+                   if not prior_craft_scene
+                   else stable_id("SCENE",self.run_id,"craft_supply_pressure","H-CRAFT","metal",day // 14))
+            if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,)):
+                actor = self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                supplier = self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-MERCH' AND resource_type='metal'")
+                if actor and supplier is not None and float(supplier) > 0:
+                    stakes = {
+                        "situation_id":"SIT-011","resource":"metal","current_amount":float(craft_metal),
+                        "next_cycle_need":0.15,"known_supplier_person_id":"P3","known_supplier_household_id":"H-MERCH",
+                        "supplier_stock_visible_as_market_availability":float(supplier),
+                        "fixture_notice":"Material amounts are ASM-FIXTURE-009 calibration; metal/fuel dependency, recycling and specialist vulnerability are research-supported.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                    (sid,self.run_id,day,actor["current_place_id"],"economic","craft_supply_pressure",
+                                     canonical_json(stakes),canonical_json({"metal_needed_for_next_cycle":0.15}),
+                                     canonical_json({"specialist_dependency":True,"market_or_patron_help_possible":True}),
+                                     canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P3","known_supplier"))
+                    created.append(self.enqueue_job(sid,"P7",["request_resource","communicate","wait"]))
+
+        # Let an open reciprocal exchange close through later occupational output.
+        # The obligation is qualitative social credit, not a priced debt: the suggested
+        # return is a bounded opportunity to reciprocate, not a claimed exchange rate.
+        reciprocal = self.db.all(
+            "SELECT * FROM obligations WHERE status='active' AND obligation_type='reciprocal_exchange' ORDER BY obligation_id"
+        )
+        for o in reciprocal:
+            provenance = json.loads(o["provenance_json"])
+            origin_scene_id = provenance.get("origin_scene_id")
+            origin_scene = self.db.one("SELECT day FROM scenes WHERE scene_id=?", (origin_scene_id,)) if origin_scene_id else None
+            if not origin_scene or day - int(origin_scene["day"]) < 30:
+                continue
+            actor_id = o["obligor_person_id"]
+            beneficiary = o["beneficiary_person_id"]
+            actor_household = o["obligor_household_id"]
+            beneficiary_household = o["beneficiary_household_id"]
+            # Current first implementation uses the craft household's actual accumulated
+            # output; other occupation-specific return forms can be added when evidence
+            # and workflows require them.
+            finished = self.db.scalar(
+                "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='finished_metalwork'",
+                (actor_household,),
+            )
+            if finished is None or float(finished) < 0.3:
+                continue
+            actor = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?", (actor_id,))
+            if not actor or not actor["alive"] or not actor["available"]:
+                continue
+            sid = stable_id("SCENE", self.run_id, "reciprocal_return_opportunity", o["obligation_id"])
+            if self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                continue
+            stakes = {
+                "situation_id": "SIT-012",
+                "obligation_id": o["obligation_id"],
+                "beneficiary_person_id": beneficiary,
+                "beneficiary_household_id": beneficiary_household,
+                "suggested_resource": "finished_metalwork",
+                "suggested_amount": 0.3,
+                "available_finished_metalwork": float(finished),
+                "origin_scene_id": origin_scene_id,
+                "fixture_notice": "The reciprocal obligation is socially causal; 30-day review timing and 0.3 finished-metalwork return are ASM-FIXTURE-015 calibration, not a historical price/equivalence claim.",
+            }
+            with self.db.transaction() as con:
+                con.execute(
+                    "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (sid,self.run_id,day,actor["current_place_id"],"economic","reciprocal_return_opportunity",
+                     canonical_json(stakes),canonical_json({"available_finished_metalwork":float(finished)}),
+                     canonical_json({"reciprocity":True,"return_is_optional":True,"not_fixed_price_debt":True}),
+                     canonical_json(["I-MARKET"]),"open"),
+                )
+                con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,actor_id,"decision_actor"))
+                if beneficiary:
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,beneficiary,"beneficiary"))
+                self._event(
+                    con,day,"reciprocal_return_opportunity",scene_id=sid,actors=[x for x in [actor_id,beneficiary] if x],
+                    rules=["ASM-FIXTURE-015","RULE-RECIPROCAL-SOCIAL-CREDIT-001"],payload=stakes,discriminator=sid,
+                )
+            created.append(self.enqueue_job(sid,actor_id,["transfer_resource","communicate","wait"]))
+
         obligations = self.db.all(
-            "SELECT * FROM obligations WHERE status='active' AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+            "SELECT * FROM obligations WHERE status='active' AND obligation_type!='palace_labor' AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
             (day,),
         )
         for o in obligations:
@@ -718,6 +1168,11 @@ class WorldEngine:
                 social_target = action.get("social_target_person_id")
                 if social_target and self._household_for_person(social_target) != target:
                     errors.append(f"action_{i}:social_target_not_in_target_household")
+                if action.get("create_reciprocal_obligation"):
+                    if packet.get("scene", {}).get("trigger") != "resource_request":
+                        errors.append(f"action_{i}:reciprocal_obligation_requires_resource_request")
+                    if not social_target:
+                        errors.append(f"action_{i}:reciprocal_obligation_requires_social_target")
                 obligation_id = action.get("fulfills_obligation_id")
                 if obligation_id:
                     obligation = self.db.one("SELECT * FROM obligations WHERE obligation_id=?", (obligation_id,))
@@ -842,6 +1297,56 @@ class WorldEngine:
                     errors.append(f"action_{i}:invalid_water_requester")
                 if actor_household != stakes.get("access_holder_household_id"):
                     errors.append(f"action_{i}:grantor_household_mismatch")
+            elif typ == "contribute_communal_feast":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "communal_feast_contribution":
+                    errors.append(f"action_{i}:invalid_scene_for_feast_contribution")
+                grain = action.get("grain_amount", 0)
+                ritual = action.get("ritual_goods_amount", 0)
+                if not isinstance(grain, (int, float)) or not isinstance(ritual, (int, float)) or grain < 0 or ritual < 0 or grain + ritual <= 0:
+                    errors.append(f"action_{i}:invalid_contribution_amount")
+                else:
+                    if grain > float(stakes.get("max_grain_contribution", 0)) + 1e-9 or ritual > float(stakes.get("max_ritual_goods_contribution", 0)) + 1e-9:
+                        errors.append(f"action_{i}:contribution_exceeds_scene_limit")
+                    for resource, amount in (("grain", grain), ("ritual_goods", ritual)):
+                        if amount <= 0:
+                            continue
+                        stock = self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type=?", (actor_household, resource)) if actor_household else None
+                        if not stock or amount > float(stock["amount"]) + 1e-9:
+                            errors.append(f"action_{i}:insufficient_{resource}")
+            elif typ == "decline_feast_contribution":
+                if packet.get("scene", {}).get("trigger") != "communal_feast_contribution":
+                    errors.append(f"action_{i}:invalid_scene_for_feast_decline")
+            elif typ == "accept_palace_labor":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "institutional_labor_conflict":
+                    errors.append(f"action_{i}:invalid_scene_for_palace_labor")
+                obligation = self.db.one("SELECT * FROM obligations WHERE obligation_id=?", (action.get("obligation_id"),))
+                if not obligation or obligation["status"] != "active" or obligation["obligation_type"] != "palace_labor" or obligation["obligor_person_id"] != job["actor_person_id"]:
+                    errors.append(f"action_{i}:invalid_palace_labor_obligation")
+                if action.get("obligation_id") != stakes.get("obligation_id"):
+                    errors.append(f"action_{i}:palace_labor_obligation_mismatch")
+            elif typ == "reschedule_palace_labor":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "institutional_labor_conflict":
+                    errors.append(f"action_{i}:invalid_scene_for_palace_reschedule")
+                obligation = self.db.one("SELECT * FROM obligations WHERE obligation_id=?", (action.get("obligation_id"),))
+                if not obligation or obligation["status"] != "active" or obligation["obligation_type"] != "palace_labor" or obligation["obligor_person_id"] != job["actor_person_id"]:
+                    errors.append(f"action_{i}:invalid_palace_labor_obligation")
+                requested = action.get("new_due_day")
+                if requested != stakes.get("suggested_reschedule_day"):
+                    errors.append(f"action_{i}:invalid_palace_reschedule_day")
+            elif typ == "commit_trade_exchange":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "port_trade_opportunity":
+                    errors.append(f"action_{i}:invalid_scene_for_trade_commitment")
+                amount = action.get("silver_amount")
+                if not isinstance(amount, (int, float)) or amount <= 0 or amount > float(stakes.get("max_silver_commitment", 0)) + 1e-9:
+                    errors.append(f"action_{i}:invalid_trade_silver_amount")
+                else:
+                    stock = self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='silver'", (actor_household,)) if actor_household else None
+                    if not stock or amount > float(stock["amount"]) + 1e-9:
+                        errors.append(f"action_{i}:insufficient_trade_silver")
             elif typ == "send_message":
                 target_person = action.get("target_person_id")
                 if target_person == job["actor_person_id"]:
@@ -985,16 +1490,21 @@ class WorldEngine:
                     relationship_delta: dict[str, Any] = {}
                     target_person = action.get("social_target_person_id")
                     obligation_id = action.get("fulfills_obligation_id")
+                    if target_person and scene["trigger_type"] == "resource_request":
+                        self._ensure_relationship_pair(con, actor_id, target_person, relationship_type="exchange_contact")
                     if obligation_id:
                         obligation = con.execute("SELECT * FROM obligations WHERE obligation_id=?", (obligation_id,)).fetchone()
                         con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?", (obligation_id,))
                         target_person = obligation["beneficiary_person_id"] or target_person
                         if target_person:
+                            reciprocal_return = obligation["obligation_type"] == "reciprocal_exchange"
                             relationship_delta[f"{actor_id}->{target_person}"] = self._adjust_relationship(
-                                con, actor_id, target_person, trust=.03, respect=.01
+                                con, actor_id, target_person, trust=.03, respect=.01,
+                                favors_owed=-1 if reciprocal_return else 0
                             )
                             relationship_delta[f"{target_person}->{actor_id}"] = self._adjust_relationship(
-                                con, target_person, actor_id, trust=.04, respect=.02
+                                con, target_person, actor_id, trust=.04, respect=.02,
+                                favors_given=-1 if reciprocal_return else 0
                             )
                     elif target_person:
                         relationship_delta[f"{actor_id}->{target_person}"] = self._adjust_relationship(
@@ -1003,23 +1513,47 @@ class WorldEngine:
                         relationship_delta[f"{target_person}->{actor_id}"] = self._adjust_relationship(
                             con, target_person, actor_id, trust=.02, favors_owed=1
                         )
+                    reciprocal_obligation_id = None
+                    if action.get("create_reciprocal_obligation") and target_person:
+                        reciprocal_obligation_id = stable_id("O", self.run_id, "reciprocal_exchange", decision_id, idx)
+                        description = action.get("reciprocal_obligation_description") or (
+                            f"{target_person} and household owe a future reciprocal return for {amount:g} {resource} supplied by {actor_id}."
+                        )
+                        con.execute(
+                            "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                            (reciprocal_obligation_id,target_person,target,actor_id,actor_household,"reciprocal_exchange",
+                             description,None,"active",canonical_json({
+                                 "assumption_id":"ASM-FIXTURE-013",
+                                 "rule_id":"RULE-RECIPROCAL-SOCIAL-CREDIT-001",
+                                 "origin_scene_id":job["scene_id"],
+                                 "notice":"Open-ended reciprocal social credit; no historical price, interest, or maturity rate claimed."
+                             })),
+                        )
+                    transfer_payload = {"action_id": aid, "fulfills_obligation_id": obligation_id}
+                    if reciprocal_obligation_id:
+                        transfer_payload["reciprocal_obligation_id"] = reciprocal_obligation_id
                     eid = self._event(
                         con, day, "resource_transfer", scene_id=job["scene_id"], decision_id=decision_id,
                         actors=[actor_id] + ([target_person] if target_person else []), causes=causes,
-                        knowledge=envelope.get("decisive_knowledge_or_belief_ids", []), rules=["RULE-ATOMIC-EVENT-001"],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["RULE-ATOMIC-EVENT-001"] + (["ASM-FIXTURE-013", "RULE-RECIPROCAL-SOCIAL-CREDIT-001"] if reciprocal_obligation_id else []),
                         material={actor_household: {resource: -amount}, target: {resource: amount}},
                         relationships=relationship_delta,
-                        payload={"action_id": aid, "fulfills_obligation_id": obligation_id}, discriminator=aid,
+                        payload=transfer_payload, discriminator=aid,
                     )
                     self._memory(
                         con, actor_id, day, f"Transferred {amount:g} {resource} to {target}.", event_id=eid,
                         memory_type="resource_exchange", salience=.72, relationship_relevance=.7, goal_relevance=.7,
                     )
                     if target_person:
+                        target_summary = f"{actor_id} transferred {amount:g} {resource} to my household."
+                        if reciprocal_obligation_id:
+                            target_summary += " I now carry an open reciprocal obligation for that support."
                         self._memory(
-                            con, target_person, day, f"{actor_id} transferred {amount:g} {resource} to my household.",
-                            event_id=eid, memory_type="resource_exchange", salience=.78,
-                            relationship_relevance=.85, goal_relevance=.6,
+                            con, target_person, day, target_summary,
+                            event_id=eid, memory_type="resource_exchange", salience=.82 if reciprocal_obligation_id else .78,
+                            relationship_relevance=.9 if reciprocal_obligation_id else .85, goal_relevance=.7 if reciprocal_obligation_id else .6,
+                            provenance={"reciprocal_obligation_id":reciprocal_obligation_id} if reciprocal_obligation_id else {},
                         )
 
                 elif typ == "perform_ritual":
@@ -1327,6 +1861,114 @@ class WorldEngine:
                         event_id=eid, memory_type="water_access", salience=.82, relationship_relevance=.9, goal_relevance=.82,
                         provenance={"assumption_id": "ASM-FIXTURE-007"},
                     )
+
+                elif typ == "contribute_communal_feast":
+                    grain = float(action.get("grain_amount", 0))
+                    ritual = float(action.get("ritual_goods_amount", 0))
+                    material: dict[str, Any] = {actor_household: {}}
+                    if grain > 0:
+                        self._change_resource(con, actor_household, "grain", -grain, assumption_id="ASM-FIXTURE-010")
+                        material[actor_household]["grain"] = -grain
+                    if ritual > 0:
+                        self._change_resource(con, actor_household, "ritual_goods", -ritual, assumption_id="ASM-FIXTURE-010")
+                        material[actor_household]["ritual_goods"] = -ritual
+                    eid = self._event(
+                        con, day, "communal_feast_contribution", scene_id=job["scene_id"], decision_id=decision_id,
+                        actors=[actor_id,"P9","P10"], knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-010","RULE-COMMUNAL-FEAST-001"], material=material,
+                        institutions={"I-SHRINE":{"communal_feast":"contributed"}},
+                        payload={"action_id":aid,"grain_amount":grain,"ritual_goods_amount":ritual,
+                                 "reason":action.get("reason")}, discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,
+                                 f"Contributed {grain:g} grain and {ritual:g} ritual_goods to the communal rite/feast.",
+                                 event_id=eid,memory_type="communal_ritual",salience=.78,relationship_relevance=.65,goal_relevance=.68,
+                                 provenance={"assumption_id":"ASM-FIXTURE-010"})
+                    for host in ("P9","P10"):
+                        self._memory(con,host,day,
+                                     f"{actor_id}'s household contributed to the communal rite/feast.",
+                                     event_id=eid,memory_type="communal_ritual",salience=.58,relationship_relevance=.62,goal_relevance=.55,
+                                     provenance={"assumption_id":"ASM-FIXTURE-010"})
+
+                elif typ == "decline_feast_contribution":
+                    eid = self._event(
+                        con,day,"communal_feast_contribution_declined",scene_id=job["scene_id"],decision_id=decision_id,
+                        actors=[actor_id,"P9","P10"],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-010","RULE-COMMUNAL-FEAST-001"],
+                        institutions={"I-SHRINE":{"communal_feast":"declined_contribution"}},
+                        payload={"action_id":aid,"reason":action.get("reason")},discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,f"Declined a material contribution to the communal rite/feast: {action.get('reason','household priorities')}.",
+                                 event_id=eid,memory_type="communal_ritual",salience=.66,relationship_relevance=.58,goal_relevance=.72,
+                                 provenance={"assumption_id":"ASM-FIXTURE-010"})
+                    for host in ("P9","P10"):
+                        self._memory(con,host,day,f"{actor_id}'s household did not make a material contribution to the communal rite/feast.",
+                                     event_id=eid,memory_type="communal_ritual",salience=.5,relationship_relevance=.58,goal_relevance=.45,
+                                     provenance={"assumption_id":"ASM-FIXTURE-010"})
+
+                elif typ == "accept_palace_labor":
+                    oid = action["obligation_id"]
+                    con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?",(oid,))
+                    eid = self._event(
+                        con,day,"palace_labor_accepted",scene_id=job["scene_id"],decision_id=decision_id,
+                        actors=[actor_id],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-011","RULE-SEASONAL-LABOR-CONFLICT-001"],
+                        institutions={"I-PALACE":{"labor_obligation":"fulfilled_during_bottleneck"}},
+                        payload={"action_id":aid,"obligation_id":oid,"seasonal_context":scene_stakes.get("seasonal_context"),
+                                 "reason":action.get("reason")},discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,"Accepted and completed the palace labor demand despite the household seasonal labor conflict.",
+                                 event_id=eid,memory_type="institutional_labor",salience=.82,relationship_relevance=.25,goal_relevance=.88,
+                                 provenance={"assumption_id":"ASM-FIXTURE-011"})
+
+                elif typ == "reschedule_palace_labor":
+                    oid = action["obligation_id"]
+                    new_due = int(action["new_due_day"])
+                    con.execute("UPDATE obligations SET due_day=? WHERE obligation_id=?",(new_due,oid))
+                    eid = self._event(
+                        con,day,"palace_labor_rescheduled",scene_id=job["scene_id"],decision_id=decision_id,
+                        actors=[actor_id],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-011","RULE-SEASONAL-LABOR-CONFLICT-001"],
+                        institutions={"I-PALACE":{"labor_obligation":"rescheduled_fixture"}},
+                        payload={"action_id":aid,"obligation_id":oid,"new_due_day":new_due,
+                                 "reason":action.get("reason"),"notice":"rescheduling is a bounded fixture mechanism, not a reconstructed Ugaritic administrative procedure"},
+                        discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,f"Moved the recorded palace labor obligation to day {new_due} so the household can pass the current seasonal bottleneck.",
+                                 event_id=eid,memory_type="institutional_labor",salience=.84,relationship_relevance=.3,goal_relevance=.9,
+                                 provenance={"assumption_id":"ASM-FIXTURE-011"})
+
+                elif typ == "commit_trade_exchange":
+                    amount = float(action["silver_amount"])
+                    transit_days = int(scene_stakes.get("transit_days",7))
+                    goods_ratio = float(scene_stakes.get("exchange_goods_ratio",1.0))
+                    goods = amount * goods_ratio
+                    self._change_resource(con,actor_household,"silver",-amount,assumption_id="ASM-FIXTURE-012")
+                    oid = stable_id("O",self.run_id,"fixture_trade_exchange",decision_id,idx)
+                    con.execute(
+                        "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid,actor_id,actor_household,None,None,"fixture_trade_exchange",
+                         "Committed weighed-metal trade capital to a delayed port exchange.",day+transit_days,"scheduled",
+                         canonical_json({"assumption_id":"ASM-FIXTURE-012","rule_id":"RULE-PORT-TRADE-CYCLE-001",
+                                         "silver_amount":amount,"trade_goods_amount":goods,"trade_cycle":scene_stakes.get("trade_cycle"),
+                                         "notice":"amount/ratio/delay are engineering calibration, not a historical price or profit rate"})),
+                    )
+                    rel = {"P3->P11":self._adjust_relationship(con,"P3","P11",trust=.01)} if actor_id=="P3" else {}
+                    eid = self._event(
+                        con,day,"trade_exchange_committed",scene_id=job["scene_id"],decision_id=decision_id,
+                        actors=[actor_id,"P11"],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-012","RULE-PORT-TRADE-CYCLE-001"],
+                        material={actor_household:{"silver":-amount}},relationships=rel,
+                        institutions={"I-MARKET":{"delayed_exchange":"committed"}},
+                        payload={"action_id":aid,"obligation_id":oid,"silver_amount":amount,"expected_trade_goods":goods,
+                                 "arrival_day":day+transit_days,"declared_basis":action.get("reason")},discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,f"Committed {amount:g} silver in fixture units to a delayed port exchange due on day {day+transit_days}.",
+                                 event_id=eid,memory_type="trade",salience=.8,relationship_relevance=.45,goal_relevance=.9,
+                                 provenance={"assumption_id":"ASM-FIXTURE-012"})
+                    self._memory(con,"P11",day,f"{actor_id} committed trade capital through the current port cycle.",
+                                 event_id=eid,memory_type="trade",salience=.55,relationship_relevance=.55,goal_relevance=.5,
+                                 provenance={"assumption_id":"ASM-FIXTURE-012"})
 
                 elif typ == "send_message":
                     target = action["target_person_id"]
