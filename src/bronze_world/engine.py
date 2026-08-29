@@ -120,9 +120,10 @@ class WorldEngine:
             )
 
     def _adjust_relationship(self, con, from_person: str, to_person: str, *, trust: float = 0,
-                             respect: float = 0, favors_given: float = 0, favors_owed: float = 0) -> dict[str, float]:
+                             respect: float = 0, favors_given: float = 0, favors_owed: float = 0,
+                             conflicts: int = 0) -> dict[str, float]:
         row = con.execute(
-            "SELECT trust,respect,favors_given,favors_owed FROM relationships WHERE from_person_id=? AND to_person_id=?",
+            "SELECT trust,respect,favors_given,favors_owed,conflicts FROM relationships WHERE from_person_id=? AND to_person_id=?",
             (from_person, to_person),
         ).fetchone()
         if not row:
@@ -130,10 +131,28 @@ class WorldEngine:
         new_trust = max(0.0, min(1.0, float(row[0]) + trust))
         new_respect = max(0.0, min(1.0, float(row[1]) + respect))
         con.execute(
-            "UPDATE relationships SET trust=?,respect=?,favors_given=favors_given+?,favors_owed=favors_owed+?,last_contact_day=? WHERE from_person_id=? AND to_person_id=?",
-            (new_trust, new_respect, favors_given, favors_owed, self.day, from_person, to_person),
+            "UPDATE relationships SET trust=?,respect=?,favors_given=favors_given+?,favors_owed=favors_owed+?,"
+            "conflicts=MAX(0,conflicts+?),last_contact_day=? WHERE from_person_id=? AND to_person_id=?",
+            (new_trust, new_respect, favors_given, favors_owed, int(conflicts), self.day, from_person, to_person),
         )
-        return {"trust": new_trust, "respect": new_respect, "favors_given_delta": favors_given, "favors_owed_delta": favors_owed}
+        return {"trust": new_trust, "respect": new_respect, "favors_given_delta": favors_given,
+                "favors_owed_delta": favors_owed, "conflicts_delta": int(conflicts)}
+
+    def _active_household_reserve_floor(self, household_id: str, resource: str) -> float | None:
+        rows = self.db.all(
+            "SELECT provenance_json FROM obligations WHERE status='active' "
+            "AND obligation_type='household_reserve_commitment' AND obligor_household_id=? ORDER BY obligation_id",
+            (household_id,),
+        )
+        floors: list[float] = []
+        for row in rows:
+            try:
+                provenance = json.loads(row["provenance_json"])
+            except json.JSONDecodeError:
+                continue
+            if provenance.get("resource") == resource and isinstance(provenance.get("reserve_floor"), (int, float)):
+                floors.append(float(provenance["reserve_floor"]))
+        return max(floors) if floors else None
 
     def _calendar_start_day_of_year(self) -> int:
         row = self.db.one(
@@ -150,6 +169,18 @@ class WorldEngine:
 
     def _seasonal_context(self, day: int) -> dict[str, Any]:
         return calendar_context(day, start_day_of_year=self._calendar_start_day_of_year())
+
+    def _next_lower_agricultural_intensity_day(self, day: int, *, threshold: float = 0.85) -> int:
+        """Find the next calendar day whose modeled agricultural intensity is below threshold.
+
+        This intentionally walks the scenario calendar rather than assuming every labor
+        bottleneck ends at the cereal-harvest boundary. Exact phase lengths remain
+        ASM-FIXTURE-008 calibration.
+        """
+        for offset in range(1, 361):
+            if float(self._seasonal_context(day + offset)["agricultural_intensity"]) < float(threshold):
+                return day + offset
+        raise RuntimeError("seasonal_calendar_has_no_lower_intensity_day")
 
     def _change_resource(self, con, household_id: str, resource: str, delta: float, *, assumption_id: str) -> float:
         row = con.execute(
@@ -278,6 +309,20 @@ class WorldEngine:
                         self._change_resource(con, person["household_id"], "charcoal", -0.20, assumption_id="ASM-FIXTURE-009")
                         self._change_resource(con, person["household_id"], "finished_metalwork", 0.08, assumption_id="ASM-FIXTURE-009")
                         material = {person["household_id"]: {"metal": -0.15, "charcoal": -0.20, "finished_metalwork": 0.08}}
+                elif "recognized_craft_worker" in roles:
+                    metal = con.execute(
+                        "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='metal'",
+                        (person["household_id"],),
+                    ).fetchone()
+                    charcoal = con.execute(
+                        "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='charcoal'",
+                        (person["household_id"],),
+                    ).fetchone()
+                    if metal and charcoal and float(metal[0]) >= 0.08 and float(charcoal[0]) >= 0.10:
+                        self._change_resource(con, person["household_id"], "metal", -0.08, assumption_id="ASM-FIXTURE-017")
+                        self._change_resource(con, person["household_id"], "charcoal", -0.10, assumption_id="ASM-FIXTURE-017")
+                        self._change_resource(con, person["household_id"], "finished_metalwork", 0.04, assumption_id="ASM-FIXTURE-017")
+                        material = {person["household_id"]: {"metal": -0.08, "charcoal": -0.10, "finished_metalwork": 0.04}}
                 self._event(
                     con, day, "occupation_work_cycle", actors=[person["person_id"]],
                     rules=["ASM-FIXTURE-008", "ASM-FIXTURE-009", "RULE-OCCUPATION-WORKFLOW-001"],
@@ -872,9 +917,7 @@ class WorldEngine:
                 actor = self.db.one("SELECT current_place_id FROM persons WHERE person_id=? AND alive=1 AND available=1", (o["obligor_person_id"],))
                 if not actor:
                     continue
-                doy = int(seasonal["day_of_year"])
-                days_to_lower_intensity = max(1, 180 - doy) if doy < 180 else 7
-                suggested = day + days_to_lower_intensity
+                suggested = self._next_lower_agricultural_intensity_day(day, threshold=.85)
                 sid = stable_id("SCENE", self.run_id, "institutional_labor_conflict", o["obligation_id"], o["due_day"])
                 if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
                     stakes = {
@@ -894,6 +937,97 @@ class WorldEngine:
                         con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,o["obligor_person_id"],"decision_actor"))
                     created.append(self.enqueue_job(sid,o["obligor_person_id"],["accept_palace_labor","reschedule_palace_labor","seek_mediation"]))
 
+        # Household strategy can become a real constraint on an individual's recurring
+        # occupational choices. After repeated successful trade cycles, the lower-risk
+        # household account partner can ask the merchant to preserve a silver reserve.
+        # The timing/floor are fixture calibration; the negotiation and later constraint
+        # are canonical social consequences rather than flavor text.
+        if day >= 91:
+            completed_trades = int(self.db.scalar(
+                "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='fixture_trade_exchange_completed'",
+                (self.run_id,),
+            ) or 0)
+            active_reserve = self._active_household_reserve_floor("H-MERCH", "silver")
+            p3_risk = self.db.scalar("SELECT value FROM character_traits WHERE person_id='P3' AND trait_name='risk_tolerance'")
+            p4_risk = self.db.scalar("SELECT value FROM character_traits WHERE person_id='P4' AND trait_name='risk_tolerance'")
+            if completed_trades >= 2 and active_reserve is None and p3_risk is not None and p4_risk is not None \
+                    and float(p3_risk) - float(p4_risk) >= 0.15:
+                sid = stable_id("SCENE", self.run_id, "household_trade_reserve_priority", "H-MERCH")
+                if not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?", (sid,)):
+                    actor = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P4'")
+                    silver = self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-MERCH' AND resource_type='silver'")
+                    if actor and actor["alive"] and actor["available"] and silver is not None:
+                        proposed_floor = max(0.0, round(float(silver) - 0.5, 2))
+                        stakes = {
+                            "situation_id": "SIT-013", "requester_person_id": "P4", "merchant_person_id": "P3",
+                            "household_id": "H-MERCH", "resource": "silver", "current_amount": float(silver),
+                            "completed_trade_exchanges": completed_trades, "proposed_reserve_floor": proposed_floor,
+                            "fixture_notice": "The reserve-review threshold and floor are ASM-FIXTURE-016 calibration; household strategy constraining individual trade exposure is the modeled social mechanism.",
+                        }
+                        with self.db.transaction() as con:
+                            con.execute(
+                                "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (sid,self.run_id,day,actor["current_place_id"],"household","household_trade_reserve_priority",
+                                 canonical_json(stakes),canonical_json({"silver_available":float(silver)}),
+                                 canonical_json({"private_negotiation_first":True,"household_resource_strategy":True}),
+                                 canonical_json(["I-MEDIATION"]),"open"),
+                            )
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P4","decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P3","household_trade_actor"))
+                            self._event(
+                                con,day,"household_resource_priority_raised",scene_id=sid,actors=["P4","P3"],
+                                rules=["ASM-FIXTURE-016","RULE-HOUSEHOLD-RESOURCE-PRIORITY-001"],payload=stakes,discriminator=sid,
+                            )
+                        created.append(self.enqueue_job(sid,"P4",["request_household_reserve_agreement","communicate","wait"]))
+
+        # Apprenticeship progression is based on accumulated work history rather than a
+        # random birthday. The first implementation is deliberately modest: recognition
+        # inside the same workshop/household, not a universal claim about Ugaritic legal
+        # emancipation, guild rank, or apprenticeship duration.
+        if day >= 91:
+            apprentice_role = self.db.one(
+                "SELECT pr.start_day FROM person_roles pr JOIN roles r USING(role_id) "
+                "WHERE pr.person_id='P8' AND r.name='craft_apprentice' AND pr.end_day IS NULL ORDER BY pr.start_day LIMIT 1"
+            )
+            prior_progression = self.db.one(
+                "SELECT 1 FROM scenes WHERE run_id=? AND trigger_type IN ('apprenticeship_progression_review','apprenticeship_progression_request') LIMIT 1",
+                (self.run_id,),
+            )
+            work_cycles = int(self.db.scalar(
+                "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='occupation_work_cycle' "
+                "AND actor_ids_json LIKE '%P8%' AND payload_json LIKE '%craft_apprentice%'",
+                (self.run_id,),
+            ) or 0)
+            finished = self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='finished_metalwork'")
+            if apprentice_role and not prior_progression and day - int(apprentice_role["start_day"]) >= 91 \
+                    and work_cycles >= 12 and finished is not None and float(finished) >= 0.6:
+                sid = stable_id("SCENE", self.run_id, "apprenticeship_progression_review", "P8")
+                apprentice = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P8'")
+                master = self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P7'")
+                if apprentice and master and apprentice["alive"] and apprentice["available"] and master["alive"] and master["available"]:
+                    stakes = {
+                        "situation_id":"SIT-014","apprentice_person_id":"P8","master_person_id":"P7",
+                        "work_cycles_as_apprentice":work_cycles,"apprenticeship_days":day-int(apprentice_role["start_day"]),
+                        "household_finished_metalwork":float(finished),
+                        "proposed_recognition":"recognized_craft_worker",
+                        "fixture_notice":"Eligibility timing and production threshold are ASM-FIXTURE-017 calibration; progression is workshop recognition, not a reconstructed Ugaritic legal rank or universal apprenticeship duration.",
+                    }
+                    with self.db.transaction() as con:
+                        con.execute(
+                            "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (sid,self.run_id,day,apprentice["current_place_id"],"household","apprenticeship_progression_review",
+                             canonical_json(stakes),canonical_json({"accumulated_work_cycles":work_cycles}),
+                             canonical_json({"master_apprentice_relationship":True,"progression_requires_negotiation":True}),
+                             canonical_json(["I-MEDIATION"]),"open"),
+                        )
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P8","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P7","master"))
+                        self._event(
+                            con,day,"apprenticeship_progression_eligible",scene_id=sid,actors=["P8","P7"],
+                            rules=["ASM-FIXTURE-017","RULE-APPRENTICESHIP-PROGRESSION-001"],payload=stakes,discriminator=sid,
+                        )
+                    created.append(self.enqueue_job(sid,"P8",["request_apprenticeship_progression","communicate","wait"]))
+
         # Recurrent port activity becomes a material commitment decision only after the
         # merchant has already experienced the information-provenance chain.
         if day >= 42 and day % 28 == 14 and self.db.one(
@@ -908,6 +1042,7 @@ class WorldEngine:
                     stakes = {
                         "situation_id":"SIT-010","trade_cycle":cycle,"silver_available":float(silver),
                         "max_silver_commitment":0.5,"transit_days":7,"exchange_goods_ratio":1.0,
+                        "household_reserve_floor":self._active_household_reserve_floor("H-MERCH","silver"),
                         "contacts":["P11","P12"],"seasonal_context":seasonal,
                         "fixture_notice":"Exchange amount, ratio and delay are ASM-FIXTURE-012 calibration; the Ugaritic port/trade/credit interface is research-supported.",
                     }
@@ -1336,6 +1471,68 @@ class WorldEngine:
                 requested = action.get("new_due_day")
                 if requested != stakes.get("suggested_reschedule_day"):
                     errors.append(f"action_{i}:invalid_palace_reschedule_day")
+            elif typ == "request_household_reserve_agreement":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "household_trade_reserve_priority":
+                    errors.append(f"action_{i}:invalid_scene_for_reserve_request")
+                if job["actor_person_id"] != stakes.get("requester_person_id"):
+                    errors.append(f"action_{i}:reserve_requester_mismatch")
+                if action.get("target_person_id") != stakes.get("merchant_person_id"):
+                    errors.append(f"action_{i}:invalid_reserve_target")
+                if action.get("resource") != "silver":
+                    errors.append(f"action_{i}:invalid_reserve_resource")
+                floor = action.get("reserve_floor")
+                if not isinstance(floor, (int, float)) or abs(float(floor) - float(stakes.get("proposed_reserve_floor", -1))) > 1e-9:
+                    errors.append(f"action_{i}:invalid_reserve_floor")
+                if action.get("target_person_id") and self._household_for_person(action["target_person_id"]) != actor_household:
+                    errors.append(f"action_{i}:reserve_target_not_same_household")
+            elif typ == "accept_household_reserve":
+                scene_packet = packet.get("scene", {})
+                stakes = scene_packet.get("stakes", {})
+                effective = stakes.get("source_stakes", stakes) if scene_packet.get("trigger") == "informal_mediation_review" else stakes
+                source_trigger = stakes.get("source_trigger") if scene_packet.get("trigger") == "informal_mediation_review" else scene_packet.get("trigger")
+                if source_trigger != "household_reserve_request":
+                    errors.append(f"action_{i}:invalid_scene_for_reserve_acceptance")
+                if job["actor_person_id"] != effective.get("merchant_person_id"):
+                    errors.append(f"action_{i}:reserve_acceptor_mismatch")
+                if action.get("resource") != effective.get("resource") or action.get("resource") != "silver":
+                    errors.append(f"action_{i}:reserve_resource_mismatch")
+                floor = action.get("reserve_floor")
+                if not isinstance(floor, (int, float)) or abs(float(floor) - float(effective.get("reserve_floor", -1))) > 1e-9:
+                    errors.append(f"action_{i}:reserve_floor_mismatch")
+                stock = self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='silver'", (actor_household,)) if actor_household else None
+                if not stock or float(floor or 0) > float(stock["amount"]) + 1e-9:
+                    errors.append(f"action_{i}:reserve_exceeds_current_stock")
+                if self._active_household_reserve_floor(actor_household, "silver") is not None:
+                    errors.append(f"action_{i}:reserve_already_active")
+            elif typ == "request_apprenticeship_progression":
+                stakes = packet.get("scene", {}).get("stakes", {})
+                if packet.get("scene", {}).get("trigger") != "apprenticeship_progression_review":
+                    errors.append(f"action_{i}:invalid_scene_for_apprentice_request")
+                if job["actor_person_id"] != stakes.get("apprentice_person_id"):
+                    errors.append(f"action_{i}:apprentice_requester_mismatch")
+                if action.get("target_person_id") != stakes.get("master_person_id"):
+                    errors.append(f"action_{i}:invalid_master_target")
+                if action.get("requested_recognition") != stakes.get("proposed_recognition"):
+                    errors.append(f"action_{i}:invalid_requested_recognition")
+            elif typ == "grant_apprenticeship_progression":
+                scene_packet = packet.get("scene", {})
+                stakes = scene_packet.get("stakes", {})
+                effective = stakes.get("source_stakes", stakes) if scene_packet.get("trigger") == "informal_mediation_review" else stakes
+                source_trigger = stakes.get("source_trigger") if scene_packet.get("trigger") == "informal_mediation_review" else scene_packet.get("trigger")
+                if source_trigger != "apprenticeship_progression_request":
+                    errors.append(f"action_{i}:invalid_scene_for_apprentice_grant")
+                if job["actor_person_id"] != effective.get("master_person_id"):
+                    errors.append(f"action_{i}:master_mismatch")
+                if action.get("apprentice_person_id") != effective.get("apprentice_person_id"):
+                    errors.append(f"action_{i}:apprentice_mismatch")
+                active = self.db.one(
+                    "SELECT 1 FROM person_roles pr JOIN roles r USING(role_id) WHERE pr.person_id=? "
+                    "AND r.name='craft_apprentice' AND pr.end_day IS NULL",
+                    (effective.get("apprentice_person_id"),),
+                )
+                if not active:
+                    errors.append(f"action_{i}:apprentice_role_not_active")
             elif typ == "commit_trade_exchange":
                 stakes = packet.get("scene", {}).get("stakes", {})
                 if packet.get("scene", {}).get("trigger") != "port_trade_opportunity":
@@ -1347,6 +1544,10 @@ class WorldEngine:
                     stock = self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='silver'", (actor_household,)) if actor_household else None
                     if not stock or amount > float(stock["amount"]) + 1e-9:
                         errors.append(f"action_{i}:insufficient_trade_silver")
+                    else:
+                        reserve_floor = self._active_household_reserve_floor(actor_household, "silver")
+                        if reserve_floor is not None and float(stock["amount"]) - float(amount) < reserve_floor - 1e-9:
+                            errors.append(f"action_{i}:household_reserve_floor_violation")
             elif typ == "send_message":
                 target_person = action.get("target_person_id")
                 if target_person == job["actor_person_id"]:
@@ -1938,6 +2139,152 @@ class WorldEngine:
                                  event_id=eid,memory_type="institutional_labor",salience=.84,relationship_relevance=.3,goal_relevance=.9,
                                  provenance={"assumption_id":"ASM-FIXTURE-011"})
 
+                elif typ == "request_household_reserve_agreement":
+                    target_person = action["target_person_id"]
+                    reserve_floor = float(action["reserve_floor"])
+                    request_scene = stable_id("SCENE", self.run_id, day, "household_reserve_request", decision_id, idx)
+                    request_stakes = {
+                        "situation_id":"SIT-013","requester_person_id":actor_id,"merchant_person_id":target_person,
+                        "household_id":actor_household,"resource":"silver","reserve_floor":reserve_floor,
+                        "completed_trade_exchanges":scene_stakes.get("completed_trade_exchanges"),
+                        "request_reason":action.get("reason","protect a household reserve before further trade commitments"),
+                        "fixture_notice":scene_stakes.get("fixture_notice"),
+                    }
+                    con.execute(
+                        "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (request_scene,self.run_id,day,scene["place_id"],"household","household_reserve_request",
+                         canonical_json(request_stakes),canonical_json({"resource":"silver","reserve_floor":reserve_floor}),
+                         canonical_json({"private_negotiation_first":True,"household_strategy":True}),
+                         canonical_json(["I-MEDIATION"]),"open"),
+                    )
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,actor_id,"requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,target_person,"decision_actor"))
+                    eid=self._event(
+                        con,day,"household_reserve_requested",scene_id=request_scene,decision_id=decision_id,
+                        actors=[actor_id,target_person],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-016","RULE-HOUSEHOLD-RESOURCE-PRIORITY-001"],
+                        payload={"action_id":aid,"reserve_floor":reserve_floor,"reason":action.get("reason")},discriminator=aid,
+                    )
+                    request_stakes["request_event_id"]=eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?",(canonical_json(request_stakes),request_scene))
+                    self._memory(con,actor_id,day,f"Asked {target_person} to keep at least {reserve_floor:g} silver in household reserve before further trade exposure.",
+                                 event_id=eid,memory_type="household_strategy",salience=.78,relationship_relevance=.82,goal_relevance=.9,
+                                 provenance={"assumption_id":"ASM-FIXTURE-016"})
+                    self._memory(con,target_person,day,f"{actor_id} asked that our household preserve at least {reserve_floor:g} silver before further trade commitments.",
+                                 event_id=eid,memory_type="household_strategy",salience=.76,relationship_relevance=.82,goal_relevance=.86,
+                                 provenance={"assumption_id":"ASM-FIXTURE-016"})
+                    followups.append((request_scene,target_person,["accept_household_reserve","refuse_proposal","seek_mediation","communicate"]))
+
+                elif typ == "accept_household_reserve":
+                    effective = scene_stakes.get("source_stakes", scene_stakes) if scene["trigger_type"] == "informal_mediation_review" else scene_stakes
+                    reserve_floor=float(action["reserve_floor"])
+                    requester=effective["requester_person_id"]
+                    oid=stable_id("O",self.run_id,"household_reserve_commitment",actor_household,"silver",decision_id)
+                    provenance={
+                        "assumption_id":"ASM-FIXTURE-016","rule_id":"RULE-HOUSEHOLD-RESOURCE-PRIORITY-001",
+                        "resource":"silver","reserve_floor":reserve_floor,"requester_person_id":requester,
+                        "notice":"reserve floor is household-strategy calibration, not a historical Ugaritic minimum capital rule",
+                    }
+                    con.execute(
+                        "INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid,actor_id,actor_household,requester,actor_household,"household_reserve_commitment",
+                         f"Preserve at least {reserve_floor:g} silver in household reserve before discretionary trade commitments.",
+                         None,"active",canonical_json(provenance)),
+                    )
+                    relationship_delta={
+                        f"{actor_id}->{requester}":self._adjust_relationship(con,actor_id,requester,trust=.02,respect=.01),
+                        f"{requester}->{actor_id}":self._adjust_relationship(con,requester,actor_id,trust=.02,respect=.01),
+                    }
+                    eid=self._event(
+                        con,day,"household_reserve_agreed",scene_id=job["scene_id"],decision_id=decision_id,
+                        actors=[actor_id,requester],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-016","RULE-HOUSEHOLD-RESOURCE-PRIORITY-001"],relationships=relationship_delta,
+                        payload={"action_id":aid,"obligation_id":oid,"resource":"silver","reserve_floor":reserve_floor,
+                                 "reason":action.get("reason")},discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,f"Agreed with {requester} to protect a household silver reserve of {reserve_floor:g}.",
+                                 event_id=eid,memory_type="household_strategy",salience=.82,relationship_relevance=.86,goal_relevance=.9,provenance=provenance)
+                    self._memory(con,requester,day,f"{actor_id} agreed to protect our household silver reserve at {reserve_floor:g} before further trade exposure.",
+                                 event_id=eid,memory_type="household_strategy",salience=.84,relationship_relevance=.88,goal_relevance=.92,provenance=provenance)
+
+                elif typ == "request_apprenticeship_progression":
+                    target_person=action["target_person_id"]
+                    request_scene=stable_id("SCENE",self.run_id,day,"apprenticeship_progression_request",decision_id,idx)
+                    request_stakes={
+                        "situation_id":"SIT-014","requester_person_id":actor_id,"apprentice_person_id":actor_id,
+                        "master_person_id":target_person,"requested_recognition":action["requested_recognition"],
+                        "work_cycles_as_apprentice":scene_stakes.get("work_cycles_as_apprentice"),
+                        "apprenticeship_days":scene_stakes.get("apprenticeship_days"),
+                        "household_finished_metalwork":scene_stakes.get("household_finished_metalwork"),
+                        "request_reason":action.get("reason","accumulated workshop work merits a progression review"),
+                        "fixture_notice":scene_stakes.get("fixture_notice"),
+                    }
+                    con.execute(
+                        "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (request_scene,self.run_id,day,scene["place_id"],"household","apprenticeship_progression_request",
+                         canonical_json(request_stakes),canonical_json({"accumulated_work_cycles":request_stakes["work_cycles_as_apprentice"]}),
+                         canonical_json({"master_apprentice_negotiation":True,"recognition_not_automatic":True}),
+                         canonical_json(["I-MEDIATION"]),"open"),
+                    )
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,actor_id,"requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(request_scene,target_person,"decision_actor"))
+                    eid=self._event(
+                        con,day,"apprenticeship_progression_requested",scene_id=request_scene,decision_id=decision_id,
+                        actors=[actor_id,target_person],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-017","RULE-APPRENTICESHIP-PROGRESSION-001"],
+                        payload={"action_id":aid,"requested_recognition":action["requested_recognition"],"reason":action.get("reason")},discriminator=aid,
+                    )
+                    request_stakes["request_event_id"]=eid
+                    con.execute("UPDATE scenes SET stakes_json=? WHERE scene_id=?",(canonical_json(request_stakes),request_scene))
+                    self._memory(con,actor_id,day,f"Asked {target_person} to recognize my progression from supervised apprenticeship to a recognized workshop worker role.",
+                                 event_id=eid,memory_type="life_course",salience=.9,relationship_relevance=.9,goal_relevance=.95,provenance={"assumption_id":"ASM-FIXTURE-017"})
+                    self._memory(con,target_person,day,f"{actor_id} asked for recognition as a workshop craft worker after sustained apprenticeship work.",
+                                 event_id=eid,memory_type="life_course",salience=.86,relationship_relevance=.9,goal_relevance=.86,provenance={"assumption_id":"ASM-FIXTURE-017"})
+                    followups.append((request_scene,target_person,["grant_apprenticeship_progression","refuse_proposal","seek_mediation","communicate"]))
+
+                elif typ == "grant_apprenticeship_progression":
+                    effective = scene_stakes.get("source_stakes", scene_stakes) if scene["trigger_type"] == "informal_mediation_review" else scene_stakes
+                    apprentice_id=effective["apprentice_person_id"]
+                    role_id="R-RECOGNIZED_CRAFT_WORKER"
+                    con.execute(
+                        "UPDATE person_roles SET end_day=? WHERE person_id=? AND role_id=(SELECT role_id FROM roles WHERE name='craft_apprentice') AND end_day IS NULL",
+                        (day,apprentice_id),
+                    )
+                    con.execute(
+                        "INSERT OR IGNORE INTO person_roles(person_id,role_id,priority,start_day,end_day) VALUES (?,?,?,?,NULL)",
+                        (apprentice_id,role_id,1,day),
+                    )
+                    current_membership=con.execute(
+                        "SELECT household_id,since_day FROM household_memberships WHERE person_id=? AND until_day IS NULL ORDER BY since_day DESC LIMIT 1",
+                        (apprentice_id,),
+                    ).fetchone()
+                    if current_membership:
+                        con.execute("UPDATE household_memberships SET until_day=? WHERE household_id=? AND person_id=? AND since_day=?",
+                                    (day,current_membership["household_id"],apprentice_id,current_membership["since_day"]))
+                        con.execute("INSERT INTO household_memberships VALUES (?,?,?,?,?)",
+                                    (current_membership["household_id"],apprentice_id,"attached_worker",day,None))
+                    status={"workshop_recognition":"recognized_craft_worker","progressed_day":day,
+                            "notice":"simulation workshop progression under ASM-FIXTURE-017; not a reconstructed Ugaritic legal rank"}
+                    con.execute("UPDATE persons SET legal_status='dependent_craft_worker',status_json=? WHERE person_id=?",
+                                (canonical_json(status),apprentice_id))
+                    con.execute("UPDATE relationships SET relationship_type='workshop_mentor' WHERE from_person_id=? AND to_person_id=?",(actor_id,apprentice_id))
+                    con.execute("UPDATE relationships SET relationship_type='craft_mentor' WHERE from_person_id=? AND to_person_id=?",(apprentice_id,actor_id))
+                    relationship_delta={
+                        f"{actor_id}->{apprentice_id}":self._adjust_relationship(con,actor_id,apprentice_id,trust=.03,respect=.04),
+                        f"{apprentice_id}->{actor_id}":self._adjust_relationship(con,apprentice_id,actor_id,trust=.04,respect=.03),
+                    }
+                    eid=self._event(
+                        con,day,"apprenticeship_progressed",scene_id=job["scene_id"],decision_id=decision_id,
+                        actors=[actor_id,apprentice_id],knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-017","RULE-APPRENTICESHIP-PROGRESSION-001"],relationships=relationship_delta,
+                        payload={"action_id":aid,"old_role":"craft_apprentice","new_role":"recognized_craft_worker",
+                                 "legal_status":"dependent_craft_worker","reason":action.get("reason")},discriminator=aid,
+                    )
+                    self._memory(con,actor_id,day,f"Recognized {apprentice_id} as a workshop craft worker after sustained supervised work.",
+                                 event_id=eid,memory_type="life_course",salience=.9,relationship_relevance=.92,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-017"})
+                    self._memory(con,apprentice_id,day,f"{actor_id} recognized my progression from apprentice to a workshop craft worker role.",
+                                 event_id=eid,memory_type="life_course",salience=.96,relationship_relevance=.94,goal_relevance=.98,provenance={"assumption_id":"ASM-FIXTURE-017"})
+
                 elif typ == "commit_trade_exchange":
                     amount = float(action["silver_amount"])
                     transit_days = int(scene_stakes.get("transit_days",7))
@@ -2102,11 +2449,65 @@ class WorldEngine:
                     eid = self._event(
                         con, day, "mediation_sought", scene_id=job["scene_id"], decision_id=decision_id,
                         actors=[actor_id], knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-018","RULE-INFORMAL-DISPUTE-LADDER-001"] if iid == "I-MEDIATION" else [],
                         institutions={iid: {"requested": True}}, payload={"action_id": aid, "issue": action.get("issue")},
                         discriminator=aid,
                     )
                     self._memory(con, actor_id, day, f"Sought mediation through {iid}: {action.get('issue', 'a dispute')}.",
-                                 event_id=eid, memory_type="institutional_action", salience=.7)
+                                 event_id=eid, memory_type="institutional_action", salience=.7, relationship_relevance=.65, goal_relevance=.7,
+                                 provenance={"assumption_id":"ASM-FIXTURE-018"} if iid == "I-MEDIATION" else None)
+                    if iid == "I-MEDIATION":
+                        if scene["trigger_type"] == "proposal_refusal_followup":
+                            source_trigger = scene_stakes.get("source_trigger")
+                            source_stakes = scene_stakes.get("source_stakes", {})
+                            review_actor = scene_stakes.get("responder_person_id")
+                        elif scene["trigger_type"] == "informal_mediation_review":
+                            source_trigger = scene_stakes.get("source_trigger")
+                            source_stakes = scene_stakes.get("source_stakes", {})
+                            review_actor = actor_id
+                        else:
+                            source_trigger = scene["trigger_type"]
+                            source_stakes = scene_stakes
+                            # The current decision actor is usually the party with authority
+                            # to answer the proposal; mediation asks that actor to review it
+                            # again rather than inventing an omniscient mediator decision.
+                            review_actor = actor_id
+                        if review_actor:
+                            mediation_scene = stable_id("SCENE",self.run_id,day,"informal_mediation_review",job["scene_id"],actor_id,review_actor)
+                            if not con.execute("SELECT 1 FROM scenes WHERE scene_id=?",(mediation_scene,)).fetchone():
+                                mediation_stakes={
+                                    "situation_id":"SIT-015","mediation_requester_person_id":actor_id,
+                                    "responder_person_id":review_actor,"source_scene_id":job["scene_id"],
+                                    "source_trigger":source_trigger,"source_stakes":source_stakes,
+                                    "issue":action.get("issue","unresolved household/economic disagreement"),
+                                    "fixture_notice":"The informal mediation interface is ASM-FIXTURE-018: kin/patron/elder mediation is research-supported broadly, while the exact Ugaritic mediator/procedure remains unspecified.",
+                                }
+                                con.execute(
+                                    "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                    (mediation_scene,self.run_id,day,scene["place_id"],"legal","informal_mediation_review",
+                                     canonical_json(mediation_stakes),"{}",
+                                     canonical_json({"private_negotiation_precedes_escalation":True,"exact_mediator_unspecified":True}),
+                                     canonical_json(["I-MEDIATION"]),"open"),
+                                )
+                                con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(mediation_scene,actor_id,"mediation_requester"))
+                                if review_actor != actor_id:
+                                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(mediation_scene,review_actor,"decision_actor"))
+                                else:
+                                    con.execute("INSERT OR REPLACE INTO scene_participants VALUES (?,?,?)",(mediation_scene,review_actor,"decision_actor"))
+                                self._event(
+                                    con,day,"informal_mediation_review_opened",scene_id=mediation_scene,actors=list(dict.fromkeys([actor_id,review_actor])),
+                                    rules=["ASM-FIXTURE-018","RULE-INFORMAL-DISPUTE-LADDER-001"],
+                                    institutions={"I-MEDIATION":{"review":"opened"}},payload=mediation_stakes,discriminator=mediation_scene,
+                                )
+                                if source_trigger == "household_reserve_request":
+                                    allowed=["accept_household_reserve","enter_obligation","communicate","refuse_proposal"]
+                                elif source_trigger == "apprenticeship_progression_request":
+                                    allowed=["grant_apprenticeship_progression","enter_obligation","communicate","refuse_proposal"]
+                                elif source_trigger == "resource_request":
+                                    allowed=["transfer_resource","enter_obligation","communicate","refuse_proposal"]
+                                else:
+                                    allowed=["enter_obligation","communicate","refuse_proposal"]
+                                followups.append((mediation_scene,review_actor,allowed))
 
                 elif typ == "travel":
                     dest = action["to_place_id"]
@@ -2132,20 +2533,50 @@ class WorldEngine:
                     )
 
                 elif typ == "refuse_proposal":
-                    requester = scene_stakes.get("requester_person_id")
-                    actors = [actor_id] + ([requester] if requester else [])
+                    effective = scene_stakes.get("source_stakes", scene_stakes) if scene["trigger_type"] == "informal_mediation_review" else scene_stakes
+                    requester = effective.get("requester_person_id")
+                    actors = [actor_id] + ([requester] if requester and requester != actor_id else [])
+                    relationship_delta: dict[str, Any] = {}
+                    if requester and requester != actor_id:
+                        relationship_delta[f"{actor_id}->{requester}"] = self._adjust_relationship(
+                            con, actor_id, requester, trust=-.02, conflicts=1
+                        )
+                        relationship_delta[f"{requester}->{actor_id}"] = self._adjust_relationship(
+                            con, requester, actor_id, trust=-.02, conflicts=1
+                        )
                     eid = self._event(
                         con, day, "proposal_refused", scene_id=job["scene_id"], decision_id=decision_id,
                         actors=actors, knowledge=envelope.get("decisive_knowledge_or_belief_ids", []),
+                        rules=["ASM-FIXTURE-018","RULE-INFORMAL-DISPUTE-LADDER-001"] if requester else [],
+                        relationships=relationship_delta,
                         payload={"action_id": aid, "reason": action.get("reason"), "requester_person_id": requester}, discriminator=aid,
                     )
                     self._memory(con, actor_id, day, f"Refused: {action.get('reason', 'proposal not accepted')}.",
-                                 event_id=eid, memory_type="decision", salience=.6, relationship_relevance=.5, goal_relevance=.6)
-                    if requester:
+                                 event_id=eid, memory_type="decision", salience=.6, relationship_relevance=.65, goal_relevance=.6)
+                    if requester and requester != actor_id:
                         self._memory(
                             con, requester, day, f"{actor_id} refused my proposal: {action.get('reason', 'proposal not accepted')}.",
-                            event_id=eid, memory_type="decision", salience=.64, relationship_relevance=.72, goal_relevance=.65,
+                            event_id=eid, memory_type="decision", salience=.7, relationship_relevance=.82, goal_relevance=.7,
                         )
+                        available_institutions=set(json.loads(scene["institution_ids_json"]))
+                        if "I-MEDIATION" in available_institutions and scene["trigger_type"] not in {"informal_mediation_review","proposal_refusal_followup"}:
+                            follow_scene=stable_id("SCENE",self.run_id,day,"proposal_refusal_followup",job["scene_id"],requester)
+                            follow_stakes={
+                                "situation_id":"SIT-015","requester_person_id":requester,"responder_person_id":actor_id,
+                                "source_scene_id":job["scene_id"],"source_trigger":scene["trigger_type"],"source_stakes":effective,
+                                "refusal_event_id":eid,"refusal_reason":action.get("reason"),
+                                "fixture_notice":"One bounded informal-mediation opportunity after direct refusal under ASM-FIXTURE-018; no automatic settlement is imposed.",
+                            }
+                            con.execute(
+                                "INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (follow_scene,self.run_id,day,scene["place_id"],"legal","proposal_refusal_followup",
+                                 canonical_json(follow_stakes),"{}",
+                                 canonical_json({"private_negotiation_failed":True,"mediation_optional":True}),
+                                 canonical_json(["I-MEDIATION"]),"open"),
+                            )
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(follow_scene,requester,"decision_actor"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(follow_scene,actor_id,"responder"))
+                            followups.append((follow_scene,requester,["seek_mediation","communicate","wait"]))
 
                 else:
                     self._event(

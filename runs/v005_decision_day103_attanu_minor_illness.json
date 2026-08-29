@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D103-ATTANU-MINOR-ILLNESS",
+  "actor_id": "P9",
+  "selected_intent": "respond to minor illness with a more deliberate household rite and cautious practical rest consistent with preserving ritual trust",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "deliberate household protective rite",
+      "ritual_goods_cost": 0.3,
+      "practical_response": "rest and avoid treating the minor symptoms as evidence that ordinary ritual duties can be performed carelessly"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P9", "K-LOCAL-P9"],
+  "decision_basis_tags": ["high_ritual_commitment", "specialist_trust", "minor_illness", "practical_rest"],
+  "declared_uncertainty": "The exact rite and 0.3 ritual-goods cost are simulation abstractions; no specific historical Ugaritic illness rite or causal medical claim is asserted."
+}

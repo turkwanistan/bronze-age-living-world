@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V005-D98-URTENU-SECOND-METAL-REQUEST",
+  "actor_id": "P7",
+  "selected_intent": "ask Yabninu for another modest metal replenishment after fully returning the prior reciprocal support",
+  "proposed_actions": [
+    {
+      "type": "request_resource",
+      "target_person_id": "P3",
+      "resource": "metal",
+      "amount": 0.6,
+      "reason": "The workshop has exhausted its metal after recurring production; the prior reciprocal obligation to Yabninu was fulfilled before this new request, and continued supply is needed to keep both workshop training and production active."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7", "K-LOCAL-DISPUTE-001-P7"],
+  "decision_basis_tags": ["workshop_supply", "repaid_reciprocity", "training_continuity", "repeat_counterparty"],
+  "declared_uncertainty": "The 0.6 metal amount is fixture calibration; the request does not assume a historical price, interest rate, or fixed patronage obligation."
+}

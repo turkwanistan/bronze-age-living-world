@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D91-YABNINU-RESERVE-ACCEPT",
+  "actor_id": "P3",
+  "selected_intent": "accept Pidduya's household reserve floor while preserving room for bounded trade",
+  "proposed_actions": [
+    {
+      "type": "accept_household_reserve",
+      "resource": "silver",
+      "reserve_floor": 16.5,
+      "reason": "The household has completed two bounded exchanges, and protecting 16.5 silver still leaves room for one standard trade commitment while supporting household continuity and credit reputation."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-TRADE-001-P3", "K-LOCAL-P3", "K-LOCAL-DISPUTE-001-P3"],
+  "decision_basis_tags": ["household_continuity", "credit_reputation", "spousal_negotiation", "bounded_trade"],
+  "declared_uncertainty": "The reserve floor is an ASM-FIXTURE-016 engineering constraint, not a historical Ugaritic property or capital rule."
+}

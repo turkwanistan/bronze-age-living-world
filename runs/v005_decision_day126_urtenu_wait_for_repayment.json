@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-V005-D126-URTENU-WAIT-FOR-REPAYMENT",
+  "actor_id": "P7",
+  "selected_intent": "hold the workshop at a temporary material stop rather than ask Yabninu for a third advance before repaying the second",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Workshop metal is nearly exhausted, but I still owe Yabninu a reciprocal return for the second replenishment. I should clear that obligation before asking the same supplier for more support."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7", "K-LOCAL-DISPUTE-001-P7"],
+  "decision_basis_tags": ["open_reciprocal_obligation", "avoid_dependency", "temporary_workshop_stop", "supplier_reputation"],
+  "declared_uncertainty": "The resource threshold and reciprocal timing are fixture calibration; no historical rule requires this exact pause."
+}

@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V005-D91-URTENU-PROGRESSION-GRANT",
+  "actor_id": "P7",
+  "selected_intent": "recognize Niqmepa as a workshop craft worker after sustained supervised apprenticeship",
+  "proposed_actions": [
+    {
+      "type": "grant_apprenticeship_progression",
+      "apprentice_person_id": "P8",
+      "reason": "Niqmepa has accumulated sustained workshop work and asks for greater responsibility without claiming independence; recognizing progression advances my training goal while the workshop can continue to gate actual production by available material."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7", "K-LOCAL-DISPUTE-001-P7"],
+  "decision_basis_tags": ["train_apprentice", "work_history", "recognized_responsibility", "workshop_continuity"],
+  "declared_uncertainty": "The role transition is an ASM-FIXTURE-017 simulation life-course mechanism, not a reconstructed Ugaritic apprenticeship rank, emancipation procedure, or duration."
+}

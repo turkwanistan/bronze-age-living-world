@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D91-NIQMEPA-PROGRESSION-REQUEST",
+  "actor_id": "P8",
+  "selected_intent": "ask Urtenu to recognize greater workshop responsibility after sustained supervised craft work",
+  "proposed_actions": [
+    {
+      "type": "request_apprenticeship_progression",
+      "target_person_id": "P7",
+      "requested_recognition": "recognized_craft_worker",
+      "reason": "I have accumulated sustained supervised workshop work and want greater craft standing without claiming independence from the household or workshop."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P8", "K-LOCAL-DISPUTE-001-P8"],
+  "decision_basis_tags": ["craft_standing", "apprenticeship_history", "master_negotiation", "life_course"],
+  "declared_uncertainty": "The progression threshold and role label are fixture mechanics under ASM-FIXTURE-017, not a reconstructed Ugaritic apprenticeship duration or legal rank."
+}

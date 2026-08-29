@@ -1,0 +1,18 @@
+{
+  "decision_id": "DEC-V005-D128-URTENU-SECOND-RECIPROCAL-RETURN",
+  "actor_id": "P7",
+  "selected_intent": "return workshop output to Yabninu and clear the second reciprocal obligation before seeking further metal",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-MERCH",
+      "social_target_person_id": "P3",
+      "resource": "finished_metalwork",
+      "amount": 0.3,
+      "fulfills_obligation_id": "O-49a290fd2d812372"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7"],
+  "decision_basis_tags": ["reciprocity", "occupational_output", "clear_second_credit", "supplier_relationship"],
+  "declared_uncertainty": "The 0.3 return is ASM-FIXTURE-015 calibration rather than a historical price or equivalence; it closes the qualitative reciprocal obligation created by the second supply."
+}

@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-V005-D112-URTENU-WAIT-ON-SECOND-CREDIT",
+  "actor_id": "P7",
+  "selected_intent": "accept a temporary workshop slowdown rather than deepen dependence on Yabninu while a second reciprocal obligation remains open",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "Current metal is below the next normal workshop-cycle need, but I already owe Yabninu a reciprocal return for the second replenishment; asking for a third advance before repaying it would deepen dependence and weaken the exchange relationship."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7", "K-LOCAL-DISPUTE-001-P7"],
+  "decision_basis_tags": ["open_reciprocal_obligation", "avoid_dependency", "workshop_slowdown", "supplier_relationship"],
+  "declared_uncertainty": "The material thresholds are fixture calibration; the decision does not assert a historical rule limiting repeated craft credit."
+}

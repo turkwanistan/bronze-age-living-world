@@ -1,0 +1,14 @@
+{
+  "decision_id": "DEC-V005-D126-YABNINU-WAIT-FOR-RESERVE",
+  "actor_id": "P3",
+  "selected_intent": "do not commit additional silver because the household reserve agreement now binds",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "The household now holds exactly the agreed 16.5 silver reserve. Another standard trade commitment would violate the agreement with Pidduya, so preserving household continuity takes priority over extending the successful exchange sequence."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-TRADE-001-P3", "K-LOCAL-P3"],
+  "decision_basis_tags": ["household_reserve_binding", "spousal_agreement", "trade_restraint", "household_continuity"],
+  "declared_uncertainty": "The 16.5 floor is ASM-FIXTURE-016 calibration, not a historical Ugaritic reserve rule; the important canonical fact is that Yabninu previously accepted this household obligation."
+}

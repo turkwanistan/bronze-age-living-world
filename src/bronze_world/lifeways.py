@@ -66,6 +66,7 @@ ROLE_ACTIVITY: dict[str, dict[str, Any]] = {
     "textile_worker": {"domain": "textile", "activity": "fiber preparation, spinning, weaving, finishing"},
     "metal_craft_worker": {"domain": "metalcraft", "activity": "repair, recycling, fuel preparation, casting/finishing"},
     "craft_apprentice": {"domain": "metalcraft", "activity": "workshop assistance, hauling, tool/mold preparation, supervised finishing"},
+    "recognized_craft_worker": {"domain": "metalcraft", "activity": "recognized workshop production, supervised responsibility and finishing"},
     "merchant": {"domain": "commerce", "activity": "credit, counterparties, weights/seals, cargo and route decisions"},
     "broker": {"domain": "commerce", "activity": "connect buyers/sellers, assess trust, information and terms"},
     "merchant_account_partner": {"domain": "commerce", "activity": "household trade accounts, reserves, counterpart obligations"},

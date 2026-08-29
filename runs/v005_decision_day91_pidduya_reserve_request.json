@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V005-D91-PIDDUYA-RESERVE-REQUEST",
+  "actor_id": "P4",
+  "selected_intent": "ask Yabninu to protect a household silver reserve before further discretionary trade exposure",
+  "proposed_actions": [
+    {
+      "type": "request_household_reserve_agreement",
+      "target_person_id": "P3",
+      "resource": "silver",
+      "reserve_floor": 16.5,
+      "reason": "Two delayed exchanges have completed successfully, but preserving most of the remaining silver protects household continuity and family credit while still leaving room for one bounded trade commitment."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-TRADE-001-P4", "K-LOCAL-P4", "K-LOCAL-DISPUTE-001-P4"],
+  "decision_basis_tags": ["household_reserve", "credit_reputation", "private_negotiation", "bounded_trade_exposure"],
+  "declared_uncertainty": "The 16.5 reserve floor is simulation calibration under ASM-FIXTURE-016, not a historical Ugaritic capital minimum or household property rule."
+}

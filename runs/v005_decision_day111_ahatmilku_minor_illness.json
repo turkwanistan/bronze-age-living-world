@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D111-AHATMILKU-MINOR-ILLNESS",
+  "actor_id": "P2",
+  "selected_intent": "respond conservatively to another minor illness while protecting household work and stores",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "brief household protective observance",
+      "ritual_goods_cost": 0.15,
+      "practical_response": "rest briefly and reduce field and textile exertion until the minor symptoms settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P2", "K-LOCAL-P2"],
+  "decision_basis_tags": ["minor_illness", "household_security", "practical_rest", "modest_ritual"],
+  "declared_uncertainty": "The recurrence does not establish a shared cause with the earlier illness; the observance and 0.15 ritual-goods cost are simulation abstractions."
+}

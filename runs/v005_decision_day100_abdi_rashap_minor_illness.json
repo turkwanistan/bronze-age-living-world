@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D100-ABDI-RASHAP-MINOR-ILLNESS",
+  "actor_id": "P11",
+  "selected_intent": "treat the minor illness conservatively so it does not jeopardize harbor work or the next voyage",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household protective observance",
+      "ritual_goods_cost": 0.15,
+      "practical_response": "reduce strenuous harbor work briefly, rest, and reassess before taking on voyage or porter work"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P11", "K-LOCAL-P11"],
+  "decision_basis_tags": ["minor_illness", "voyage_readiness", "practical_rest", "modest_household_ritual"],
+  "declared_uncertainty": "The exact observance and 0.15 ritual-goods cost are simulation abstractions; no specific Ugaritic medical or ritual prescription is asserted."
+}

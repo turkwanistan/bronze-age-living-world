@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D99-NIQMEPA-MINOR-ILLNESS",
+  "actor_id": "P8",
+  "selected_intent": "respond to a minor illness with brief household observance and practical rest so the new workshop responsibility is not jeopardized",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "brief household protective observance",
+      "ritual_goods_cost": 0.1,
+      "practical_response": "reduce work temporarily, rest, and return to workshop responsibility when the minor symptoms settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P8", "K-LOCAL-P8"],
+  "decision_basis_tags": ["minor_illness", "modest_ritual", "practical_rest", "new_workshop_responsibility"],
+  "declared_uncertainty": "The exact household observance and 0.1 ritual-goods cost are simulation abstractions; no specific historical treatment or rite is asserted."
+}

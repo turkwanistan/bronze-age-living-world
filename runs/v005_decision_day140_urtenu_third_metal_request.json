@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V005-D140-URTENU-THIRD-METAL-REQUEST",
+  "actor_id": "P7",
+  "selected_intent": "reopen the established supplier relationship only after fully repaying the second workshop credit",
+  "proposed_actions": [
+    {
+      "type": "request_resource",
+      "target_person_id": "P3",
+      "resource": "metal",
+      "amount": 0.6,
+      "reason": "The workshop is materially stopped at 0.06 metal, both prior reciprocal supply obligations were fulfilled before this request, and renewed metal is needed to keep the workshop and Niqmepa's new craft responsibility productive."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P7", "K-LOCAL-DISPUTE-001-P7"],
+  "decision_basis_tags": ["repaid_reciprocity", "repeat_supplier", "workshop_continuity", "mentor_responsibility"],
+  "declared_uncertainty": "The requested amount is fixture calibration; repeated exchange does not imply a historical standing contract, fixed price, or entitlement to Yabninu's stock."
+}

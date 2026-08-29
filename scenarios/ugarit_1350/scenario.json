@@ -1,6 +1,6 @@
 {
   "scenario_id": "ugarit_1350_micro_v001",
-  "scenario_version": "0.2.0",
+  "scenario_version": "0.3.0",
   "year_bce": 1350,
   "local_period_label": "Late Bronze Age Ugarit",
   "evidence_model_version": "evidence-v0.1",
@@ -36,6 +36,9 @@
     "ASM-FIXTURE-012",
     "ASM-FIXTURE-013",
     "ASM-FIXTURE-014",
-    "ASM-FIXTURE-015"
+    "ASM-FIXTURE-015",
+    "ASM-FIXTURE-016",
+    "ASM-FIXTURE-017",
+    "ASM-FIXTURE-018"
   ]
 }

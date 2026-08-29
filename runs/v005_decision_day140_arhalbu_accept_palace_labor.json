@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V005-D140-ARHALBU-ACCEPT-PALACE-LABOR",
+  "actor_id": "P13",
+  "selected_intent": "meet the palace labor obligation during the current moderate-high seasonal workload rather than defer institutional compliance again",
+  "proposed_actions": [
+    {
+      "type": "accept_palace_labor",
+      "obligation_id": "O-fb66e7f8c0dfe42e",
+      "reason": "The current grape/olive and field-preparation work is demanding, but it is less acute than the earlier cereal-harvest bottleneck; I have already deferred once in a more severe season, and completing this obligation now reduces vulnerability to further patron or administrative pressure."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-LABOR-001-P13", "K-LOCAL-P13"],
+  "decision_basis_tags": ["institutional_compliance", "seasonal_opportunity_cost", "deference", "reduce_patron_vulnerability"],
+  "declared_uncertainty": "The palace-labor cadence and completion mechanism are ASM-FIXTURE-011 calibration, not a reconstructed Ugaritic corvee rate or legal procedure."
+}

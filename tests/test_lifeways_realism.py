@@ -22,7 +22,7 @@ def test_weekly_occupations_have_season_and_material_dependencies(world):
     assert db.scalar("SELECT COUNT(*) FROM events WHERE run_id=? AND day=7 AND event_type='household_labor_allocation'", (rid,)) == 8
     assert db.scalar("SELECT COUNT(*) FROM events WHERE run_id=? AND day=7 AND event_type='port_market_cycle'", (rid,)) == 1
     assert abs(float(db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='metal'")) - 1.35) < 1e-9
-    assert abs(float(db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='charcoal'")) - 2.8) < 1e-9
+    assert abs(float(db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='charcoal'")) - 5.8) < 1e-9
     assert abs(float(db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='finished_metalwork'")) - 0.08) < 1e-9
     assert abs(float(db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-FARM' AND resource_type='fiber'")) - 3.38) < 1e-9
     assert abs(float(db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-FARM' AND resource_type='textile_goods'")) - 0.08) < 1e-9

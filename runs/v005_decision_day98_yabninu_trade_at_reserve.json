@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V005-D98-YABNINU-TRADE-AT-RESERVE",
+  "actor_id": "P3",
+  "selected_intent": "make one final standard bounded trade commitment while honoring the household reserve agreement",
+  "proposed_actions": [
+    {
+      "type": "commit_trade_exchange",
+      "silver_amount": 0.5,
+      "reason": "The 16.5 household reserve remains protected after this commitment, so I can continue the established trade cycle without violating the agreement with Pidduya."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-TRADE-001-P3", "K-LOCAL-P3"],
+  "decision_basis_tags": ["trade_continuity", "household_reserve", "bounded_exposure", "credit_reputation"],
+  "declared_uncertainty": "The exchange amount and reserve floor are fixture calibration; this does not reconstruct historical Ugaritic prices, household capital rules, or profit rates."
+}

@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V005-D115-URTENU-MINOR-ILLNESS",
+  "actor_id": "P7",
+  "selected_intent": "use the current workshop slowdown to rest through a minor illness without unnecessary ritual expenditure",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "brief household protective observance",
+      "ritual_goods_cost": 0.1,
+      "practical_response": "rest while workshop metal is already constrained and resume normal master work when the minor symptoms settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P7", "K-LOCAL-P7"],
+  "decision_basis_tags": ["minor_illness", "existing_workshop_slowdown", "practical_rest", "modest_ritual"],
+  "declared_uncertainty": "The observance and 0.1 ritual-goods cost are simulation abstractions; no specific Ugaritic treatment or causal interpretation is asserted."
+}

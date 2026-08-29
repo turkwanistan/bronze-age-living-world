@@ -28,6 +28,7 @@ INSTITUTIONS = [
     ("I-SHRINE", "Local household/shrine ritual network", "ritual", "P-SHRINE", {"procedures":["household rite","consult specialist"]}, {"sanctions":[]}),
     ("I-MARKET", "Market and credit interface", "market_credit", "P-MARKET", {"procedures":["exchange","credit negotiation","witnessed agreement"]}, {"sanctions":["credit refusal","reputation cost"]}),
     ("I-PALACE", "Palace administrative interface", "administrative", "P-PALACE-OFFICE", {"procedures":["record obligation","request labor/resource","petition"]}, {"sanctions":["administrative pressure","patron withdrawal"]}),
+    ("I-MEDIATION", "Informal kin/patron/elder mediation interface", "informal_mediation", "P-NORTH-NEIGH", {"procedures":["private negotiation","kin/patron/elder mediation","compensation or obligation"]}, {"sanctions":["relationship strain","reputation cost","unresolved dispute"]}),
 ]
 
 HOUSEHOLDS = [
@@ -66,7 +67,7 @@ ROLE_DEFS = {
     "merchant_account_partner":"commerce","scribe":"scribal","interpreter":"scribal","metal_craft_worker":"craft","craft_apprentice":"craft",
     "porter":"labor","ritual_specialist":"ritual","ritual_assistant":"ritual","healer_helper":"ritual","sailor":"maritime",
     "market_trader":"commerce","dependent_field_worker":"agriculture","corvee_laborer":"institutional_labor","dependent_household_worker":"household",
-    "property_claimant":"household","seasonal_worker":"labor"
+    "property_claimant":"household","seasonal_worker":"labor","recognized_craft_worker":"craft"
 }
 
 RELATIONSHIPS = [
@@ -121,7 +122,7 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
                 "H-FARM": [("fiber", 3.5), ("textile_goods", 0.0)],
                 "H-SCRIBE": [("fiber", 2.5), ("textile_goods", 0.0)],
                 "H-DEPEND": [("fiber", 2.5), ("textile_goods", 0.0)],
-                "H-CRAFT": [("metal", 1.5), ("charcoal", 3.0), ("finished_metalwork", 0.0)],
+                "H-CRAFT": [("metal", 1.5), ("charcoal", 6.0), ("finished_metalwork", 0.0)],
                 "H-MERCH": [("metal", 3.0), ("trade_goods", 3.0)],
                 "H-HARBOR": [("trade_goods", 1.0)],
             }.get(h["id"], [])
@@ -171,6 +172,8 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350) -> str:
              [p["id"] for p in PEOPLE]),
             ("PROP-LOCAL-TRADE-001", "Trade and credit depend on trusted counterparties, information, transport access, and remembered obligations.",
              ["P3","P4","P5","P11","P12"]),
+            ("PROP-LOCAL-DISPUTE-001", "Household and economic disagreements can be negotiated privately and, where socially available, through kin, patrons, elders, compensation, or obligations before more formal escalation.",
+             [p["id"] for p in PEOPLE]),
         ]
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",

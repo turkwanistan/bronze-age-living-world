@@ -1,0 +1,19 @@
+{
+  "decision_id": "DEC-V005-D140-YABNINU-THIRD-METAL-CREDIT",
+  "actor_id": "P3",
+  "selected_intent": "continue the proven workshop exchange relationship with another bounded reciprocal metal supply",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-CRAFT",
+      "social_target_person_id": "P7",
+      "resource": "metal",
+      "amount": 0.6,
+      "create_reciprocal_obligation": true,
+      "reciprocal_obligation_description": "Urtenu and the craft household owe Yabninu's household a future reciprocal return for the third workshop metal replenishment."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P3", "K-LOCAL-TRADE-001-P3"],
+  "decision_basis_tags": ["repeat_exchange_relationship", "fulfilled_prior_obligations", "specialist_network", "bounded_social_credit"],
+  "declared_uncertainty": "The 0.6 metal amount and open reciprocal obligation remain fixture mechanics; repeated successful exchange is not evidence of a reconstructed standing contract, historical price, or entitlement."
+}
