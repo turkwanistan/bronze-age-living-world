@@ -1,6 +1,6 @@
 # STATUS
 
-**Checkpoint:** accepted strict Ugarit v012 workshop-tool interruption + repair gate at day 443.
+**Checkpoint:** accepted strict Ugarit v013 local-weather/storage resilience + recycling-restraint gate at day 458.
 
 ## Authority
 
@@ -10,28 +10,50 @@
 
 ## Accepted strict runtime
 
-Canonical DB: `state/ugarit_living_v012.sqlite`; v002-v011 are immutable prior accepted histories.
+Canonical DB: `state/ugarit_living_v013.sqlite`; v002-v012 are immutable prior accepted histories.
 
 - run `RUN-3dda7920595c1748`, seed `1701`
-- scenario `0.10.0`, schema `3`
-- accepted day **443**
-- hash `46bea8ae1c1614e51e3e11b7372f955af4fd5bc5a9fd4ac95da59e648c668c5b`
-- **6,300 events**
-- **144 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
-- **73/73 tests**
-- exact replay: **144 decisions / 0 new cognition / exact hash**
+- scenario `0.11.0`, schema `3`
+- accepted day **458**
+- state hash `8254bd35f77fa492dc28c9d3b66cde982c0da08f5310f20a062ae6b14160906b`
+- **6,516 events**
+- **149 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
+- **77/77 tests**
+- exact replay: **149 decisions / 0 new cognition / exact hash**
 - zero negative stocks, false shortfalls, overdue scheduled obligations, delivery-before-arrival or knowledge-before-delivery violations
 
-Acceptance manifest: `runs/ACCEPTED_DAY443_V012_TOOL_REPAIR.md`.
+Acceptance manifest: `runs/ACCEPTED_DAY458_V013_WEATHER_STORAGE.md`.
 
-## v012 result
+## v013 result
 
-The first post-v011 master metalwork cycle that is otherwise viable is interrupted by one bounded tool/mold failure on day 434. H-CRAFT has ~0.16 metal and 0.70 charcoal; damage occurs before either input is consumed and sets `workshop_tool_condition` to 0. P7 spends 0.10 finished metalwork on repair and schedules one day of downtime. The day-435 completion restores condition to 1.0. Ordinary day-441 work then consumes the preserved 0.15 metal + 0.20 charcoal and produces 0.08 finished work. Damage and repair each occur exactly once.
+### Bounded local weather/storage shock
 
-Existing household/economic constraints remain causal: P3 still protects the 16.5 silver reserve, P7 still makes zero post-refusal resource requests to P3, and unrelated illness decisions remain sparse and individually grounded.
+On day 444 one localized dry-summer moisture/rain exposure threatens only exposed `seasonal_produce` in H-FARM and H-DEPEND. It does **not** touch neutral staple grain or already-protected `stored_seasonal_goods`.
 
-## Current limitations
+Both household seniors independently choose one modeled labor day of protection at agricultural intensity 0.68. Under explicit fixture calibration this reduces the extra-loss fraction from 0.30 to 0.05:
 
-Tool condition is a bounded engineering abstraction, not a generic durability simulator. Repair uses workshop output rather than a separate specialist. The current market no-lot state is still fixture-bounded. Agricultural weather/storage shocks, shared/renegotiated care, property-use disagreement, a second life-course transition, language/scribal transaction constraints and second-seed/paired-counterfactual validation remain future work.
+- H-FARM exposed produce ~0.2313; protected loss ~0.0116 instead of ~0.0694 unprotected.
+- H-DEPEND exposed produce ~0.1223; protected loss ~0.0061 instead of ~0.0367 unprotected.
+
+The weather episode occurs exactly once per affected household. The larger unprotected path is regression-tested but was not forced into strict history.
+
+### Recycling restraint becomes decision-aware
+
+At day 444 H-CRAFT has only ~0.25 finished metalwork and ~0.01 raw metal. P7 decides **not** to destroy 0.20 finished output for another 0.12 raw-metal recovery because that would leave almost no finished stock and still would not support a full master cycle.
+
+That explicit wait now starts the same true fourteen-day reconsideration interval as a recycle. The unchanged choice does not reappear on day 448; it returns on day 458. With the material and market facts still unchanged, P7 waits again. This prevents repetitive prompts from overriding remembered economic restraint.
+
+### Existing systems remain causal
+
+Kothar returns to fulfilling the continuing-care obligation on day 454 after the prior illness-based deferment. The weather shock does not alter neutral provisioning, stored surplus, marriage/property state, market-message containment, or prior P7→P3 scarcity boundaries.
+
+## Current limitations / next priorities
+
+- The weather episode is one bounded fixture, not a stochastic climate model or historical Ugaritic rain event.
+- Protection is represented as one household labor day rather than a reconstructed storage technology inventory.
+- Bat-Rapiu's property preference remains non-binding; genuine shared-care/property-use disagreement should precede succession modeling.
+- A second independent life-course transition remains needed.
+- Second-seed / paired-counterfactual validation should begin before treating behavior frequency as meaningful.
+- P12's no-lot market state should recover only through new information, never automatically.
 
 **The world is structured. The people are not scripted.**

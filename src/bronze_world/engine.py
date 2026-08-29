@@ -220,6 +220,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 422
 
+    def _v013_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v013_lifeways_start_day", 444))
+        except (TypeError, ValueError):
+            return 444
+
     def _v008_start_day(self) -> int:
         cfg = scenario_config(self.db, self.run_id)
         try:
@@ -1402,6 +1409,41 @@ class WorldEngine:
                                 rules=["ASM-FIXTURE-021","RULE-SEASONAL-SURPLUS-STORAGE-001"],payload=stakes,discriminator=sid)
                 created.append(self.enqueue_job(sid,actor["person_id"],["preserve_seasonal_surplus","wait","communicate"]))
 
+        # v013: one bounded local dry-summer moisture/rain exposure stresses only
+        # exposed seasonal produce. Each household independently chooses whether to
+        # commit one modeled labor day to protect/move the exposed stock or accept
+        # the calibrated extra loss. Staple grain and already-stored goods are excluded.
+        if self._has_assumption("ASM-FIXTURE-034") and day >= self._v013_start_day():
+            seasonal_v013=self._seasonal_context(day)
+            if seasonal_v013["phase"] == "dry_summer_storage_and_vines":
+                shock_key=stable_id("WX",self.run_id,"dry_summer_storage_moisture")
+                prior=self.db.one("SELECT 1 FROM events WHERE run_id=? AND event_type='local_storage_weather_exposure' LIMIT 1",(self.run_id,))
+                if not prior:
+                    for hh in ("H-FARM","H-DEPEND"):
+                        exposed=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='seasonal_produce'",(hh,))
+                        if exposed is None or float(exposed) <= 0:
+                            continue
+                        actor=self.db.one(
+                            "SELECT p.person_id,p.current_place_id FROM persons p JOIN household_memberships hm USING(person_id) "
+                            "WHERE hm.household_id=? AND hm.until_day IS NULL AND p.alive=1 AND p.available=1 "
+                            "ORDER BY CASE hm.membership_role WHEN 'senior' THEN 0 ELSE 1 END,p.person_id LIMIT 1",(hh,))
+                        if not actor: continue
+                        sid=stable_id("SCENE",self.run_id,"local_storage_weather_exposure",hh,shock_key)
+                        if self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(sid,)): continue
+                        stakes={"situation_id":"SIT-031","household_id":hh,"exposed_seasonal_produce":float(exposed),
+                                "unprotected_extra_loss_fraction":0.30,"protected_extra_loss_fraction":0.05,"protection_labor_days":1,
+                                "seasonal_context":seasonal_v013,
+                                "fixture_notice":"Local rainfall/humidity and storage vulnerability are research-supported; the one-off timing, households, loss fractions and one-day protection labor are ASM-FIXTURE-034 calibration. Staple grain and stored_seasonal_goods are excluded."}
+                        with self.db.transaction() as con:
+                            con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                (sid,self.run_id,day,actor["current_place_id"],"environmental","local_storage_weather_exposure",canonical_json(stakes),
+                                 canonical_json({"seasonal_produce_at_risk":float(exposed),"stored_goods_protected":True,"staple_grain_protected":True}),
+                                 canonical_json({"household_labor_can_reduce_loss":True}),"[]","open"))
+                            con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,actor["person_id"],"decision_actor"))
+                            self._event(con,day,"local_storage_weather_exposure",scene_id=sid,actors=[actor["person_id"]],
+                                rules=["ASM-FIXTURE-034","RULE-LOCAL-STORAGE-WEATHER-001"],payload=stakes,discriminator=sid)
+                        created.append(self.enqueue_job(sid,actor["person_id"],["protect_exposed_stores","accept_weather_storage_loss","communicate"]))
+
         # Palace labor becomes a cognition boundary only while it collides with an
         # ecological labor bottleneck. Outside that bottleneck it is completed by the
         # deterministic institutional routine above.
@@ -1667,7 +1709,17 @@ class WorldEngine:
             bucket=day//14
             recycle_sid=stable_id("SCENE",self.run_id,"market_unavailable_recycling_choice","P7",bucket)
             last_recycle=self.db.one("SELECT day FROM events WHERE run_id=? AND event_type='finished_metalwork_recycled' ORDER BY day DESC,event_seq DESC LIMIT 1",(self.run_id,))
-            recycle_interval_ok=(not last_recycle) or day-int(last_recycle["day"])>=14
+            # From v013 onward, an explicit wait on the no-lot recycling choice is a
+            # real decision boundary too. Do not nag P7 again merely because a calendar
+            # bucket changed when neither market information nor material state improved.
+            last_wait=None
+            if self._has_assumption("ASM-FIXTURE-034") and day >= self._v013_start_day():
+                last_wait=self.db.one(
+                    "SELECT e.day FROM events e JOIN scenes s ON s.scene_id=e.scene_id "
+                    "WHERE e.run_id=? AND e.event_type='decision_to_wait' AND s.trigger_type='market_unavailable_recycling_choice' "
+                    "AND e.actor_ids_json LIKE '%P7%' ORDER BY e.day DESC,e.event_seq DESC LIMIT 1",(self.run_id,))
+            anchors=[int(x["day"]) for x in (last_recycle,last_wait) if x]
+            recycle_interval_ok=(not anchors) or day-max(anchors)>=14
             if (no_lot_k and metal_now is not None and float(metal_now)<0.15 and finished_now is not None and float(finished_now)>=0.20
                     and recycle_interval_ok and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(recycle_sid,))):
                 actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
@@ -2391,6 +2443,14 @@ class WorldEngine:
                 stakes = packet.get("scene", {}).get("stakes", {})
                 if packet.get("scene", {}).get("trigger") != "marriage_final_consent" or job["actor_person_id"] != stakes.get("consenting_person_id"):
                     errors.append(f"action_{i}:invalid_marriage_consent_decline")
+            elif typ in {"protect_exposed_stores","accept_weather_storage_loss"}:
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "local_storage_weather_exposure":
+                    errors.append(f"action_{i}:invalid_scene_for_weather_storage")
+                if actor_household != stakes.get("household_id"):
+                    errors.append(f"action_{i}:weather_storage_household_mismatch")
+                if typ == "protect_exposed_stores" and action.get("labor_days") != stakes.get("protection_labor_days"):
+                    errors.append(f"action_{i}:weather_storage_labor_mismatch")
             elif typ == "preserve_seasonal_surplus":
                 stakes = packet.get("scene", {}).get("stakes", {})
                 if packet.get("scene", {}).get("trigger") != "seasonal_surplus_storage_pressure":
@@ -3358,6 +3418,27 @@ class WorldEngine:
                                  memory_type="marriage_negotiation",salience=.9,relationship_relevance=.9,goal_relevance=.85)
                     self._memory(con,partner,day,f"{actor_id} declined final marriage consent; no marriage was created.",event_id=eid,
                                  memory_type="marriage_negotiation",salience=.9,relationship_relevance=.9,goal_relevance=.8)
+
+                elif typ in {"protect_exposed_stores","accept_weather_storage_loss"}:
+                    household_id=scene_stakes["household_id"]
+                    stock=con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='seasonal_produce'",(household_id,)).fetchone()
+                    current=float(stock[0]) if stock else 0.0
+                    protected=typ == "protect_exposed_stores"
+                    frac=float(scene_stakes["protected_extra_loss_fraction"] if protected else scene_stakes["unprotected_extra_loss_fraction"])
+                    loss=min(current,current*frac)
+                    if loss>0:
+                        self._change_resource(con,household_id,"seasonal_produce",-loss,assumption_id="ASM-FIXTURE-034")
+                    event_type="storage_weather_protection_completed" if protected else "storage_weather_loss_accepted"
+                    eid=self._event(con,day,event_type,scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-034","RULE-LOCAL-STORAGE-WEATHER-001"],
+                        material={household_id:{"seasonal_produce":-loss}} if loss else {},
+                        payload={"action_id":aid,"household_id":household_id,"protected":protected,"extra_loss_fraction":frac,"loss_amount":loss,
+                                 "labor_days":scene_stakes.get("protection_labor_days") if protected else 0,
+                                 "staple_grain_changed":False,"stored_seasonal_goods_changed":False,
+                                 "notice":"bounded fixture local weather/storage episode; not a historical spoilage rate"},discriminator=aid)
+                    self._memory(con,actor_id,day,
+                        (f"Committed one household labor day to cover/move exposed seasonal produce during a local moisture episode; {loss:g} fixture units were still lost." if protected else f"Accepted the local moisture exposure without extra protection; {loss:g} fixture units of exposed seasonal produce were lost."),
+                        event_id=eid,memory_type="weather_storage",salience=.82,relationship_relevance=.2,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-034"})
 
                 elif typ == "preserve_seasonal_surplus":
                     amount=float(action["amount"])

@@ -112,3 +112,4 @@ As applicable, validate:
 - state update and event append occur in one transaction.
 
 A fluent or historically plausible sentence cannot bypass these checks.
+- `protect_exposed_stores` / `accept_weather_storage_loss` — resolve one bounded local weather/storage exposure affecting only exposed seasonal produce; protection commits one modeled household labor day and reduces, but does not eliminate, fixture loss.

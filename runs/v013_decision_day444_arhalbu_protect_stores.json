@@ -1,0 +1,11 @@
+{
+  "decision_id": "DEC-V013-D444-ARHALBU-PROTECT-STORES",
+  "actor_id": "P13",
+  "selected_intent": "protect the dependent household's smaller exposed produce reserve because preserving food buffers vulnerability and no outside obligation is currently due",
+  "proposed_actions": [
+    {"type": "protect_exposed_stores", "labor_days": 1}
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-STORAGE-001-P13", "K-LOCAL-LABOR-001-P13"],
+  "decision_basis_tags": ["dependent_household", "food_security", "storage_risk", "available_labor"],
+  "declared_uncertainty": "The modeled moisture episode and protective effectiveness are explicit fixture calibration; no historical household technique or loss rate is asserted."
+}

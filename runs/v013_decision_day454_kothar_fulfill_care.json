@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-V013-D454-KOTHAR-FULFILL-CARE",
+  "actor_id": "P16",
+  "selected_intent": "resume the continuing care commitment after the earlier illness-based deferment once no current conflict remains",
+  "proposed_actions": [
+    {
+      "type": "fulfill_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "beneficiary_person_id": "P15",
+      "support_kind": "household_property_support_day",
+      "reason": "The earlier deferment was tied to my own minor illness. With no current illness conflict and only moderate dry-summer labor intensity, I can return to the continuing household support duty."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-CARE-001-P16", "K-LOCAL-LABOR-001-P16"],
+  "decision_basis_tags": ["continuing_care", "prior_temporary_deferment", "lower_intensity_season", "household_obligation"],
+  "declared_uncertainty": "The concrete care cadence and task are fixture mechanics; this does not assert a historical Ugaritic care schedule."
+}

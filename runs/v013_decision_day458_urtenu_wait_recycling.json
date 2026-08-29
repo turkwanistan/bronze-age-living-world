@@ -1,0 +1,11 @@
+{
+  "decision_id": "DEC-V013-D458-URTENU-WAIT-RECYCLING",
+  "actor_id": "P7",
+  "selected_intent": "continue preserving scarce finished output because neither market availability nor workshop material state has improved enough to justify another remelt",
+  "proposed_actions": [
+    {"type": "wait", "reason": "Fourteen days have passed, but the decision facts are materially unchanged: the market still has no usable lot, another 0.20 remelt would consume most remaining finished metalwork, and 0.12 recovered metal would still not support a full master cycle."}
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RECYCLE-001-P7", "K-e0325e0f464ffea5"],
+  "decision_basis_tags": ["market_unavailable", "fourteen_day_reconsideration", "finished_stock_preservation", "unchanged_information"],
+  "declared_uncertainty": "The no-lot state and recycling quantities are simulation fixtures; another wait does not imply permanent closure or that future changed information would be ignored."
+}

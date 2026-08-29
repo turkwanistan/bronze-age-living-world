@@ -1,0 +1,11 @@
+{
+  "decision_id": "DEC-V013-D444-ILIMILKU-PROTECT-STORES",
+  "actor_id": "P1",
+  "selected_intent": "use one lower-intensity dry-summer labor day to protect exposed produce from the bounded moisture episode",
+  "proposed_actions": [
+    {"type": "protect_exposed_stores", "labor_days": 1}
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-STORAGE-001-P1", "K-LOCAL-LABOR-001-P1"],
+  "decision_basis_tags": ["storage_risk", "risk_aversion", "available_household_labor", "protect_food"],
+  "declared_uncertainty": "The weather episode, one-day labor cost and protected loss fraction are simulation fixtures, not reconstructed Ugaritic weather or storage rates."
+}
