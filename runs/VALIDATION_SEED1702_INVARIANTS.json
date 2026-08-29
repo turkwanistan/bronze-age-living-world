@@ -1,0 +1,12 @@
+{
+  "delivery_before_arrival": 0,
+  "arrival_before_departure": 0,
+  "message_knowledge_before_delivery": 0,
+  "negative_resource_stocks": 0,
+  "resource_shortfalls": 0,
+  "overdue_obligations": 0,
+  "rejected_jobs": 0,
+  "pending_jobs": 0,
+  "open_scenes": 0,
+  "state_hash": "870ac079134c5f6c9ef75af64f5fb1113b23ba73b30d54652c047cd3c8633405"
+}

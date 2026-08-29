@@ -1,0 +1,542 @@
+{
+  "seed1701": {
+    "run_id": "RUN-3dda7920595c1748",
+    "day": 462,
+    "events": 6608,
+    "accepted": 157,
+    "rejected": 0,
+    "pending": 0,
+    "open": 0,
+    "runtime_circumstances": [
+      [
+        27,
+        "P14"
+      ],
+      [
+        36,
+        "P2"
+      ],
+      [
+        78,
+        "P6"
+      ],
+      [
+        99,
+        "P8"
+      ],
+      [
+        100,
+        "P11"
+      ],
+      [
+        103,
+        "P9"
+      ],
+      [
+        111,
+        "P2"
+      ],
+      [
+        115,
+        "P7"
+      ],
+      [
+        154,
+        "P10"
+      ],
+      [
+        169,
+        "P5"
+      ],
+      [
+        175,
+        "P7"
+      ],
+      [
+        177,
+        "P3"
+      ],
+      [
+        229,
+        "P14"
+      ],
+      [
+        230,
+        "P2"
+      ],
+      [
+        234,
+        "P13"
+      ],
+      [
+        239,
+        "P2"
+      ],
+      [
+        244,
+        "P9"
+      ],
+      [
+        258,
+        "P4"
+      ],
+      [
+        296,
+        "P3"
+      ],
+      [
+        318,
+        "P2"
+      ],
+      [
+        376,
+        "P11"
+      ],
+      [
+        378,
+        "P2"
+      ],
+      [
+        378,
+        "P5"
+      ],
+      [
+        423,
+        "P16"
+      ],
+      [
+        434,
+        "P15"
+      ],
+      [
+        443,
+        "P2"
+      ],
+      [
+        460,
+        "P6"
+      ]
+    ],
+    "critical_counts": {
+      "marriage_concluded": 1,
+      "kin_care_fulfilled": 8,
+      "kin_care_deferred": 2,
+      "property_preference_recorded": 1,
+      "household_property_reserve_established": 1,
+      "adult_harbor_role_progressed": 1,
+      "alternate_metal_exchange_completed": 2,
+      "finished_metalwork_recycled": 4,
+      "workshop_tool_damage": 1,
+      "workshop_tool_repair_completed": 1,
+      "local_storage_weather_exposure": 2,
+      "storage_weather_protection_completed": 2,
+      "trade_exchange_committed": 3,
+      "decision_to_wait": 30
+    },
+    "critical_days": {
+      "marriage_concluded": [
+        150
+      ],
+      "kin_care_fulfilled": [
+        184,
+        214,
+        244,
+        274,
+        304,
+        334,
+        394,
+        454
+      ],
+      "kin_care_deferred": [
+        364,
+        424
+      ],
+      "property_preference_recorded": [
+        214
+      ],
+      "household_property_reserve_established": [
+        459
+      ],
+      "adult_harbor_role_progressed": [
+        460
+      ],
+      "alternate_metal_exchange_completed": [
+        368,
+        385
+      ],
+      "finished_metalwork_recycled": [
+        388,
+        402,
+        416,
+        430
+      ],
+      "workshop_tool_damage": [
+        434
+      ],
+      "workshop_tool_repair_completed": [
+        435
+      ],
+      "local_storage_weather_exposure": [
+        444,
+        444
+      ],
+      "storage_weather_protection_completed": [
+        444,
+        444
+      ],
+      "trade_exchange_committed": [
+        42,
+        70,
+        98
+      ],
+      "decision_to_wait": [
+        9,
+        84,
+        112,
+        126,
+        126,
+        154,
+        154,
+        168,
+        182,
+        196,
+        210,
+        210,
+        238,
+        238,
+        252,
+        266,
+        280,
+        294,
+        294,
+        322,
+        322,
+        336,
+        350,
+        350,
+        378,
+        406,
+        434,
+        444,
+        458,
+        462
+      ]
+    },
+    "H_WIDOW_resources": {
+      "grain": 15.649999999999764,
+      "oil": 4.0,
+      "property_maintenance_reserve": 0.4,
+      "ritual_goods": 0.29999999999999954,
+      "silver": 2.8000000000000003
+    },
+    "P11_roles": [
+      {
+        "name": "porter",
+        "start_day": 0,
+        "end_day": 460
+      },
+      {
+        "name": "sailor",
+        "start_day": 0,
+        "end_day": null
+      },
+      {
+        "name": "harbor_coordinator",
+        "start_day": 460,
+        "end_day": null
+      }
+    ],
+    "P10_ritual_events": 1,
+    "P15_ritual_events": 1,
+    "P5_feast_events": 0,
+    "negative": 0,
+    "shortfalls": 0,
+    "overdue": 0,
+    "hash": "a15e3ec7a0ae8ada835b3920acb370855e1443977abd7849040a336cf8b0e2f0",
+    "runtime_count": 27
+  },
+  "seed1702": {
+    "run_id": "RUN-6336780b6050abf5",
+    "day": 462,
+    "events": 6632,
+    "accepted": 164,
+    "rejected": 0,
+    "pending": 0,
+    "open": 0,
+    "runtime_circumstances": [
+      [
+        11,
+        "P15"
+      ],
+      [
+        29,
+        "P3"
+      ],
+      [
+        34,
+        "P7"
+      ],
+      [
+        44,
+        "P3"
+      ],
+      [
+        51,
+        "P4"
+      ],
+      [
+        67,
+        "P3"
+      ],
+      [
+        109,
+        "P5"
+      ],
+      [
+        112,
+        "P12"
+      ],
+      [
+        133,
+        "P10"
+      ],
+      [
+        160,
+        "P6"
+      ],
+      [
+        162,
+        "P16"
+      ],
+      [
+        163,
+        "P13"
+      ],
+      [
+        172,
+        "P2"
+      ],
+      [
+        178,
+        "P1"
+      ],
+      [
+        182,
+        "P16"
+      ],
+      [
+        188,
+        "P1"
+      ],
+      [
+        198,
+        "P8"
+      ],
+      [
+        221,
+        "P2"
+      ],
+      [
+        230,
+        "P16"
+      ],
+      [
+        238,
+        "P10"
+      ],
+      [
+        241,
+        "P12"
+      ],
+      [
+        263,
+        "P6"
+      ],
+      [
+        282,
+        "P6"
+      ],
+      [
+        291,
+        "P16"
+      ],
+      [
+        294,
+        "P5"
+      ],
+      [
+        327,
+        "P10"
+      ],
+      [
+        351,
+        "P10"
+      ],
+      [
+        358,
+        "P1"
+      ],
+      [
+        372,
+        "P7"
+      ],
+      [
+        374,
+        "P12"
+      ],
+      [
+        381,
+        "P15"
+      ],
+      [
+        395,
+        "P2"
+      ],
+      [
+        415,
+        "P9"
+      ],
+      [
+        430,
+        "P13"
+      ]
+    ],
+    "critical_counts": {
+      "marriage_concluded": 1,
+      "kin_care_fulfilled": 8,
+      "kin_care_deferred": 2,
+      "property_preference_recorded": 1,
+      "household_property_reserve_established": 1,
+      "adult_harbor_role_progressed": 1,
+      "alternate_metal_exchange_completed": 2,
+      "finished_metalwork_recycled": 4,
+      "workshop_tool_damage": 1,
+      "workshop_tool_repair_completed": 1,
+      "local_storage_weather_exposure": 2,
+      "storage_weather_protection_completed": 2,
+      "trade_exchange_committed": 3,
+      "decision_to_wait": 30
+    },
+    "critical_days": {
+      "marriage_concluded": [
+        150
+      ],
+      "kin_care_fulfilled": [
+        184,
+        214,
+        244,
+        274,
+        304,
+        334,
+        394,
+        454
+      ],
+      "kin_care_deferred": [
+        364,
+        424
+      ],
+      "property_preference_recorded": [
+        214
+      ],
+      "household_property_reserve_established": [
+        459
+      ],
+      "adult_harbor_role_progressed": [
+        460
+      ],
+      "alternate_metal_exchange_completed": [
+        368,
+        385
+      ],
+      "finished_metalwork_recycled": [
+        388,
+        402,
+        416,
+        430
+      ],
+      "workshop_tool_damage": [
+        434
+      ],
+      "workshop_tool_repair_completed": [
+        435
+      ],
+      "local_storage_weather_exposure": [
+        444,
+        444
+      ],
+      "storage_weather_protection_completed": [
+        444,
+        444
+      ],
+      "trade_exchange_committed": [
+        42,
+        70,
+        98
+      ],
+      "decision_to_wait": [
+        9,
+        84,
+        112,
+        126,
+        126,
+        154,
+        154,
+        168,
+        182,
+        196,
+        210,
+        210,
+        238,
+        238,
+        252,
+        266,
+        280,
+        294,
+        294,
+        322,
+        322,
+        336,
+        350,
+        350,
+        378,
+        406,
+        434,
+        444,
+        458,
+        462
+      ]
+    },
+    "H_WIDOW_resources": {
+      "grain": 15.949999999999765,
+      "oil": 4.0,
+      "property_maintenance_reserve": 0.4,
+      "ritual_goods": 0.04999999999999963,
+      "silver": 2.8000000000000003
+    },
+    "P11_roles": [
+      {
+        "name": "porter",
+        "start_day": 0,
+        "end_day": 460
+      },
+      {
+        "name": "sailor",
+        "start_day": 0,
+        "end_day": null
+      },
+      {
+        "name": "harbor_coordinator",
+        "start_day": 460,
+        "end_day": null
+      }
+    ],
+    "P10_ritual_events": 4,
+    "P15_ritual_events": 2,
+    "P5_feast_events": 1,
+    "negative": 0,
+    "shortfalls": 0,
+    "overdue": 0,
+    "hash": "870ac079134c5f6c9ef75af64f5fb1113b23ba73b30d54652c047cd3c8633405",
+    "runtime_count": 34
+  }
+}

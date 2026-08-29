@@ -1,0 +1,87 @@
+{
+  "mode": "paired_harbor_progression_counterfactual",
+  "source_db": "state/ugarit_living_v015.sqlite",
+  "base_day": 459,
+  "target_day": 462,
+  "accept_branch": {
+    "day": 462,
+    "legal_status": "free_laborer",
+    "membership": {
+      "household_id": "H-HARBOR",
+      "membership_role": "senior",
+      "since_day": 0,
+      "until_day": null
+    },
+    "roles": [
+      {
+        "name": "porter",
+        "start_day": 0,
+        "end_day": 460
+      },
+      {
+        "name": "sailor",
+        "start_day": 0,
+        "end_day": null
+      },
+      {
+        "name": "harbor_coordinator",
+        "start_day": 460,
+        "end_day": null
+      }
+    ],
+    "post460_work": [
+      {
+        "day": 462,
+        "payload_json": "{\"activities\":[{\"activity\":\"cargo/porter coordination, harbor information brokerage, voyage-work allocation\",\"domain\":\"maritime\",\"role\":\"harbor_coordinator\"},{\"activity\":\"vessel preparation, cargo handling, crew work, harbor/weather intelligence\",\"domain\":\"maritime\",\"role\":\"sailor\"}],\"roles\":[\"harbor_coordinator\",\"sailor\"],\"seasonal_context\":{\"agricultural_intensity\":0.68,\"calendar_notice\":\"Season ordering is research-constrained Mediterranean dry-farming; exact 360-day alignment and simulation-day offset are ASM-FIXTURE-008 calibration, not an attested Ugaritic date conversion.\",\"day_of_year\":222,\"farm_activity\":\"threshing/storage completion, vine work, dry-season maintenance\",\"phase\":\"dry_summer_storage_and_vines\",\"pressures\":[\"water access\",\"storage loss\",\"transport\"]}}"
+      }
+    ],
+    "negative_resources": 0,
+    "rejected_jobs": 0,
+    "pending_jobs": 0,
+    "open_scenes": 0,
+    "state_hash": "dc64041fcbb3b20293d0120df1846aeec7d4550de9c47feba2dd9cde5ed94a02"
+  },
+  "refuse_branch": {
+    "day": 462,
+    "legal_status": "free_laborer",
+    "membership": {
+      "household_id": "H-HARBOR",
+      "membership_role": "senior",
+      "since_day": 0,
+      "until_day": null
+    },
+    "roles": [
+      {
+        "name": "porter",
+        "start_day": 0,
+        "end_day": null
+      },
+      {
+        "name": "sailor",
+        "start_day": 0,
+        "end_day": null
+      }
+    ],
+    "post460_work": [
+      {
+        "day": 462,
+        "payload_json": "{\"activities\":[{\"activity\":\"vessel preparation, cargo handling, crew work, harbor/weather intelligence\",\"domain\":\"maritime\",\"role\":\"sailor\"},{\"activity\":\"human portage for household, market, workshop or harbor\",\"domain\":\"labor\",\"role\":\"porter\"}],\"roles\":[\"sailor\",\"porter\"],\"seasonal_context\":{\"agricultural_intensity\":0.68,\"calendar_notice\":\"Season ordering is research-constrained Mediterranean dry-farming; exact 360-day alignment and simulation-day offset are ASM-FIXTURE-008 calibration, not an attested Ugaritic date conversion.\",\"day_of_year\":222,\"farm_activity\":\"threshing/storage completion, vine work, dry-season maintenance\",\"phase\":\"dry_summer_storage_and_vines\",\"pressures\":[\"water access\",\"storage loss\",\"transport\"]}}"
+      }
+    ],
+    "negative_resources": 0,
+    "rejected_jobs": 0,
+    "pending_jobs": 0,
+    "open_scenes": 0,
+    "state_hash": "44e5a76b8b0ced753addb122fd7b21caf6e0b3812085e7d77017cf39427047c2"
+  },
+  "invariants": {
+    "legal_status_same": true,
+    "household_membership_same": true,
+    "no_negative_resources": true,
+    "no_rejected_pending_open": true,
+    "accept_has_harbor_coordinator": true,
+    "refuse_keeps_porter": true,
+    "refuse_has_no_harbor_coordinator": true
+  },
+  "all_invariants_pass": true
+}

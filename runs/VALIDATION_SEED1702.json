@@ -1,0 +1,356 @@
+{
+  "mode": "semantic_policy_transfer_validation_only",
+  "source_db": "state/ugarit_living_v015.sqlite",
+  "seed": 1702,
+  "run_id": "RUN-6336780b6050abf5",
+  "target_day": 462,
+  "reached_day": 462,
+  "completed_target": true,
+  "semantic_decisions_applied": 164,
+  "repeated_minor_illness_templates": 8,
+  "explicit_overrides_applied": [
+    {
+      "key": "P12|minor_illness|1",
+      "template_override_key": "P12|minor_illness|1",
+      "day": 112,
+      "job_id": "JOB-594ba42d9c02eacc",
+      "reused_prior_override": false
+    },
+    {
+      "key": "P1|minor_illness|1",
+      "template_override_key": "P1|minor_illness|1",
+      "day": 178,
+      "job_id": "JOB-6519dfce0101c912",
+      "reused_prior_override": false
+    },
+    {
+      "key": "P1|minor_illness|2",
+      "template_override_key": "P1|minor_illness|1",
+      "day": 188,
+      "job_id": "JOB-cd55535e385bacae",
+      "reused_prior_override": true
+    },
+    {
+      "key": "P12|minor_illness|2",
+      "template_override_key": "P12|minor_illness|1",
+      "day": 241,
+      "job_id": "JOB-7e4f301fee12b3d7",
+      "reused_prior_override": true
+    },
+    {
+      "key": "P10|minor_illness|4",
+      "template_override_key": "P10|minor_illness|4",
+      "day": 351,
+      "job_id": "JOB-1975d76f3f03c504",
+      "reused_prior_override": false
+    },
+    {
+      "key": "P1|minor_illness|3",
+      "template_override_key": "P1|minor_illness|1",
+      "day": 358,
+      "job_id": "JOB-d2243b7a8a44a14e",
+      "reused_prior_override": true
+    },
+    {
+      "key": "P12|minor_illness|3",
+      "template_override_key": "P12|minor_illness|1",
+      "day": 374,
+      "job_id": "JOB-bb03fc0c61bbf643",
+      "reused_prior_override": true
+    },
+    {
+      "key": "P15|minor_illness|2",
+      "template_override_key": "P15|minor_illness|2",
+      "day": 381,
+      "job_id": "JOB-756a0ad549dd43e3",
+      "reused_prior_override": false
+    },
+    {
+      "key": "P5|communal_feast_contribution|1",
+      "template_override_key": "P5|communal_feast_contribution|1",
+      "day": 390,
+      "job_id": "JOB-e0417e8f8eac037a",
+      "reused_prior_override": false
+    }
+  ],
+  "failures": [],
+  "accepted_jobs": 164,
+  "rejected_jobs": 0,
+  "pending_jobs": 0,
+  "open_scenes": 0,
+  "events": 6632,
+  "negative_resource_stocks": 0,
+  "resource_shortfalls": 0,
+  "overdue_obligations": 0,
+  "runtime_circumstances": [
+    {
+      "day": 11,
+      "actor_ids_json": "[\"P15\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 29,
+      "actor_ids_json": "[\"P3\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 34,
+      "actor_ids_json": "[\"P7\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 44,
+      "actor_ids_json": "[\"P3\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 51,
+      "actor_ids_json": "[\"P4\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 67,
+      "actor_ids_json": "[\"P3\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 109,
+      "actor_ids_json": "[\"P5\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 112,
+      "actor_ids_json": "[\"P12\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 133,
+      "actor_ids_json": "[\"P10\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 160,
+      "actor_ids_json": "[\"P6\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 162,
+      "actor_ids_json": "[\"P16\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 163,
+      "actor_ids_json": "[\"P13\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 172,
+      "actor_ids_json": "[\"P2\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 178,
+      "actor_ids_json": "[\"P1\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 182,
+      "actor_ids_json": "[\"P16\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 188,
+      "actor_ids_json": "[\"P1\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 198,
+      "actor_ids_json": "[\"P8\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 221,
+      "actor_ids_json": "[\"P2\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 230,
+      "actor_ids_json": "[\"P16\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 238,
+      "actor_ids_json": "[\"P10\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 241,
+      "actor_ids_json": "[\"P12\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 263,
+      "actor_ids_json": "[\"P6\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 282,
+      "actor_ids_json": "[\"P6\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 291,
+      "actor_ids_json": "[\"P16\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 294,
+      "actor_ids_json": "[\"P5\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 327,
+      "actor_ids_json": "[\"P10\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 351,
+      "actor_ids_json": "[\"P10\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 358,
+      "actor_ids_json": "[\"P1\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 372,
+      "actor_ids_json": "[\"P7\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 374,
+      "actor_ids_json": "[\"P12\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 381,
+      "actor_ids_json": "[\"P15\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 395,
+      "actor_ids_json": "[\"P2\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 415,
+      "actor_ids_json": "[\"P9\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    },
+    {
+      "day": 430,
+      "actor_ids_json": "[\"P13\"]",
+      "payload_json": "{\"runtime_stochastic\":true,\"sample\":\"minor_illness\"}"
+    }
+  ],
+  "state_hash": "870ac079134c5f6c9ef75af64f5fb1113b23ba73b30d54652c047cd3c8633405",
+  "last_applied": [
+    {
+      "day": 444,
+      "actor": "P1",
+      "trigger": "local_storage_weather_exposure",
+      "source_template_day": 444,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 444,
+      "actor": "P13",
+      "trigger": "local_storage_weather_exposure",
+      "source_template_day": 444,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 444,
+      "actor": "P7",
+      "trigger": "market_unavailable_recycling_choice",
+      "source_template_day": 444,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 454,
+      "actor": "P16",
+      "trigger": "continuing_kin_care_need",
+      "source_template_day": 454,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 458,
+      "actor": "P7",
+      "trigger": "market_unavailable_recycling_choice",
+      "source_template_day": 458,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 459,
+      "actor": "P15",
+      "trigger": "household_property_reserve_proposal",
+      "source_template_day": 459,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 459,
+      "actor": "P10",
+      "trigger": "household_property_reserve_review",
+      "source_template_day": 459,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 459,
+      "actor": "P15",
+      "trigger": "household_property_reserve_counter_review",
+      "source_template_day": 459,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 459,
+      "actor": "P16",
+      "trigger": "household_property_stewardship_consent",
+      "source_template_day": 459,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 460,
+      "actor": "P11",
+      "trigger": "harbor_role_progression_review",
+      "source_template_day": 460,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 460,
+      "actor": "P12",
+      "trigger": "harbor_role_progression_request",
+      "source_template_day": 460,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    },
+    {
+      "day": 462,
+      "actor": "P3",
+      "trigger": "port_trade_opportunity",
+      "source_template_day": 462,
+      "reused_repeat_minor_template": false,
+      "override_key": null
+    }
+  ]
+}

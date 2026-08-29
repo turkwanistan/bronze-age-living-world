@@ -1,0 +1,109 @@
+{
+  "P12|minor_illness|1": {
+    "selected_intent": "respond conservatively to a first minor illness without treating it as a severe diagnosis or abandoning market responsibilities",
+    "proposed_actions": [
+      {
+        "type": "perform_ritual",
+        "ritual_kind": "brief household protective observance",
+        "ritual_goods_cost": 0.2,
+        "practical_response": "rest briefly and reduce market and household exertion while symptoms remain minor, then resume ordinary work if they settle"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P12"
+    ],
+    "decision_basis_tags": [
+      "first_minor_illness",
+      "moderate_ritual_commitment",
+      "practical_rest",
+      "market_continuity"
+    ],
+    "declared_uncertainty": "The illness is a runtime circumstance and the rite/cost are fixture abstractions; no diagnosis or specific Ugaritic medical prescription is asserted."
+  },
+  "P1|minor_illness|1": {
+    "selected_intent": "respond conservatively to a first minor illness while protecting household continuity and avoiding unnecessary field exertion",
+    "proposed_actions": [
+      {
+        "type": "perform_ritual",
+        "ritual_kind": "modest household protective observance",
+        "ritual_goods_cost": 0.2,
+        "practical_response": "rest briefly and reduce strenuous field and household work while symptoms remain minor, then resume ordinary responsibilities if they settle"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P1",
+      "K-LOCAL-LABOR-001-P1"
+    ],
+    "decision_basis_tags": [
+      "first_minor_illness",
+      "household_continuity",
+      "ritual_commitment",
+      "practical_rest"
+    ],
+    "declared_uncertainty": "The illness is a runtime circumstance and the rite/cost are fixture abstractions; no diagnosis or specific Ugaritic treatment is asserted."
+  },
+  "P10|minor_illness|4": {
+    "selected_intent": "preserve a minimal ritual response while adapting to depleted household ritual stock and resting rather than over-consuming scarce materials",
+    "proposed_actions": [
+      {
+        "type": "perform_ritual",
+        "ritual_kind": "minimal household protective observance",
+        "ritual_goods_cost": 0.1,
+        "practical_response": "rest briefly and reduce client-care exertion while symptoms remain minor, conserving the household remaining ritual materials"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P10"
+    ],
+    "decision_basis_tags": [
+      "repeated_minor_illness",
+      "ritual_material_scarcity",
+      "high_ritual_commitment",
+      "practical_rest"
+    ],
+    "declared_uncertainty": "The illness is still only a runtime minor-illness circumstance. The smaller rite reflects current fixture resource scarcity, not a historical medical prescription."
+  },
+  "P5|communal_feast_contribution|1": {
+    "selected_intent": "participate visibly in the communal feast while preserving scarce ritual materials and most household stores",
+    "proposed_actions": [
+      {
+        "type": "contribute_communal_feast",
+        "grain_amount": 0.4,
+        "ritual_goods_amount": 0.1,
+        "reason": "The scribal household has ample grain but limited ritual goods; a modest contribution supports communal and institutional ties without consuming most of the remaining ritual stock during harvest."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P5",
+      "K-LOCAL-P5"
+    ],
+    "decision_basis_tags": [
+      "communal_ritual",
+      "institutional_trust",
+      "ritual_material_scarcity",
+      "harvest_pressure"
+    ],
+    "declared_uncertainty": "The feast timing and contribution quantities are fixture mechanics; this does not assert a historical Ugaritic contribution norm."
+  },
+  "P15|minor_illness|2": {
+    "selected_intent": "maintain a minimal household protective observance while conserving the nearly exhausted ritual stock and resting through a minor episode",
+    "proposed_actions": [
+      {
+        "type": "perform_ritual",
+        "ritual_kind": "spoken household protective observance without material expenditure",
+        "ritual_goods_cost": 0.0,
+        "practical_response": "rest briefly and reduce household/property work while symptoms remain minor, conserving the remaining ritual materials"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P15"
+    ],
+    "decision_basis_tags": [
+      "repeated_minor_illness",
+      "ritual_material_exhaustion",
+      "household_continuity",
+      "practical_rest"
+    ],
+    "declared_uncertainty": "The illness remains a runtime minor-illness circumstance. The non-material observance is a bounded simulation response to depleted fixture ritual stock, not a reconstructed Ugaritic prescription."
+  }
+}
