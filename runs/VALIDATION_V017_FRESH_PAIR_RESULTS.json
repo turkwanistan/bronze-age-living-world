@@ -1,0 +1,263 @@
+{
+  "mode": "fresh_cognition_paired_validation",
+  "results": {
+    "p10_illness_adequate": {
+      "ok": true,
+      "errors": [],
+      "action_type": "perform_ritual",
+      "packet_hash": "29f59e88fab50985b519365b2a2a6b410ab693f2514edf3b8a88e4efd45d481b",
+      "household_resources_before": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 1.0,
+        "silver": 2.8000000000000003
+      },
+      "household_resources_after": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.8,
+        "silver": 2.8000000000000003
+      },
+      "accepted_jobs": 158,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p10_illness_depleted": {
+      "ok": true,
+      "errors": [],
+      "action_type": "perform_ritual",
+      "packet_hash": "2640115e4310729cfc0a8f14c176e11fa4cb8c19299f54ce08253e2d045a7700",
+      "household_resources_before": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.05,
+        "silver": 2.8000000000000003
+      },
+      "household_resources_after": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.05,
+        "silver": 2.8000000000000003
+      },
+      "accepted_jobs": 158,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p7_recycling_buffered": {
+      "ok": true,
+      "errors": [],
+      "action_type": "recycle_finished_metalwork",
+      "packet_hash": "15a5931ee5d7a3f5466c701421eeae242c185653b2ac05cf1427c1c5cbfff55c",
+      "household_resources_before": {
+        "charcoal": 0.4999999999999966,
+        "finished_metalwork": 0.75,
+        "fuel_feedstock": 0.7999999999999999,
+        "grain": 29.000000000000234,
+        "metal": 0.03,
+        "oil": 5.0,
+        "ritual_goods": 0.9499999999999991,
+        "silver": 3.2,
+        "workshop_tool_condition": 1.0
+      },
+      "household_resources_after": {
+        "charcoal": 0.4999999999999966,
+        "finished_metalwork": 0.55,
+        "fuel_feedstock": 0.7999999999999999,
+        "grain": 29.000000000000234,
+        "metal": 0.15,
+        "oil": 5.0,
+        "ritual_goods": 0.9499999999999991,
+        "silver": 3.2,
+        "workshop_tool_condition": 1.0
+      },
+      "accepted_jobs": 158,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p7_recycling_near_exhausted": {
+      "ok": true,
+      "errors": [],
+      "action_type": "wait",
+      "packet_hash": "63e7be8c2ef9e2dcd9a8cfc6f11ba8ac2aa12eb07ff63dece2ebf9b71dda7a58",
+      "household_resources_before": {
+        "charcoal": 0.4999999999999966,
+        "finished_metalwork": 0.21,
+        "fuel_feedstock": 0.7999999999999999,
+        "grain": 29.000000000000234,
+        "metal": 0.03,
+        "oil": 5.0,
+        "ritual_goods": 0.9499999999999991,
+        "silver": 3.2,
+        "workshop_tool_condition": 1.0
+      },
+      "household_resources_after": {
+        "charcoal": 0.4999999999999966,
+        "finished_metalwork": 0.21,
+        "fuel_feedstock": 0.7999999999999999,
+        "grain": 29.000000000000234,
+        "metal": 0.03,
+        "oil": 5.0,
+        "ritual_goods": 0.9499999999999991,
+        "silver": 3.2,
+        "workshop_tool_condition": 1.0
+      },
+      "accepted_jobs": 158,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p16_care_no_conflict": {
+      "ok": true,
+      "errors": [],
+      "action_type": "fulfill_kin_care",
+      "packet_hash": "c458f98cab5820381d0f101f7dfea1fd747ecdc07165c95ded42b4ba30404d4d",
+      "household_resources_before": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 2.8000000000000003
+      },
+      "household_resources_after": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 2.8000000000000003
+      },
+      "accepted_jobs": 158,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p16_care_recovery_conflict": {
+      "ok": true,
+      "errors": [],
+      "action_type": "defer_kin_care",
+      "packet_hash": "c4103e5687c9e03e9d52742fc727dec8a59a0760cc977ecf8f77378a916e55af",
+      "household_resources_before": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 2.8000000000000003
+      },
+      "household_resources_after": {
+        "grain": 15.649999999999764,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 2.8000000000000003
+      },
+      "accepted_jobs": 158,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p16_stewardship_funded": {
+      "ok": true,
+      "errors": [],
+      "action_type": "accept_property_stewardship",
+      "packet_hash": "130d746d3eeb1bc042687cd5be17596c26df9ee91c2b5dfeb8dd79c8f80ebe2e",
+      "household_resources_before": {
+        "grain": 13.459999999999766,
+        "oil": 4.0,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 3.2
+      },
+      "household_resources_after": {
+        "grain": 13.459999999999766,
+        "oil": 4.0,
+        "property_maintenance_reserve": 0.4,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 2.8000000000000003
+      },
+      "accepted_jobs": 150,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p16_stewardship_underfunded": {
+      "ok": true,
+      "errors": [],
+      "action_type": "decline_property_stewardship",
+      "packet_hash": "5d91e221b108ff2456c79b2b282fc758b09fb96cd5e7f2865290ae3d37a4707b",
+      "household_resources_before": {
+        "grain": 13.459999999999766,
+        "oil": 4.0,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 0.2
+      },
+      "household_resources_after": {
+        "grain": 13.459999999999766,
+        "oil": 4.0,
+        "ritual_goods": 0.29999999999999954,
+        "silver": 0.2
+      },
+      "accepted_jobs": 150,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p3_shipping_single_report": {
+      "ok": true,
+      "errors": [],
+      "action_type": "send_message",
+      "packet_hash": "9b64440009e0b0253cdf515c89a14db512fdf186070114f1b9d76d6f2127d3d7",
+      "household_resources_before": {
+        "grain": 33.0,
+        "metal": 3.0,
+        "oil": 10.0,
+        "ritual_goods": 2.0,
+        "silver": 18.0,
+        "trade_goods": 3.0
+      },
+      "household_resources_after": {
+        "grain": 33.0,
+        "metal": 3.0,
+        "oil": 10.0,
+        "ritual_goods": 2.0,
+        "silver": 18.0,
+        "trade_goods": 3.0
+      },
+      "accepted_jobs": 1,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    },
+    "p3_shipping_discordant_reports": {
+      "ok": true,
+      "errors": [],
+      "action_type": "wait",
+      "packet_hash": "980d90e8a02af4113fe2c68cd1e200208c4072ace854ca8bdce4c3a5bc905049",
+      "household_resources_before": {
+        "grain": 33.0,
+        "metal": 3.0,
+        "oil": 10.0,
+        "ritual_goods": 2.0,
+        "silver": 18.0,
+        "trade_goods": 3.0
+      },
+      "household_resources_after": {
+        "grain": 33.0,
+        "metal": 3.0,
+        "oil": 10.0,
+        "ritual_goods": 2.0,
+        "silver": 18.0,
+        "trade_goods": 3.0
+      },
+      "accepted_jobs": 1,
+      "rejected_jobs": 0,
+      "negative_resources": 0
+    }
+  },
+  "pair_checks": {
+    "p10_resource_sensitive": true,
+    "p7_stock_sensitive": true,
+    "p16_obligation_sensitive": true,
+    "property_funding_sensitive": true,
+    "shipping_epistemic_sensitive": true,
+    "all_decisions_valid": true,
+    "no_rejections": true,
+    "no_negative_resources": true
+  },
+  "all_checks_pass": true
+}

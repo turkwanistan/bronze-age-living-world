@@ -1,40 +1,27 @@
 # NEXT SESSION
 
-Start from accepted v016 validation in `STATUS.md` and `runs/ACCEPTED_V016_SECOND_SEED_COUNTERFACTUAL_VALIDATION.md`. Canonical runtime remains accepted v015 day 462.
+Start from accepted v017 fresh-cognition validation in `STATUS.md` and `runs/ACCEPTED_V017_FRESH_COGNITION_PAIRED_VALIDATION.md`. Canonical runtime remains accepted v015 day 462.
 
-1. Verify Git, authority hashes, canonical `state/current.json`, full test suite, and exact **157-decision** replay of `state/ugarit_living_v015.sqlite`.
-2. Reproduce the seed-1702 validation using `scripts/semantic_seed_validation.py` and `runs/VALIDATION_SEED1702_OVERRIDES.json`; it must reach day 462 with no failures or invariant violations.
-3. Reproduce `scripts/paired_harbor_progression_validation.py`; all paired invariants must remain true.
-4. Highest-value next milestone: **fresh-cognition paired evaluation**, not another simulation feature.
-   - choose ~5–10 consequential scenes from the existing behavioral library;
-   - vary one controlled factor at a time (knowledge, household obligation, institution/access, material constraint, status/role or relationship history);
-   - obtain fresh cognition rather than semantic policy transfer;
-   - compare action validity, causal sensitivity, unsupported invention, persona drift and relationship continuity;
-   - do not score historical realism with one number and do not treat choice frequencies as historical probabilities.
-5. Especially valuable pairs include:
-   - Šapšu illness with adequate vs depleted ritual stock;
-   - Kothar care need with no conflict vs harvest/own-illness conflict;
-   - P11 harbor progression accepted vs refused;
-   - P7 recycling with sufficient finished stock vs severe finished-stock depletion;
-   - household property reserve with steward consent vs steward refusal;
-   - shipping information with one report vs contradictory delivered reports.
-6. Keep seed-1702 as validation evidence only. Do not promote it over the canonical seed-1701 strict history.
-7. Add no new shock/mechanic merely for variety. Let validation reveal the next real modeling gap.
-8. Every future canonical behavior checkpoint still requires exact replay; validation checkpoints must clearly label whether cognition is transferred, fresh, or counterfactual.
+1. Verify Git, authority hashes, canonical `state/current.json`, full **87-test** suite, and exact **157-decision** replay of `state/ugarit_living_v015.sqlite`.
+2. Preserve v016 validation: seed 1702 semantic-transfer run and harbor accept/refuse counterfactual remain validation evidence only.
+3. Reproduce v017 with `scripts/build_fresh_cognition_pairs.py` + `scripts/apply_fresh_cognition_pairs.py`; all ten decisions and five pair checks must validate with no branch promotion.
+4. Highest-value milestone: **repeated fresh-cognition stability evaluation**.
+   - choose a small but consequential subset of the v017 sealed packets;
+   - preserve packet bytes exactly across attempts;
+   - obtain several independent fresh cognition decisions per identical packet;
+   - validate every decision through the normal engine validator on a fresh disposable branch;
+   - compare action-family/rationale variance, invalidity, unsupported invention, goal/persona continuity and relationship/obligation continuity;
+   - specifically check whether controlled-factor sensitivity remains stronger than within-packet answer noise.
+5. Strong subset candidates:
+   - P10 adequate vs depleted ritual stock;
+   - P7 buffered vs near-exhausted recycling;
+   - P3 single vs discordant shipping reports.
+6. Do not interpret repeated-choice frequencies as historical probabilities. This measures current cognition behavior only.
+7. If repeated cognition reveals a packet omission or validator gap, fix that deficiency before adding new mechanics. Otherwise resume canonical ordinary-life development only after the validation layer is credible.
+8. Keep all validation SQLite branches disposable. Canonical behavior checkpoints still require exact replay and explicit acceptance manifests.
 
-Current canonical v015 facts:
+Canonical v015: day 462, seed 1701, scenario 0.13.0, 6,608 events, 157 accepted, hash `a15e3ec7a0ae8ada835b3920acb370855e1443977abd7849040a336cf8b0e2f0`.
 
-- day 462, seed 1701, scenario 0.13.0;
-- 6,608 events; 157 accepted decisions;
-- hash `a15e3ec7a0ae8ada835b3920acb370855e1443977abd7849040a336cf8b0e2f0`.
-
-Current v016 validation facts:
-
-- seed 1702 reaches day 462 with 6,632 events and 164 accepted decisions;
-- 34 stochastic minor illnesses vs 27 in seed 1701;
-- critical mechanism counts/timing remain stable;
-- H-WIDOW ritual goods diverge materially (~0.05 vs ~0.30) because of extra illness burden;
-- semantic-transfer validation has 0 rejected/pending/open jobs and 0 containment/material violations;
-- harbor accept/refuse paired counterfactual passes all declared invariants.
+v017: 10 fresh decisions / 5 controlled pairs; all valid, 0 rejected, 0 negative resources, 5/5 causal-sensitivity checks passing.
 
 **The world is structured. The people are not scripted.**

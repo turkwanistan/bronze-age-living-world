@@ -1,0 +1,223 @@
+{
+  "p10_illness_adequate": {
+    "actor_id": "P10",
+    "selected_intent": "respond to a minor illness with a modest protective observance and practical rest while household ritual materials are ample",
+    "proposed_actions": [
+      {
+        "type": "perform_ritual",
+        "ritual_kind": "modest household protective observance",
+        "ritual_goods_cost": 0.2,
+        "practical_response": "rest briefly and reduce client-care exertion while symptoms remain minor, then resume ordinary responsibilities if they settle"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P10"
+    ],
+    "decision_basis_tags": [
+      "minor_illness",
+      "ample_ritual_stock",
+      "high_ritual_commitment",
+      "practical_rest"
+    ],
+    "declared_uncertainty": "The illness is only identified as minor; the rite and cost are simulation abstractions rather than a reconstructed medical prescription."
+  },
+  "p10_illness_depleted": {
+    "actor_id": "P10",
+    "selected_intent": "preserve ritual meaning and practical rest without consuming the household's nearly exhausted ritual materials",
+    "proposed_actions": [
+      {
+        "type": "perform_ritual",
+        "ritual_kind": "spoken household protective observance without material expenditure",
+        "ritual_goods_cost": 0.0,
+        "practical_response": "rest briefly and reduce client-care exertion while symptoms remain minor, conserving the remaining ritual materials"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-RITUAL-001-P10"
+    ],
+    "decision_basis_tags": [
+      "minor_illness",
+      "ritual_material_scarcity",
+      "high_ritual_commitment",
+      "practical_rest"
+    ],
+    "declared_uncertainty": "The packet supports only a minor illness and household ritual scarcity; the non-material observance is a bounded response, not a historical prescription."
+  },
+  "p7_recycling_buffered": {
+    "actor_id": "P7",
+    "selected_intent": "sacrifice a bounded portion of finished output because the workshop has no current market lot and enough finished stock remains afterward",
+    "proposed_actions": [
+      {
+        "type": "recycle_finished_metalwork",
+        "input_finished_metalwork": 0.2,
+        "output_metal": 0.12
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-e0325e0f464ffea5"
+    ],
+    "decision_basis_tags": [
+      "market_unavailable",
+      "finished_stock_buffer",
+      "workshop_continuity",
+      "lossy_recycling"
+    ],
+    "declared_uncertainty": "The recovery ratio is fixture calibration; the packet only supports that no current lot is available and recycling destroys valuable finished output."
+  },
+  "p7_recycling_near_exhausted": {
+    "actor_id": "P7",
+    "selected_intent": "preserve the last meaningful finished output rather than destroy almost all of it for one short raw-metal cycle while no changed market information exists",
+    "proposed_actions": [
+      {
+        "type": "wait",
+        "reason": "Recycling 0.20 of only 0.21 finished output would leave almost nothing saleable or usable; preserve the finished work until material or market information changes."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-e0325e0f464ffea5"
+    ],
+    "decision_basis_tags": [
+      "market_unavailable",
+      "finished_stock_near_exhaustion",
+      "preserve_output",
+      "wait_for_change"
+    ],
+    "declared_uncertainty": "No future supplier recovery is assumed; waiting preserves current finished output but does not guarantee later metal access."
+  },
+  "p16_care_no_conflict": {
+    "actor_id": "P16",
+    "selected_intent": "fulfill the continuing care duty because no competing active obligation outweighs one bounded support day",
+    "proposed_actions": [
+      {
+        "type": "fulfill_kin_care",
+        "care_obligation_id": "O-6a002e2785b22a67",
+        "support_kind": "household_property_support_day"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-CARE-001-P16"
+    ],
+    "decision_basis_tags": [
+      "continuing_care",
+      "no_competing_obligation",
+      "family_loyalty",
+      "moderate_seasonal_pressure"
+    ],
+    "declared_uncertainty": "The support-day cadence and task are fixture mechanics; fulfilling it does not imply property transfer or a universal care rule."
+  },
+  "p16_care_recovery_conflict": {
+    "actor_id": "P16",
+    "selected_intent": "defer one care episode so the explicit same-day recovery-rest obligation remains meaningful while keeping the continuing care duty active",
+    "proposed_actions": [
+      {
+        "type": "defer_kin_care",
+        "care_obligation_id": "O-6a002e2785b22a67",
+        "reason": "A same-day recovery-rest obligation is active after minor symptoms; defer this one support episode rather than undermine that rest, without treating the continuing care commitment as ended."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-CARE-001-P16"
+    ],
+    "decision_basis_tags": [
+      "continuing_care",
+      "temporary_recovery_conflict",
+      "bounded_deferment",
+      "obligation_persists"
+    ],
+    "declared_uncertainty": "The recovery-rest obligation is an explicit validation control; this tests sensitivity to a temporary competing duty, not a historical care schedule."
+  },
+  "p16_stewardship_funded": {
+    "actor_id": "P16",
+    "selected_intent": "accept bounded stewardship because the agreed reserve is currently fundable and remains household property under joint approval",
+    "proposed_actions": [
+      {
+        "type": "accept_property_stewardship",
+        "reserve_amount": 0.4,
+        "joint_approval_required": true,
+        "purpose": "household_property_maintenance"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-PROPERTY-USE-001-P16"
+    ],
+    "decision_basis_tags": [
+      "current_use_not_ownership",
+      "reserve_fundable",
+      "joint_approval",
+      "household_standing"
+    ],
+    "declared_uncertainty": "The reserve amount and approval structure are validation fixtures; accepting stewardship does not imply ownership or inheritance."
+  },
+  "p16_stewardship_underfunded": {
+    "actor_id": "P16",
+    "selected_intent": "decline the current stewardship terms because the household cannot presently fund the agreed reserve without pretending unavailable silver exists",
+    "proposed_actions": [
+      {
+        "type": "decline_property_stewardship",
+        "reason": "The agreed 0.40 reserve cannot currently be funded from only 0.20 liquid silver; return the present-use terms to household negotiation rather than treating the unfunded reserve as established."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-LOCAL-PROPERTY-USE-001-P16"
+    ],
+    "decision_basis_tags": [
+      "current_use_not_ownership",
+      "reserve_underfunded",
+      "household_liquidity",
+      "renegotiation_needed"
+    ],
+    "declared_uncertainty": "This branch changes only current liquid silver; declining stewardship does not decide later property ownership or succession."
+  },
+  "p3_shipping_single_report": {
+    "actor_id": "P3",
+    "selected_intent": "seek independent harbor and market confirmation before treating one unconfirmed delay report as a basis for trade or credit commitments",
+    "proposed_actions": [
+      {
+        "type": "send_message",
+        "target_person_id": "P11",
+        "sender_intent": "inquiry",
+        "content": "What report do you currently have about the expected arrival timing?"
+      },
+      {
+        "type": "send_message",
+        "target_person_id": "P12",
+        "sender_intent": "inquiry",
+        "content": "What report do you currently have about the expected arrival timing?"
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-SHIP-P3",
+      "K-LOCAL-TRADE-001-P3"
+    ],
+    "decision_basis_tags": [
+      "single_unconfirmed_report",
+      "information_provenance",
+      "credit_preservation",
+      "independent_confirmation"
+    ],
+    "declared_uncertainty": "The packet contains one unconfirmed delay report and does not expose either contact’s private knowledge or the actual shipment outcome."
+  },
+  "p3_shipping_discordant_reports": {
+    "actor_id": "P3",
+    "selected_intent": "defer commitment because two delivered reports remain incomplete and discordant rather than treating either as the canonical shipment outcome",
+    "proposed_actions": [
+      {
+        "type": "wait",
+        "until_day": 14,
+        "reason": "The two reports do not resolve the shipment outcome; preserve household credit and wait for changed or stronger information rather than converting discordance into certainty."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": [
+      "K-SHIP-P3",
+      "K-V017-SHIP2-P3",
+      "K-LOCAL-TRADE-001-P3"
+    ],
+    "decision_basis_tags": [
+      "discordant_reports",
+      "information_provenance",
+      "credit_preservation",
+      "no_false_certainty"
+    ],
+    "declared_uncertainty": "Neither report establishes the actual arrival outcome; waiting does not assume which report is correct."
+  }
+}
