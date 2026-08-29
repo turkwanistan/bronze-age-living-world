@@ -192,6 +192,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 181
 
+    def _v009_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v009_lifeways_start_day", 361))
+        except (TypeError, ValueError):
+            return 361
+
     def _v008_start_day(self) -> int:
         cfg = scenario_config(self.db, self.run_id)
         try:
@@ -330,6 +337,36 @@ class WorldEngine:
                     self._memory(con,beneficiary,day,"Received the agreed winter maintenance help; the earlier sowing favor is now answered.",
                                  event_id=eid,memory_type="reciprocal_labor",salience=.82,relationship_relevance=.9,goal_relevance=.76,
                                  provenance={"assumption_id":"ASM-FIXTURE-025"})
+
+        # Resolve a v009 alternate raw-metal exchange only after its modeled market delay.
+        # Silver was transferred to the intermediary household when terms were accepted;
+        # the metal enters H-CRAFT here from the external fixture lot, not from hidden stock.
+        if self._has_assumption("ASM-FIXTURE-028"):
+            alt_due = con.execute(
+                "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_alternate_metal_exchange' "
+                "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+                (day,),
+            ).fetchall()
+            for o in alt_due:
+                provenance = json.loads(o["provenance_json"])
+                amount = float(provenance.get("metal_amount", 0.0))
+                target_household = o["beneficiary_household_id"]
+                if target_household and amount > 0:
+                    self._change_resource(con,target_household,"metal",amount,assumption_id="ASM-FIXTURE-028")
+                con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?",(o["obligation_id"],))
+                eid=self._event(
+                    con,day,"alternate_metal_exchange_completed",actors=[x for x in [o["obligor_person_id"],o["beneficiary_person_id"]] if x],
+                    rules=["ASM-FIXTURE-028","RULE-ALTERNATE-METAL-SOURCING-001"],
+                    material={target_household:{"metal":amount}} if target_household and amount else {},
+                    payload={"obligation_id":o["obligation_id"],"metal_amount":amount,
+                             "notice":"fixture external market lot delivered after modeled delay; not a historical shipment or price"},
+                    discriminator=o["obligation_id"],
+                )
+                if o["beneficiary_person_id"]:
+                    self._memory(con,o["beneficiary_person_id"],day,
+                        f"The alternate market exchange completed and brought {amount:g} metal in fixture units after the agreed delay.",
+                        event_id=eid,memory_type="trade",salience=.88,relationship_relevance=.72,goal_relevance=.95,
+                        provenance={"assumption_id":"ASM-FIXTURE-028"})
 
         # Resolve scheduled external trade exchanges. Silver left the household when the
         # commitment was made; imported trade goods appear only after the modeled delay.
@@ -1401,8 +1438,52 @@ class WorldEngine:
                     created.append(self.enqueue_job(sid,"P3",["commit_trade_exchange","send_message","wait"]))
 
         # Workshop supply pressure emerges from the material workflow consuming metal.
+        # From v009, once P3 has legitimately refused further supply for scarcity reasons,
+        # expose costly recycling and a provenance-preserving network-search alternative
+        # instead of mechanically repeating the same supplier request forever.
         craft_metal = self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='metal'")
-        if craft_metal is not None and float(craft_metal) < 0.31:
+        v009_alt_opened = False
+        if (craft_metal is not None and float(craft_metal) < 0.31
+                and self._has_assumption("ASM-FIXTURE-028") and day >= self._v009_start_day()):
+            conflict = self.db.one("SELECT conflicts FROM relationships WHERE from_person_id='P7' AND to_person_id='P3'")
+            refusal = self.db.one(
+                "SELECT e.event_id,e.day FROM events e WHERE e.run_id=? AND e.event_type='proposal_refused' "
+                "AND e.actor_ids_json LIKE '%P3%' AND e.actor_ids_json LIKE '%P7%' ORDER BY e.day DESC,e.event_seq DESC LIMIT 1",
+                (self.run_id,),
+            )
+            alt_sid=stable_id("SCENE",self.run_id,"workshop_supply_alternatives","P7","P3")
+            if conflict and int(conflict["conflicts"])>0 and refusal and self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(alt_sid,)):
+                # The accepted scarcity refusal permanently retires the legacy single-supplier
+                # loop for this run. Subsequent supply work proceeds through recycling or the
+                # modeled alternate network rather than silently offering P3 again.
+                v009_alt_opened=True
+            if conflict and int(conflict["conflicts"])>0 and refusal and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(alt_sid,)):
+                actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                finished=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='finished_metalwork'")
+                supplier=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-MERCH' AND resource_type='metal'")
+                if actor:
+                    stakes={
+                        "situation_id":"SIT-021","resource":"metal","current_amount":float(craft_metal),
+                        "next_cycle_need":0.15,"recent_supplier_refusal_event_id":refusal["event_id"],
+                        "known_supplier_person_id":"P3","known_supplier_stock":float(supplier or 0),
+                        "finished_metalwork_available":float(finished or 0),
+                        "recycle_input_finished_metalwork":0.20,"recycle_output_metal":0.12,
+                        "possible_introduction_person_id":"P3","possible_harbor_contact_person_id":"P11",
+                        "fixture_notice":"Recycling is research-supported but 0.20→0.12 is ASM-FIXTURE-027 calibration. Alternate sourcing must proceed through ASM-FIXTURE-028 social/information steps; no second supplier is pre-known to P7."
+                    }
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (alt_sid,self.run_id,day,actor["current_place_id"],"economic","workshop_supply_alternatives",
+                             canonical_json(stakes),canonical_json({"metal_needed_for_next_cycle":0.15,"recycling_sacrifices_finished_output":True}),
+                             canonical_json({"recent_supplier_refusal":True,"alternate_contact_not_yet_known":True}),
+                             canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(alt_sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(alt_sid,"P3","merchant_relationship"))
+                        self._event(con,day,"workshop_supply_alternatives_opened",scene_id=alt_sid,actors=["P7","P3"],
+                            rules=["ASM-FIXTURE-027","ASM-FIXTURE-028","RULE-ALTERNATE-METAL-SOURCING-001"],payload=stakes,discriminator=alt_sid)
+                    created.append(self.enqueue_job(alt_sid,"P7",["recycle_finished_metalwork","request_market_introduction","wait","communicate"]))
+                    v009_alt_opened=True
+        if craft_metal is not None and float(craft_metal) < 0.31 and not v009_alt_opened:
             prior_craft_scene = self.db.one(
                 "SELECT scene_id FROM scenes WHERE run_id=? AND trigger_type='craft_supply_pressure' ORDER BY day DESC,scene_id DESC LIMIT 1",
                 (self.run_id,),
@@ -1431,6 +1512,50 @@ class WorldEngine:
                         con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P7","decision_actor"))
                         con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P3","known_supplier"))
                     created.append(self.enqueue_job(sid,"P7",["request_resource","communicate","wait"]))
+
+        # Once P7 has actually received P11's private fixture lead through message delivery,
+        # expose a terms request to P12. Mere repository/scenario knowledge is insufficient.
+        if self._has_assumption("ASM-FIXTURE-028") and day >= self._v009_start_day():
+            lead_k=self.db.one(
+                "SELECT knowledge_id,learned_day FROM knowledge WHERE person_id='P7' AND proposition_id='PROP-METAL-ALT-001' "
+                "AND learned_day<=? ORDER BY learned_day DESC,knowledge_id LIMIT 1",(day,))
+            lead_sid=stable_id("SCENE",self.run_id,"alternate_metal_lead_received","P7","P12")
+            if lead_k and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(lead_sid,)):
+                actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                if actor:
+                    stakes={"situation_id":"SIT-022","lead_knowledge_id":lead_k["knowledge_id"],
+                            "market_intermediary_person_id":"P12","silver_cost":0.30,"metal_amount":0.30,"delivery_days":3,
+                            "fixture_notice":"P11's delivered report exposes only a fixture market lead. P12 must independently decide whether to offer the calibrated terms under ASM-FIXTURE-028."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (lead_sid,self.run_id,day,actor["current_place_id"],"economic","alternate_metal_lead_received",
+                             canonical_json(stakes),canonical_json({"lead_is_information_not_stock":True}),
+                             canonical_json({"market_terms_not_yet_offered":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(lead_sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(lead_sid,"P12","possible_market_intermediary"))
+                    created.append(self.enqueue_job(lead_sid,"P7",["send_message","wait"]))
+
+        # A P12 offer becomes actionable only after his report of the private terms has
+        # actually been delivered to P7. Until then the fixture terms remain hidden.
+        if self._has_assumption("ASM-FIXTURE-028") and day >= self._v009_start_day():
+            terms_k=self.db.one(
+                "SELECT knowledge_id,learned_day FROM knowledge WHERE person_id='P7' AND proposition_id='PROP-METAL-TERMS-001' "
+                "AND learned_day<=? ORDER BY learned_day DESC,knowledge_id LIMIT 1",(day,))
+            offer_sid=stable_id("SCENE",self.run_id,"alternate_metal_exchange_offer_received","P7","P12")
+            if terms_k and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(offer_sid,)):
+                actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                if actor:
+                    stakes={"situation_id":"SIT-023","terms_knowledge_id":terms_k["knowledge_id"],
+                            "market_intermediary_person_id":"P12","silver_cost":0.30,"metal_amount":0.30,"delivery_days":3,
+                            "fixture_notice":"The exact 0.30/0.30/3-day terms are ASM-FIXTURE-028 calibration and became actionable only after P12's report was delivered."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (offer_sid,self.run_id,day,actor["current_place_id"],"economic","alternate_metal_exchange_offer",canonical_json(stakes),
+                             canonical_json({"silver_due_on_acceptance":0.30,"metal_delayed":0.30}),
+                             canonical_json({"requester_may_accept_or_walk_away":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(offer_sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(offer_sid,"P12","market_intermediary"))
+                    created.append(self.enqueue_job(offer_sid,"P7",["accept_alternate_metal_exchange","wait","communicate"]))
 
         # Let an open reciprocal exchange close through later occupational output.
         # The obligation is qualitative social credit, not a priced debt: the suggested
@@ -1683,6 +1808,39 @@ class WorldEngine:
                     errors.append(f"action_{i}:cannot_request_from_self")
                 if not action.get("resource"):
                     errors.append(f"action_{i}:missing_resource")
+            elif typ == "recycle_finished_metalwork":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "workshop_supply_alternatives":
+                    errors.append(f"action_{i}:invalid_scene_for_metal_recycling")
+                input_amount=action.get("input_finished_metalwork")
+                output_amount=action.get("output_metal")
+                if abs(float(input_amount or 0)-float(stakes.get("recycle_input_finished_metalwork",0)))>1e-9 or abs(float(output_amount or 0)-float(stakes.get("recycle_output_metal",0)))>1e-9:
+                    errors.append(f"action_{i}:recycling_terms_mismatch")
+                stock=self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='finished_metalwork'",(actor_household,)) if actor_household else None
+                if not stock or not isinstance(input_amount,(int,float)) or float(stock["amount"])+1e-9<float(input_amount):
+                    errors.append(f"action_{i}:insufficient_finished_metalwork")
+            elif typ == "request_market_introduction":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "workshop_supply_alternatives":
+                    errors.append(f"action_{i}:invalid_scene_for_market_introduction_request")
+                if action.get("target_person_id") != stakes.get("possible_introduction_person_id") or action.get("requested_contact_person_id") != stakes.get("possible_harbor_contact_person_id"):
+                    errors.append(f"action_{i}:market_introduction_party_mismatch")
+            elif typ == "grant_market_introduction":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "market_introduction_request":
+                    errors.append(f"action_{i}:invalid_scene_for_market_introduction_grant")
+                if job["actor_person_id"] != stakes.get("merchant_person_id") or action.get("requester_person_id") != stakes.get("requester_person_id") or action.get("contact_person_id") != stakes.get("contact_person_id"):
+                    errors.append(f"action_{i}:market_introduction_terms_mismatch")
+            elif typ == "accept_alternate_metal_exchange":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "alternate_metal_exchange_offer":
+                    errors.append(f"action_{i}:invalid_scene_for_alt_metal_acceptance")
+                for k in ("silver_cost","metal_amount","delivery_days"):
+                    if abs(float(action.get(k,0))-float(stakes.get(k,0)))>1e-9:
+                        errors.append(f"action_{i}:alternate_accept_{k}_mismatch")
+                silver=self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='silver'",(actor_household,)) if actor_household else None
+                if not silver or float(silver["amount"])+1e-9<float(action.get("silver_cost",0)):
+                    errors.append(f"action_{i}:insufficient_silver_for_alternate_exchange")
             elif typ == "repay_debt":
                 debt = self.db.one("SELECT * FROM debts WHERE debt_id=?", (action.get("debt_id"),))
                 amount = action.get("amount")
@@ -3201,6 +3359,85 @@ class WorldEngine:
                                  event_id=eid,memory_type="life_course",salience=.9,relationship_relevance=.92,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-017"})
                     self._memory(con,apprentice_id,day,f"{actor_id} recognized my progression from apprentice to a workshop craft worker role.",
                                  event_id=eid,memory_type="life_course",salience=.96,relationship_relevance=.94,goal_relevance=.98,provenance={"assumption_id":"ASM-FIXTURE-017"})
+
+                elif typ == "recycle_finished_metalwork":
+                    input_amount=float(action["input_finished_metalwork"]); output_amount=float(action["output_metal"])
+                    self._change_resource(con,actor_household,"finished_metalwork",-input_amount,assumption_id="ASM-FIXTURE-027")
+                    self._change_resource(con,actor_household,"metal",output_amount,assumption_id="ASM-FIXTURE-027")
+                    eid=self._event(con,day,"finished_metalwork_recycled",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-027","RULE-METAL-RECYCLING-001"],
+                        material={actor_household:{"finished_metalwork":-input_amount,"metal":output_amount}},
+                        payload={"action_id":aid,"input_finished_metalwork":input_amount,"output_metal":output_amount,
+                                 "notice":"lossy fixture remelting; not a historical Ugaritic recovery rate or value equivalence"},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Sacrificed {input_amount:g} finished metalwork to recover {output_amount:g} raw metal in fixture units.",
+                        event_id=eid,memory_type="craft_recycling",salience=.86,relationship_relevance=.2,goal_relevance=.95,provenance={"assumption_id":"ASM-FIXTURE-027"})
+
+                elif typ == "request_market_introduction":
+                    merchant=action["target_person_id"]; contact=action["requested_contact_person_id"]
+                    req_scene=stable_id("SCENE",self.run_id,day,"market_introduction_request",decision_id,idx)
+                    req_stakes={"situation_id":"SIT-021","requester_person_id":actor_id,"merchant_person_id":merchant,"contact_person_id":contact,
+                                "reason":action.get("reason"),
+                                "fixture_notice":"P7 asks an existing merchant relationship for an introduction; P3 must independently grant or refuse under ASM-FIXTURE-028."}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (req_scene,self.run_id,day,scene["place_id"],"economic","market_introduction_request",canonical_json(req_stakes),"{}",
+                         canonical_json({"introduction_not_supplier_guarantee":True}),canonical_json(["I-MARKET"]),"open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(req_scene,actor_id,"requester")); con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(req_scene,merchant,"decision_actor"))
+                    eid=self._event(con,day,"market_introduction_requested",scene_id=req_scene,decision_id=decision_id,actors=[actor_id,merchant],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-028","RULE-ALTERNATE-METAL-SOURCING-001"],
+                        payload={"action_id":aid,"contact_person_id":contact,"reason":action.get("reason")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Asked {merchant} to introduce me to harbor contact {contact} for alternate metal sourcing information.",
+                        event_id=eid,memory_type="trade_network",salience=.82,relationship_relevance=.9,goal_relevance=.94,provenance={"assumption_id":"ASM-FIXTURE-028"})
+                    followups.append((req_scene,merchant,["grant_market_introduction","refuse_proposal","communicate"]))
+
+                elif typ == "grant_market_introduction":
+                    requester=action["requester_person_id"]; contact=action["contact_person_id"]
+                    self._ensure_relationship_pair(con,requester,contact,relationship_type="market_introduction_contact")
+                    prop_id=stable_id("PROP",self.run_id,"market_introduction",requester,contact,day)
+                    text=f"{actor_id} introduced {requester} to {contact} as a harbor contact who can be asked about alternate metal market leads; no supply is guaranteed."
+                    con.execute("INSERT OR IGNORE INTO propositions VALUES (?,?,?,?)",(prop_id,text,"simulation_contingent",canonical_json({"origin":"market_introduction","assumption_id":"ASM-FIXTURE-028"})))
+                    kid=stable_id("K",requester,prop_id,decision_id,day)
+                    con.execute("INSERT OR IGNORE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (kid,requester,prop_id,day,"direct_communication",decision_id,canonical_json([actor_id,requester]),"direct",.92,"ordinary",None))
+                    rel={f"{actor_id}->{requester}":self._adjust_relationship(con,actor_id,requester,trust=.01,respect=.01),
+                         f"{requester}->{actor_id}":self._adjust_relationship(con,requester,actor_id,trust=.02,respect=.01)}
+                    eid=self._event(con,day,"market_introduction_granted",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,requester,contact],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-028","RULE-ALTERNATE-METAL-SOURCING-001"],relationships=rel,
+                        payload={"action_id":aid,"contact_person_id":contact,"knowledge_id":kid},discriminator=aid)
+                    self._memory(con,requester,day,f"{actor_id} introduced me to {contact} as a harbor contact for alternate metal-market information.",
+                        event_id=eid,memory_type="trade_network",salience=.9,relationship_relevance=.94,goal_relevance=.96,provenance={"assumption_id":"ASM-FIXTURE-028"})
+                    inquiry_scene=stable_id("SCENE",self.run_id,"harbor_metal_inquiry_opportunity",requester,contact)
+                    inquiry_stakes={"situation_id":"SIT-021","contact_person_id":contact,"introduction_knowledge_id":kid,
+                        "fixture_notice":"The introduction permits an inquiry only; P7 still does not know P11's private market lead."}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (inquiry_scene,self.run_id,day,scene["place_id"],"economic","harbor_metal_inquiry_opportunity",canonical_json(inquiry_stakes),"{}",
+                         canonical_json({"private_contact_knowledge_hidden":True}),canonical_json(["I-MARKET"]),"open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(inquiry_scene,requester,"decision_actor")); con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(inquiry_scene,contact,"harbor_contact"))
+                    followups.append((inquiry_scene,requester,["send_message","wait"]))
+
+                elif typ == "accept_alternate_metal_exchange":
+                    silver=float(action["silver_cost"]); metal=float(action["metal_amount"]); delay=int(action["delivery_days"]); intermediary=scene_stakes["market_intermediary_person_id"]
+                    intermediary_household=self._household_for_person(intermediary)
+                    self._ensure_relationship_pair(con,actor_id,intermediary,relationship_type="market_contact")
+                    self._change_resource(con,actor_household,"silver",-silver,assumption_id="ASM-FIXTURE-028")
+                    if intermediary_household:
+                        self._change_resource(con,intermediary_household,"silver",silver,assumption_id="ASM-FIXTURE-028")
+                    oid=stable_id("O",self.run_id,"fixture_alternate_metal_exchange",decision_id,idx)
+                    con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid,intermediary,intermediary_household,actor_id,actor_household,"fixture_alternate_metal_exchange",
+                         "Arrange the accepted alternate raw-metal market lot after the modeled delay.",day+delay,"scheduled",
+                         canonical_json({"assumption_id":"ASM-FIXTURE-028","rule_id":"RULE-ALTERNATE-METAL-SOURCING-001","metal_amount":metal,"silver_cost":silver,
+                                         "notice":"external fixture lot; terms and delay are not historical price/cargo evidence"})))
+                    rel={f"{actor_id}->{intermediary}":self._adjust_relationship(con,actor_id,intermediary,trust=.02,respect=.01),
+                         f"{intermediary}->{actor_id}":self._adjust_relationship(con,intermediary,actor_id,trust=.01,respect=.01)}
+                    eid=self._event(con,day,"alternate_metal_exchange_committed",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,intermediary],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-028","RULE-ALTERNATE-METAL-SOURCING-001"],
+                        material={actor_household:{"silver":-silver},intermediary_household:{"silver":silver} if intermediary_household else {}},relationships=rel,
+                        payload={"action_id":aid,"obligation_id":oid,"silver_cost":silver,"metal_amount":metal,"arrival_day":day+delay},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Accepted alternate market terms and paid {silver:g} silver; {metal:g} metal is due after {delay} days in fixture units.",
+                        event_id=eid,memory_type="trade",salience=.94,relationship_relevance=.84,goal_relevance=.99,provenance={"assumption_id":"ASM-FIXTURE-028"})
+
+                    self._memory(con,intermediary,day,f"{actor_id} accepted my reported alternate-metal terms; {silver:g} silver entered my household and the fixture lot is due after {delay} days.",
+                        event_id=eid,memory_type="trade",salience=.82,relationship_relevance=.86,goal_relevance=.78,provenance={"assumption_id":"ASM-FIXTURE-028"})
 
                 elif typ == "commit_trade_exchange":
                     amount = float(action["silver_amount"])

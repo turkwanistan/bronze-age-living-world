@@ -80,6 +80,9 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `request_draft_access` / `grant_draft_access` — negotiate a bounded sowing-season service whose delayed completion transfers modeled field capacity and records social obligation
 - `request_reciprocal_labor` / `fulfill_reciprocal_labor` — call in and answer one bounded practical labor favor; the social favor clears only when the scheduled service actually completes
 - `handle_winter_maintenance_internally` — resolve the current fixture winter-maintenance episode without consuming an outstanding social favor
+- `recycle_finished_metalwork` — sacrifice bounded finished output for a smaller raw-metal recovery under explicit fixture calibration
+- `request_market_introduction` / `grant_market_introduction` — ask an existing merchant relationship for a contact introduction without implying hidden supplier knowledge or guaranteed supply
+- `accept_alternate_metal_exchange` — accept only terms already delivered into the actor packet; silver moves immediately and metal arrives later through a scheduled exchange
 - `seek_mediation`
 - `perform_ritual`
 - `accept_proposal`

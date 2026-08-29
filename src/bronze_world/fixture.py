@@ -220,6 +220,35 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "Winter rain, animal care, and maintenance of agricultural assets can create household labor demands; remembered favors may be answered through bounded practical help rather than fixed-price repayment.",
                 ["P1","P13"],
             ))
+        if "ASM-FIXTURE-027" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-RECYCLE-001",
+                "Worked metal can sometimes be repaired, remelted, recycled, or recirculated; using finished objects as feedstock sacrifices valuable output and does not recover all material.",
+                ["P7","P8"],
+            ))
+        if "ASM-FIXTURE-028" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-ALT-METAL-001",
+                "When one supplier is exhausted, trusted merchant and harbor contacts can sometimes provide information about other market opportunities, but availability and terms must be learned rather than assumed.",
+                ["P3","P7","P11","P12"],
+            ))
+        if "ASM-FIXTURE-028" in active_assumptions:
+            con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
+                "PROP-METAL-ALT-001",
+                "A harbor-side market contact reports that Dagan-beli may be able to arrange one small raw-metal lot on delayed terms.",
+                "simulation_contingent",
+                canonical_json({"canonical":"fixture_market_lead","topic":"alternate_workshop_metal","provenance":"ASM-FIXTURE-028"})))
+            con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
+                "K-METAL-ALT-P11","P11","PROP-METAL-ALT-001",0,"initial_scenario",None,"[]","hearsay",.66,"ordinary",None))
+
+            con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
+                "PROP-METAL-TERMS-001",
+                "Dagan-beli can arrange one small fixture raw-metal lot for 0.30 silver, with 0.30 metal due after three days if the terms are accepted.",
+                "simulation_contingent",
+                canonical_json({"canonical":"fixture_market_terms","topic":"alternate_workshop_metal","provenance":"ASM-FIXTURE-028"})))
+            con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
+                "K-METAL-TERMS-P12","P12","PROP-METAL-TERMS-001",0,"initial_scenario",None,"[]","direct",.80,"ordinary",None))
+
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",
                         (prop_id,text,"true",canonical_json({"model_scope":"research-derived local norm representation"})))
