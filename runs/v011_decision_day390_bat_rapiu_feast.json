@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V011-D390-BAT-RAPIU-FEAST",
+  "actor_id": "P15",
+  "selected_intent": "participate visibly in the communal feast while scaling the contribution to the household’s lower current stores",
+  "proposed_actions": [
+    {
+      "type": "contribute_communal_feast",
+      "grain_amount": 0.3,
+      "ritual_goods_amount": 0.15,
+      "reason": "Maintain communal and ritual participation, but contribute less than the earlier feast because current household grain and ritual stores are lower."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RITUAL-001-P15",
+    "K-LOCAL-P15"
+  ],
+  "decision_basis_tags": [
+    "ritual_participation",
+    "household_reserves",
+    "harvest",
+    "scaled_contribution"
+  ],
+  "declared_uncertainty": "The exact feast timing and contribution quantities are ASM-FIXTURE-010 calibration, not reconstructed Ugaritic dues."
+}

@@ -206,6 +206,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 376
 
+    def _v011_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v011_lifeways_start_day", 386))
+        except (TypeError, ValueError):
+            return 386
+
     def _v008_start_day(self) -> int:
         cfg = scenario_config(self.db, self.run_id)
         try:
@@ -345,6 +352,52 @@ class WorldEngine:
                                  event_id=eid,memory_type="reciprocal_labor",salience=.82,relationship_relevance=.9,goal_relevance=.76,
                                  provenance={"assumption_id":"ASM-FIXTURE-025"})
 
+        # Resolve an accepted v011 fuel-haul contract only after the one-day labor/transport delay.
+        # The feedstock enters from an explicit external local fixture source; payment moves
+        # to the hauler's household only when the service actually completes.
+        if self._has_assumption("ASM-FIXTURE-031"):
+            fuel_hauls = con.execute(
+                "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_fuel_haul' "
+                "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",
+                (day,),
+            ).fetchall()
+            for o in fuel_hauls:
+                provenance=json.loads(o["provenance_json"])
+                payment=float(provenance.get("silver_payment",0.0))
+                feedstock=float(provenance.get("fuel_feedstock_amount",0.0))
+                payer=o["beneficiary_household_id"] or "H-CRAFT"
+                hauler_household=o["obligor_household_id"] or "H-WIDOW"
+                silver_row=con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='silver'",(payer,)).fetchone()
+                if not silver_row or float(silver_row[0])+1e-9 < payment:
+                    # Fail closed on changed material precondition; leave scheduled for explicit review.
+                    continue
+                if payment>0:
+                    self._change_resource(con,payer,"silver",-payment,assumption_id="ASM-FIXTURE-031")
+                    self._change_resource(con,hauler_household,"silver",payment,assumption_id="ASM-FIXTURE-031")
+                if feedstock>0:
+                    self._change_resource(con,payer,"fuel_feedstock",feedstock,assumption_id="ASM-FIXTURE-031")
+                con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?",(o["obligation_id"],))
+                actor=o["obligor_person_id"]; beneficiary=o["beneficiary_person_id"]
+                rel={}
+                if actor and beneficiary:
+                    rel[f"{actor}->{beneficiary}"]=self._adjust_relationship(con,actor,beneficiary,trust=.02,respect=.01)
+                    rel[f"{beneficiary}->{actor}"]=self._adjust_relationship(con,beneficiary,actor,trust=.02,respect=.02)
+                eid=self._event(
+                    con,day,"fuel_haul_completed",actors=[x for x in [actor,beneficiary] if x],
+                    rules=["ASM-FIXTURE-031","RULE-CRAFT-FUEL-LOGISTICS-001"],
+                    material={payer:{"silver":-payment,"fuel_feedstock":feedstock},hauler_household:{"silver":payment}},
+                    relationships=rel,
+                    payload={"obligation_id":o["obligation_id"],"silver_payment":payment,"fuel_feedstock_amount":feedstock,
+                             "notice":"local external fuel-feedstock fixture delivered through paid porter labor; not a historical wage, woodland yield or hauling rate"},
+                    discriminator=o["obligation_id"],
+                )
+                if actor:
+                    self._memory(con,actor,day,f"Completed the agreed fuel haul for {beneficiary}; my household received {payment:g} silver in fixture units.",
+                                 event_id=eid,memory_type="paid_labor",salience=.8,relationship_relevance=.78,goal_relevance=.82,provenance={"assumption_id":"ASM-FIXTURE-031"})
+                if beneficiary:
+                    self._memory(con,beneficiary,day,f"{actor} completed the agreed fuel haul; the workshop received {feedstock:g} fuel feedstock and paid {payment:g} silver in fixture units.",
+                                 event_id=eid,memory_type="craft_supply",salience=.9,relationship_relevance=.82,goal_relevance=.98,provenance={"assumption_id":"ASM-FIXTURE-031"})
+
         # Resolve a v009 alternate raw-metal exchange only after its modeled market delay.
         # Silver was transferred to the intermediary household when terms were accepted;
         # the metal enters H-CRAFT here from the external fixture lot, not from hidden stock.
@@ -468,7 +521,8 @@ class WorldEngine:
                         "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='charcoal'",
                         (person["household_id"],),
                     ).fetchone()
-                    if metal and charcoal and float(metal[0]) >= 0.15 and float(charcoal[0]) >= 0.20:
+                    material_tol = 1e-9 if self._has_assumption("ASM-FIXTURE-031") and day >= self._v011_start_day() else 0.0
+                    if metal and charcoal and float(metal[0]) + material_tol >= 0.15 and float(charcoal[0]) + material_tol >= 0.20:
                         self._change_resource(con, person["household_id"], "metal", -0.15, assumption_id="ASM-FIXTURE-009")
                         self._change_resource(con, person["household_id"], "charcoal", -0.20, assumption_id="ASM-FIXTURE-009")
                         self._change_resource(con, person["household_id"], "finished_metalwork", 0.08, assumption_id="ASM-FIXTURE-009")
@@ -482,7 +536,8 @@ class WorldEngine:
                         "SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='charcoal'",
                         (person["household_id"],),
                     ).fetchone()
-                    if metal and charcoal and float(metal[0]) >= 0.08 and float(charcoal[0]) >= 0.10:
+                    material_tol = 1e-9 if self._has_assumption("ASM-FIXTURE-031") and day >= self._v011_start_day() else 0.0
+                    if metal and charcoal and float(metal[0]) + material_tol >= 0.08 and float(charcoal[0]) + material_tol >= 0.10:
                         self._change_resource(con, person["household_id"], "metal", -0.08, assumption_id="ASM-FIXTURE-017")
                         self._change_resource(con, person["household_id"], "charcoal", -0.10, assumption_id="ASM-FIXTURE-017")
                         self._change_resource(con, person["household_id"], "finished_metalwork", 0.04, assumption_id="ASM-FIXTURE-017")
@@ -1473,6 +1528,83 @@ class WorldEngine:
                             rules=["ASM-FIXTURE-029","RULE-CRAFT-FUEL-PREPARATION-001"],payload=stakes,discriminator=fuel_sid)
                     created.append(self.enqueue_job(fuel_sid,"P7",["prepare_charcoal_fuel","wait"]))
 
+        # v011 turns fuel replenishment into a social/material logistics problem. The
+        # workshop may plan ahead once it is down to one preparation batch, but the same
+        # porter is not asked repeatedly inside one agricultural phase after a refusal.
+        if self._has_assumption("ASM-FIXTURE-031") and day >= self._v011_start_day():
+            feedstock_now=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='fuel_feedstock'")
+            craft_silver=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='silver'")
+            scheduled_haul=self.db.one("SELECT 1 FROM obligations WHERE status='scheduled' AND obligation_type='fixture_fuel_haul' LIMIT 1")
+            phase=seasonal["phase"]
+            procure_sid=stable_id("SCENE",self.run_id,"workshop_fuel_procurement_pressure","P7","P16",phase)
+            if (feedstock_now is not None and float(feedstock_now) <= 0.40 + 1e-9 and craft_silver is not None and float(craft_silver)>=0.20
+                    and not scheduled_haul and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(procure_sid,))):
+                p7=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P7'")
+                p16=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P16'")
+                if p7 and p16 and p7["alive"] and p7["available"] and p16["alive"] and p16["available"] and p7["current_place_id"]==p16["current_place_id"]:
+                    stakes={"situation_id":"SIT-027","hauler_person_id":"P16","fuel_feedstock_available":float(feedstock_now),
+                            "fuel_feedstock_amount":0.80,"silver_payment":0.20,"service_days":1,"seasonal_context":seasonal,
+                            "fixture_notice":"Fuel hauling is research-supported as labor/transport dependence; P16, the 0.20 payment, 0.80 feedstock, one-day duration and phase recurrence are ASM-FIXTURE-031 calibration."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (procure_sid,self.run_id,day,p7["current_place_id"],"economic","workshop_fuel_procurement_pressure",canonical_json(stakes),
+                             canonical_json({"fuel_feedstock_is_low":True,"payment_requires_completion":True}),
+                             canonical_json({"porter_household_labor_conflict_possible":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(procure_sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(procure_sid,"P16","possible_hauler"))
+                        self._event(con,day,"workshop_fuel_procurement_pressure",scene_id=procure_sid,actors=["P7","P16"],
+                            rules=["ASM-FIXTURE-031","RULE-CRAFT-FUEL-LOGISTICS-001"],payload=stakes,discriminator=procure_sid)
+                    created.append(self.enqueue_job(procure_sid,"P7",["request_fuel_haul","wait"]))
+
+        # After the v010 disrupted lot completes, v011 does not turn P12 into a permanent
+        # faucet. P7 must ask for another current update; P12 privately knows that no
+        # additional usable lot is presently available.
+        if self._has_assumption("ASM-FIXTURE-032") and day >= self._v011_start_day():
+            craft_metal_v11=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='metal'")
+            shock_completed=self.db.one("SELECT 1 FROM events WHERE run_id=? AND event_type='alternate_metal_exchange_completed' AND model_rule_or_assumption_ids_json LIKE '%ASM-FIXTURE-030%' LIMIT 1",(self.run_id,))
+            p12_contact=self.db.one("SELECT 1 FROM relationships WHERE from_person_id='P7' AND to_person_id='P12' AND relationship_type='market_contact'")
+            no_lot_known=self.db.one("SELECT 1 FROM knowledge WHERE person_id='P7' AND proposition_id='PROP-METAL-NONE-001' AND learned_day<=?",(day,))
+            second_sid=stable_id("SCENE",self.run_id,"second_repeat_alternate_metal_inquiry_opportunity","P7","P12")
+            if (craft_metal_v11 is not None and float(craft_metal_v11)<0.15 and shock_completed and p12_contact and not no_lot_known
+                    and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(second_sid,))):
+                actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                if actor:
+                    stakes={"situation_id":"SIT-028","market_contact_person_id":"P12","current_metal":float(craft_metal_v11),
+                            "prior_disrupted_lot_completed":True,"fixture_notice":"P7 must ask again for current availability; P12's temporary no-lot state remains private until reported under ASM-FIXTURE-032."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (second_sid,self.run_id,day,actor["current_place_id"],"economic","second_repeat_alternate_metal_inquiry_opportunity",canonical_json(stakes),"{}",
+                             canonical_json({"changed_information_required":True,"no_automatic_repeat_market_lot":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(second_sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(second_sid,"P12","market_contact"))
+                    created.append(self.enqueue_job(second_sid,"P7",["send_message","wait"]))
+
+        # Once the no-lot report is actually delivered, recycling can recur by coarse
+        # episode bucket while metal remains short. This is local resilience, not a hidden
+        # replacement supplier, and each use destroys finished output.
+        if self._has_assumption("ASM-FIXTURE-032") and day >= self._v011_start_day():
+            no_lot_k=self.db.one("SELECT knowledge_id FROM knowledge WHERE person_id='P7' AND proposition_id='PROP-METAL-NONE-001' AND learned_day<=? ORDER BY learned_day DESC LIMIT 1",(day,))
+            metal_now=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='metal'")
+            finished_now=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='finished_metalwork'")
+            bucket=day//14
+            recycle_sid=stable_id("SCENE",self.run_id,"market_unavailable_recycling_choice","P7",bucket)
+            last_recycle=self.db.one("SELECT day FROM events WHERE run_id=? AND event_type='finished_metalwork_recycled' ORDER BY day DESC,event_seq DESC LIMIT 1",(self.run_id,))
+            recycle_interval_ok=(not last_recycle) or day-int(last_recycle["day"])>=14
+            if (no_lot_k and metal_now is not None and float(metal_now)<0.15 and finished_now is not None and float(finished_now)>=0.20
+                    and recycle_interval_ok and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(recycle_sid,))):
+                actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                if actor:
+                    stakes={"situation_id":"SIT-029","no_lot_knowledge_id":no_lot_k["knowledge_id"],"current_metal":float(metal_now),
+                            "finished_metalwork_available":float(finished_now),"recycle_input_finished_metalwork":0.20,"recycle_output_metal":0.12,
+                            "fixture_notice":"Temporary market unavailability is ASM-FIXTURE-032; recycling remains the ASM-FIXTURE-027 lossy fallback and may recur only by coarse episode bucket."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (recycle_sid,self.run_id,day,actor["current_place_id"],"economic","market_unavailable_recycling_choice",canonical_json(stakes),
+                             canonical_json({"market_lot_available":False,"recycling_destroys_finished_output":True}),
+                             canonical_json({"market_relationship_not_broken":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(recycle_sid,"P7","decision_actor"))
+                    created.append(self.enqueue_job(recycle_sid,"P7",["recycle_finished_metalwork","wait"]))
+
         # After the first alternate lot has actually completed, a later low-metal state
         # can reopen the network only by asking the established P12 contact for changed
         # availability. The v010 disruption remains private to P12 until messaged.
@@ -1894,7 +2026,7 @@ class WorldEngine:
                     errors.append(f"action_{i}:missing_resource")
             elif typ == "recycle_finished_metalwork":
                 stakes=packet.get("scene",{}).get("stakes",{})
-                if packet.get("scene",{}).get("trigger") not in {"workshop_supply_alternatives","disrupted_alternate_metal_terms_received"}:
+                if packet.get("scene",{}).get("trigger") not in {"workshop_supply_alternatives","disrupted_alternate_metal_terms_received","market_unavailable_recycling_choice"}:
                     errors.append(f"action_{i}:invalid_scene_for_metal_recycling")
                 input_amount=action.get("input_finished_metalwork")
                 output_amount=action.get("output_metal")
@@ -1913,6 +2045,36 @@ class WorldEngine:
                 stock=self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='fuel_feedstock'",(actor_household,)) if actor_household else None
                 if not stock or not isinstance(feed,(int,float)) or float(stock["amount"])+1e-9<float(feed):
                     errors.append(f"action_{i}:insufficient_fuel_feedstock")
+            elif typ == "request_fuel_haul":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "workshop_fuel_procurement_pressure":
+                    errors.append(f"action_{i}:invalid_scene_for_fuel_haul_request")
+                if action.get("target_person_id") != stakes.get("hauler_person_id"):
+                    errors.append(f"action_{i}:fuel_haul_target_mismatch")
+                for k in ("fuel_feedstock_amount","silver_payment","service_days"):
+                    if abs(float(action.get(k,0))-float(stakes.get(k,0)))>1e-9:
+                        errors.append(f"action_{i}:fuel_haul_{k}_mismatch")
+                target=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id=?",(action.get("target_person_id"),))
+                if not target or not target["alive"] or not target["available"]:
+                    errors.append(f"action_{i}:fuel_hauler_unavailable")
+                elif actor and target["current_place_id"] != actor["current_place_id"]:
+                    errors.append(f"action_{i}:fuel_hauler_not_colocated")
+                silver=self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='silver'",(actor_household,)) if actor_household else None
+                if not silver or float(silver["amount"])+1e-9<float(action.get("silver_payment",0)):
+                    errors.append(f"action_{i}:insufficient_silver_for_fuel_haul")
+            elif typ == "accept_fuel_haul":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "fuel_haul_request":
+                    errors.append(f"action_{i}:invalid_scene_for_fuel_haul_acceptance")
+                if job["actor_person_id"] != stakes.get("hauler_person_id") or action.get("requester_person_id") != stakes.get("requester_person_id"):
+                    errors.append(f"action_{i}:fuel_haul_party_mismatch")
+                for k in ("fuel_feedstock_amount","silver_payment","service_days"):
+                    if abs(float(action.get(k,0))-float(stakes.get(k,0)))>1e-9:
+                        errors.append(f"action_{i}:fuel_haul_accept_{k}_mismatch")
+            elif typ == "decline_fuel_haul":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "fuel_haul_request" or job["actor_person_id"] != stakes.get("hauler_person_id"):
+                    errors.append(f"action_{i}:invalid_scene_for_fuel_haul_decline")
             elif typ == "request_market_introduction":
                 stakes=packet.get("scene",{}).get("stakes",{})
                 if packet.get("scene",{}).get("trigger") != "workshop_supply_alternatives":
@@ -3465,6 +3627,63 @@ class WorldEngine:
                                  "notice":"finite fixture fuel preparation; not a historical charcoal yield or woodland-use rate"},discriminator=aid)
                     self._memory(con,actor_id,day,f"Prepared workshop fuel from {feed:g} feedstock, producing {charcoal_out:g} charcoal in fixture units.",
                         event_id=eid,memory_type="craft_fuel",salience=.84,relationship_relevance=.15,goal_relevance=.94,provenance={"assumption_id":"ASM-FIXTURE-029"})
+
+                elif typ == "request_fuel_haul":
+                    hauler=action["target_person_id"]
+                    self._ensure_relationship_pair(con,actor_id,hauler,relationship_type="work_contact")
+                    req_scene=stable_id("SCENE",self.run_id,day,"fuel_haul_request",decision_id,idx)
+                    req_stakes={"situation_id":"SIT-027","requester_person_id":actor_id,"hauler_person_id":hauler,
+                                "fuel_feedstock_amount":float(action["fuel_feedstock_amount"]),"silver_payment":float(action["silver_payment"]),
+                                "service_days":int(action["service_days"]),"seasonal_context":scene_stakes.get("seasonal_context"),
+                                "reason":action.get("reason"),
+                                "fixture_notice":"The request is a bounded ASM-FIXTURE-031 porter/seasonal-labor contract; acceptance is independent and payment/feedstock move only on completion."}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (req_scene,self.run_id,day,scene["place_id"],"economic","fuel_haul_request",canonical_json(req_stakes),
+                         canonical_json({"external_local_feedstock":req_stakes["fuel_feedstock_amount"],"payment_on_completion":req_stakes["silver_payment"]}),
+                         canonical_json({"household_and_seasonal_labor_compete":True}),canonical_json(["I-MARKET"]),"open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(req_scene,actor_id,"requester"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(req_scene,hauler,"decision_actor"))
+                    eid=self._event(con,day,"fuel_haul_requested",scene_id=req_scene,decision_id=decision_id,actors=[actor_id,hauler],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-031","RULE-CRAFT-FUEL-LOGISTICS-001"],
+                        payload={"action_id":aid,"fuel_feedstock_amount":req_stakes["fuel_feedstock_amount"],"silver_payment":req_stakes["silver_payment"],
+                                 "service_days":req_stakes["service_days"],"reason":action.get("reason")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Asked {hauler} for one bounded fuel-haul job to keep the workshop supplied.",
+                        event_id=eid,memory_type="labor_request",salience=.78,relationship_relevance=.82,goal_relevance=.94,provenance={"assumption_id":"ASM-FIXTURE-031"})
+                    self._memory(con,hauler,day,f"{actor_id} asked me to haul workshop fuel feedstock for {req_stakes['silver_payment']:g} silver in fixture units.",
+                        event_id=eid,memory_type="work_opportunity",salience=.78,relationship_relevance=.8,goal_relevance=.82,provenance={"assumption_id":"ASM-FIXTURE-031"})
+                    followups.append((req_scene,hauler,["accept_fuel_haul","decline_fuel_haul","communicate"]))
+
+                elif typ == "accept_fuel_haul":
+                    requester=action["requester_person_id"]
+                    requester_household=self._household_for_person(requester)
+                    hauler_household=actor_household
+                    days=int(action["service_days"]); payment=float(action["silver_payment"]); feedstock=float(action["fuel_feedstock_amount"])
+                    oid=stable_id("O",self.run_id,"fixture_fuel_haul",decision_id,idx)
+                    con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid,actor_id,hauler_household,requester,requester_household,"fixture_fuel_haul",
+                         "Complete one bounded fuel-feedstock haul for the workshop.",day+days,"scheduled",
+                         canonical_json({"assumption_id":"ASM-FIXTURE-031","rule_id":"RULE-CRAFT-FUEL-LOGISTICS-001",
+                                         "silver_payment":payment,"fuel_feedstock_amount":feedstock,
+                                         "notice":"local external fuel-feedstock fixture; not a historical wage, route or woodland yield"})))
+                    rel={f"{actor_id}->{requester}":self._adjust_relationship(con,actor_id,requester,trust=.01,respect=.01),
+                         f"{requester}->{actor_id}":self._adjust_relationship(con,requester,actor_id,trust=.01,respect=.02)}
+                    eid=self._event(con,day,"fuel_haul_accepted",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,requester],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-031","RULE-CRAFT-FUEL-LOGISTICS-001"],relationships=rel,
+                        payload={"action_id":aid,"obligation_id":oid,"due_day":day+days,"silver_payment":payment,"fuel_feedstock_amount":feedstock},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Accepted {requester}'s bounded fuel-haul job; payment is due only when I complete it.",
+                        event_id=eid,memory_type="paid_labor",salience=.82,relationship_relevance=.84,goal_relevance=.86,provenance={"assumption_id":"ASM-FIXTURE-031"})
+
+                elif typ == "decline_fuel_haul":
+                    requester=scene_stakes["requester_person_id"]
+                    rel={f"{actor_id}->{requester}":self._adjust_relationship(con,actor_id,requester),
+                         f"{requester}->{actor_id}":self._adjust_relationship(con,requester,actor_id)}
+                    eid=self._event(con,day,"fuel_haul_declined",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id,requester],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-031","RULE-CRAFT-FUEL-LOGISTICS-001"],relationships=rel,
+                        payload={"action_id":aid,"reason":action.get("reason"),"seasonal_context":scene_stakes.get("seasonal_context")},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Declined {requester}'s fuel-haul job for now: {action.get('reason','household or seasonal labor conflict')}.",
+                        event_id=eid,memory_type="work_refusal",salience=.72,relationship_relevance=.72,goal_relevance=.82,provenance={"assumption_id":"ASM-FIXTURE-031"})
+                    self._memory(con,requester,day,f"{actor_id} declined the fuel-haul request for now; I should not treat the labor as guaranteed.",
+                        event_id=eid,memory_type="work_refusal",salience=.76,relationship_relevance=.76,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-031"})
 
                 elif typ == "recycle_finished_metalwork":
                     input_amount=float(action["input_finished_metalwork"]); output_amount=float(action["output_metal"])

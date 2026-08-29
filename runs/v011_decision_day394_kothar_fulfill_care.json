@@ -1,0 +1,25 @@
+{
+  "decision_id": "DEC-V011-D394-KOTHAR-FULFILL-CARE",
+  "actor_id": "P16",
+  "selected_intent": "use the household labor capacity I protected from outside work to fulfill the continuing care duty during harvest",
+  "proposed_actions": [
+    {
+      "type": "fulfill_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "beneficiary_person_id": "P15",
+      "support_kind": "household_property_support_day",
+      "reason": "I already declined the extra workshop haul during this harvest bottleneck; the continuing household care obligation should take priority over outside paid work."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CARE-001-P16",
+    "K-LOCAL-LABOR-001-P16"
+  ],
+  "decision_basis_tags": [
+    "care_priority",
+    "harvest_labor",
+    "consistency",
+    "household_obligation"
+  ],
+  "declared_uncertainty": "The care cadence/task are ASM-FIXTURE-023 calibration; this individual choice does not imply a universal hierarchy of kin duty over paid labor."
+}

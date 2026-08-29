@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V011-D402-URTENU-RECYCLE-SECOND",
+  "actor_id": "P7",
+  "selected_intent": "use another bounded remelt after the minimum interval because no replacement lot has appeared and the workshop remains below one master cycle",
+  "proposed_actions": [
+    {
+      "type": "recycle_finished_metalwork",
+      "input_finished_metalwork": 0.2,
+      "output_metal": 0.12
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RECYCLE-001-P7",
+    "K-e0325e0f464ffea5"
+  ],
+  "decision_basis_tags": [
+    "market_unavailable",
+    "fourteen_day_interval",
+    "lossy_recycling",
+    "workshop_continuity"
+  ],
+  "declared_uncertainty": "The remelting ratio and recurrence interval are explicit fixture calibration rather than historical rates."
+}

@@ -1,0 +1,26 @@
+{
+  "decision_id": "DEC-V011-D420-URTENU-REQUEST-FUEL-HAUL-SUMMER",
+  "actor_id": "P7",
+  "selected_intent": "reopen the bounded fuel-haul request now that the harvest bottleneck has passed and Kothar’s seasonal labor is less constrained",
+  "proposed_actions": [
+    {
+      "type": "request_fuel_haul",
+      "target_person_id": "P16",
+      "fuel_feedstock_amount": 0.8,
+      "silver_payment": 0.2,
+      "service_days": 1,
+      "reason": "The workshop still has only one feedstock batch left, but the modeled labor intensity has fallen to 0.68; I am asking again only because the seasonal constraint that justified the earlier refusal has changed."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CRAFT-FUEL-001-P7",
+    "K-LOCAL-FUEL-LOGISTICS-001-P7"
+  ],
+  "decision_basis_tags": [
+    "changed_season",
+    "fuel_security",
+    "respect_prior_refusal",
+    "paid_labor"
+  ],
+  "declared_uncertainty": "The re-offer timing, labor identity, payment and quantity are ASM-FIXTURE-031 calibration."
+}

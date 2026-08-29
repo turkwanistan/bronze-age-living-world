@@ -1,0 +1,22 @@
+{
+  "decision_id": "DEC-V011-D386-KOTHAR-DECLINE-FUEL-HAUL",
+  "actor_id": "P16",
+  "selected_intent": "protect the peak harvest labor window while leaving the workshop relationship open for a later phase",
+  "proposed_actions": [
+    {
+      "type": "decline_fuel_haul",
+      "reason": "The modeled cereal-harvest transport and storage bottleneck is at intensity 1.00, and my household already depends on my porter/seasonal labor; I will not commit this extra haul during the peak."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-FUEL-LOGISTICS-001-P16",
+    "K-LOCAL-LABOR-001-P16"
+  ],
+  "decision_basis_tags": [
+    "harvest_bottleneck",
+    "household_labor",
+    "paid_work_refusal",
+    "temporary_not_relational"
+  ],
+  "declared_uncertainty": "The exact harvest timing and fuel-haul terms are fixture calibration; the refusal is a simulated individual choice, not a general historical norm."
+}

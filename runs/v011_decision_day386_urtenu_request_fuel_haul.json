@@ -1,0 +1,26 @@
+{
+  "decision_id": "DEC-V011-D386-URTENU-REQUEST-FUEL-HAUL",
+  "actor_id": "P7",
+  "selected_intent": "secure future workshop fuel before the final local feedstock batch is exhausted without assuming Kothar must accept during harvest",
+  "proposed_actions": [
+    {
+      "type": "request_fuel_haul",
+      "target_person_id": "P16",
+      "fuel_feedstock_amount": 0.8,
+      "silver_payment": 0.2,
+      "service_days": 1,
+      "reason": "The workshop is down to one prepared-feedstock batch; I am asking for one paid haul while leaving Kothar free to weigh the harvest labor bottleneck."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CRAFT-FUEL-001-P7",
+    "K-LOCAL-FUEL-LOGISTICS-001-P7"
+  ],
+  "decision_basis_tags": [
+    "finite_fuel",
+    "proactive_logistics",
+    "paid_labor",
+    "independent_acceptance"
+  ],
+  "declared_uncertainty": "The hauler identity, payment, quantity and one-day service are fixture calibration; the historical claim is only that metallurgical fuel requires labor, preparation and transport."
+}

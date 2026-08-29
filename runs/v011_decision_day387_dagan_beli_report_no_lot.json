@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V011-D387-DAGAN-BELI-REPORT-NO-LOT",
+  "actor_id": "P12",
+  "selected_intent": "give Urtenu the current negative market information rather than imply the earlier source can still supply him",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P7",
+      "sender_intent": "report",
+      "proposition_id": "PROP-METAL-NONE-001",
+      "content": "The same market contact has no additional usable raw-metal lot available now. I cannot offer you another lot through that path at present."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-METAL-NONE-P12",
+    "K-LOCAL-ALT-METAL-001-P12"
+  ],
+  "decision_basis_tags": [
+    "current_market_information",
+    "no_false_offer",
+    "relationship_preservation"
+  ],
+  "declared_uncertainty": "The no-lot state is an ASM-FIXTURE-032 simulation circumstance, not a historical Ugaritic market event or frequency claim."
+}

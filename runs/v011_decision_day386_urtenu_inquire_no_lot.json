@@ -1,0 +1,22 @@
+{
+  "decision_id": "DEC-V011-D386-URTENU-INQUIRE-CURRENT-METAL",
+  "actor_id": "P7",
+  "selected_intent": "ask the established market contact for genuinely current metal availability rather than assume the previous degraded lot can repeat",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P12",
+      "sender_intent": "inquiry",
+      "content": "The disrupted lot has been used. Is any additional usable raw-metal lot actually available now, and if not, tell me plainly?"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-ALT-METAL-001-P7"
+  ],
+  "decision_basis_tags": [
+    "changed_information_required",
+    "market_contact",
+    "no_automatic_restock"
+  ],
+  "declared_uncertainty": "The current market state is intentionally unknown to Urtenu until P12 replies; this inquiry asserts no availability."
+}

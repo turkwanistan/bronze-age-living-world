@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V011-D421-URTENU-PREPARE-HAULED-FUEL",
+  "actor_id": "P7",
+  "selected_intent": "turn part of the newly delivered feedstock into usable workshop charcoal before the next metalworking opportunity",
+  "proposed_actions": [
+    {
+      "type": "prepare_charcoal_fuel",
+      "feedstock_input": 0.4,
+      "charcoal_output": 0.5
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CRAFT-FUEL-001-P7",
+    "K-LOCAL-FUEL-LOGISTICS-001-P7"
+  ],
+  "decision_basis_tags": [
+    "delivered_feedstock",
+    "fuel_preparation",
+    "material_chain",
+    "workshop_resilience"
+  ],
+  "declared_uncertainty": "The 0.40→0.50 conversion is ASM-FIXTURE-029 calibration; no historical charcoal yield is asserted."
+}

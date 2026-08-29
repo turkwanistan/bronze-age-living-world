@@ -1,0 +1,26 @@
+{
+  "decision_id": "DEC-V011-D420-KOTHAR-ACCEPT-FUEL-HAUL",
+  "actor_id": "P16",
+  "selected_intent": "take the paid fuel-haul work now that peak harvest has passed and my recent household care duty has been fulfilled",
+  "proposed_actions": [
+    {
+      "type": "accept_fuel_haul",
+      "requester_person_id": "P7",
+      "fuel_feedstock_amount": 0.8,
+      "silver_payment": 0.2,
+      "service_days": 1
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-FUEL-LOGISTICS-001-P16",
+    "K-LOCAL-LABOR-001-P16",
+    "K-LOCAL-CARE-001-P16"
+  ],
+  "decision_basis_tags": [
+    "seasonal_capacity",
+    "paid_labor",
+    "recent_care_fulfilled",
+    "changed_conditions"
+  ],
+  "declared_uncertainty": "The job terms and feedstock quantity are fixture calibration; this individual acceptance does not imply a historical wage norm."
+}

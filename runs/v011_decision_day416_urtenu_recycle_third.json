@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V011-D416-URTENU-RECYCLE-THIRD",
+  "actor_id": "P7",
+  "selected_intent": "use one more bounded remelt because the market remains empty and the workshop otherwise has no raw metal at all",
+  "proposed_actions": [
+    {
+      "type": "recycle_finished_metalwork",
+      "input_finished_metalwork": 0.2,
+      "output_metal": 0.12
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RECYCLE-001-P7",
+    "K-e0325e0f464ffea5"
+  ],
+  "decision_basis_tags": [
+    "market_unavailable",
+    "fourteen_day_interval",
+    "declining_finished_stock",
+    "workshop_continuity"
+  ],
+  "declared_uncertainty": "The recycling ratio and interval are fixture calibration; repeated use is intentionally costly and does not imply limitless recoverable scrap."
+}

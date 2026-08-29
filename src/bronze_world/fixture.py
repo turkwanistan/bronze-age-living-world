@@ -241,6 +241,12 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "Metalworking depends on prepared fuel as well as metal; finite household fuel material can require dedicated preparation before casting or finishing can resume.",
                 ["P7","P8"],
             ))
+        if "ASM-FIXTURE-031" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-FUEL-LOGISTICS-001",
+                "Workshop fuel can require gathering, hauling, preparation and negotiated labor; a porter or seasonal worker may reasonably refuse during a household labor bottleneck.",
+                ["P7","P15","P16"],
+            ))
         if "ASM-FIXTURE-028" in active_assumptions:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
                 "PROP-METAL-ALT-001",
@@ -266,6 +272,14 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 canonical_json({"canonical":"fixture_disrupted_market_terms","topic":"alternate_workshop_metal","provenance":"ASM-FIXTURE-030"})))
             con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
                 "K-METAL-DISRUPT-P12","P12","PROP-METAL-DISRUPT-001",0,"initial_scenario",None,"[]","direct",.82,"ordinary",None))
+        if "ASM-FIXTURE-032" in active_assumptions:
+            con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(
+                "PROP-METAL-NONE-001",
+                "Dagan-beli reports that the same fixture market contact currently has no additional usable raw-metal lot available; the workshop must wait, recycle, or seek a genuinely new path.",
+                "simulation_contingent",
+                canonical_json({"canonical":"fixture_temporary_no_lot","topic":"alternate_workshop_metal","provenance":"ASM-FIXTURE-032"})))
+            con.execute("INSERT OR REPLACE INTO knowledge VALUES (?,?,?,?,?,?,?,?,?,?,?)",(
+                "K-METAL-NONE-P12","P12","PROP-METAL-NONE-001",0,"initial_scenario",None,"[]","direct",.84,"ordinary",None))
 
         for prop_id,text,people in local_norms:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",
