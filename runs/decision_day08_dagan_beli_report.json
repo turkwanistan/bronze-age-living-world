@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-D08-DAGAN-BELI-REPORT",
+  "actor_id": "P12",
+  "selected_intent": "answer Yabninu with the independent report I actually possess",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P3",
+      "sender_intent": "report",
+      "proposition_id": "PROP-SHIP-002",
+      "content": "My market-side contact has no confirmation that the expected arrival timing changed."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-SHIP-P12"],
+  "decision_basis_tags": ["hearsay", "information_provenance", "market_ties"],
+  "declared_uncertainty": "No confirmation is not proof that arrival timing is unchanged."
+}

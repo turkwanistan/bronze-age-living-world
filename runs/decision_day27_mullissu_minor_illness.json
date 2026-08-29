@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-D27-MULLISSU-MINOR-ILLNESS",
+  "actor_id": "P14",
+  "selected_intent": "respond to minor illness with a modest household rite and practical rest/care",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household protective rite",
+      "ritual_goods_cost": 0.25,
+      "practical_response": "reduce ordinary exertion and rely on household care while symptoms remain minor"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [],
+  "decision_basis_tags": ["minor_illness", "ritual_commitment", "household_resource_caution", "mixed_practical_ritual_response"],
+  "declared_uncertainty": "The packet supports a household ritual affordance but does not specify an exact historical rite or material quantity; the cost is an abstract fixture amount."
+}

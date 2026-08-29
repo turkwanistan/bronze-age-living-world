@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-D09-YABNINU-WAIT",
+  "actor_id": "P3",
+  "selected_intent": "avoid acting on incomplete discordant reports until stronger information arrives",
+  "proposed_actions": [
+    {
+      "type": "wait",
+      "reason": "the two delivered reports do not establish the actual arrival outcome",
+      "until_day": 10
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-be7a1325615ef98a", "K-c532b957dc620738"],
+  "decision_basis_tags": ["information_uncertainty", "preserve_credit", "household_security"],
+  "declared_uncertainty": "The packet contains two incomplete or discordant reports and explicitly leaves the canonical shipment outcome unspecified."
+}

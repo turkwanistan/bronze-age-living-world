@@ -1,0 +1,17 @@
+{
+  "decision_id": "DEC-D08-ABDI-RASHAP-REPORT",
+  "actor_id": "P11",
+  "selected_intent": "answer Yabninu with the report I actually possess",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P3",
+      "sender_intent": "report",
+      "proposition_id": "PROP-SHIP-001",
+      "content": "My report is that one expected vessel may be delayed."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-SHIP-P11"],
+  "decision_basis_tags": ["direct_report", "information_provenance", "trade_contact"],
+  "declared_uncertainty": "The report does not establish what actually happened to the vessel."
+}

@@ -1,0 +1,88 @@
+# Cognition Protocol v1
+
+## Boundary
+
+The simulation engine decides **when** cognition is useful. ChatGPT never receives unrestricted database access while inhabiting a character.
+
+## Pull workflow
+
+1. advance routine world;
+2. detect consequential situation;
+3. create scene;
+4. compile one character-scoped packet;
+5. persist pending cognition job;
+6. ChatGPT reads the pending packet;
+7. ChatGPT returns a structured decision envelope;
+8. engine validates factual premises and every typed action;
+9. accepted actions and their events commit atomically;
+10. rejected decisions remain rejected and may receive one bounded correction attempt;
+11. later replay reuses the recorded validated decision instead of silently re-reasoning.
+
+## Packet minimum
+
+- protocol version;
+- job/scene/run/time/place IDs;
+- actor identity, life/status state, household;
+- relevant roles;
+- relevant persistent dispositions;
+- current household-controlled resources;
+- relevant directed relationships;
+- admissible knowledge/belief/rumor IDs only;
+- relevant memories;
+- available institutions and constraints;
+- active stakes/goals;
+- allowed typed action families.
+
+No hidden world facts are included merely because they would make the decision easier.
+
+## Decision envelope
+
+```json
+{
+  "decision_id": "...",
+  "actor_id": "...",
+  "selected_intent": "...",
+  "proposed_actions": [
+    {"type": "transfer_resource", "target_household_id": "...", "resource": "grain", "amount": 3}
+  ],
+  "optional_communicated_content": null,
+  "decisive_knowledge_or_belief_ids": ["K-..."],
+  "decision_basis_tags": ["household_security", "reciprocity"],
+  "declared_uncertainty": "..."
+}
+```
+
+Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
+
+## Initial typed actions
+
+- `transfer_resource`
+- `communicate`
+- `send_message` — delayed route-validated inquiry/report; reports require a proposition already present in the sender packet
+- `enter_obligation`
+- `repay_debt`
+- `seek_mediation`
+- `perform_ritual`
+- `accept_proposal`
+- `refuse_proposal`
+- `travel`
+
+The grammar expands only when a real scene needs a reusable family.
+
+## Fail-closed validation
+
+As applicable, validate:
+
+- actor alive and available;
+- actor matches job;
+- cited knowledge/belief IDs are present in the packet;
+- target exists;
+- place/reachability and time cost;
+- resource ownership/control and non-negative result;
+- debt/obligation consistency;
+- institutional procedure/access/authority;
+- language/communication feasibility when modeled;
+- action is allowed for this scene;
+- state update and event append occur in one transaction.
+
+A fluent or historically plausible sentence cannot bypass these checks.

@@ -1,0 +1,22 @@
+{
+  "decision_id": "DEC-D07-YABNINU-INQUIRIES",
+  "actor_id": "P3",
+  "selected_intent": "seek independent confirmation before acting on a stale unconfirmed report",
+  "proposed_actions": [
+    {
+      "type": "send_message",
+      "target_person_id": "P11",
+      "sender_intent": "inquiry",
+      "content": "What report do you currently have about the expected arrival timing?"
+    },
+    {
+      "type": "send_message",
+      "target_person_id": "P12",
+      "sender_intent": "inquiry",
+      "content": "What report do you currently have about the expected arrival timing?"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-SHIP-P3"],
+  "decision_basis_tags": ["information_provenance", "preserve_credit", "avoid_acting_on_unconfirmed_report"],
+  "declared_uncertainty": "The packet establishes only an unconfirmed hearsay report; it does not establish the vessel outcome or what either contact knows."
+}

@@ -1,0 +1,28 @@
+{
+  "scenario_id": "ugarit_1350_micro_v001",
+  "scenario_version": "0.1.0",
+  "year_bce": 1350,
+  "local_period_label": "Late Bronze Age Ugarit",
+  "evidence_model_version": "evidence-v0.1",
+  "cognition_protocol_version": "cognition-v1",
+  "schema_version": 1,
+  "calendar": {
+    "unit": "day",
+    "start_day": 0
+  },
+  "fixture_resource_notice": "All numeric material stocks/rates are abstract simulation calibration units under ASM-FIXTURE-001/002, not historical quantities.",
+  "runtime_randomness": {
+    "minor_illness_daily_probability_per_named_person": 0.004,
+    "purpose": "exercise circumstance->scene mechanics only; not a historical disease-rate claim"
+  },
+  "active_assumptions": [
+    "ASM-UGA-001",
+    "ASM-UGA-002",
+    "ASM-UGA-003",
+    "ASM-FIXTURE-001",
+    "ASM-FIXTURE-002",
+    "ASM-FIXTURE-003",
+    "ASM-FIXTURE-004",
+    "ASM-FIXTURE-005"
+  ]
+}

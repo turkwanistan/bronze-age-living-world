@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-D36-AHATMILKU-ILLNESS",
+  "actor_id": "P2",
+  "selected_intent": "respond conservatively to minor illness with household care and a modest rite",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "modest household rite",
+      "ritual_goods_cost": 0.25,
+      "practical_response": "rest and ordinary household care"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P2"],
+  "decision_basis_tags": ["minor_illness", "household_security", "ritual_commitment"],
+  "declared_uncertainty": "No specific historical rite is asserted; the ritual-goods quantity is an abstract fixture value."
+}

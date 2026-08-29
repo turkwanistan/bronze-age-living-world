@@ -1,0 +1,18 @@
+{
+  "decision_id": "DEC-D21-BAT-RAPIU-RECIPROCITY",
+  "actor_id": "P15",
+  "selected_intent": "honor the reciprocal-aid obligation without materially endangering the household",
+  "proposed_actions": [
+    {
+      "type": "transfer_resource",
+      "target_household_id": "H-FARM",
+      "social_target_person_id": "P2",
+      "resource": "grain",
+      "amount": 1.0,
+      "fulfills_obligation_id": "O-FAVOR-001"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-P15"],
+  "decision_basis_tags": ["reciprocity", "reputation", "household_security"],
+  "declared_uncertainty": "The 1.0-unit transfer is an abstract fixture quantity chosen within available resources; it is not a reconstructed historical equivalence for the prior favor."
+}
