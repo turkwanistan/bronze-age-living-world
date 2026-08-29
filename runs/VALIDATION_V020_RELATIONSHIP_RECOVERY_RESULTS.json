@@ -1,0 +1,105 @@
+{
+  "mode": "v020_relationship_memory_and_recovery_validation",
+  "compatibility": {
+    "scenario_version": "0.14.0",
+    "day": 462,
+    "recorded_decisions_applied": 157,
+    "pending": 0,
+    "rejected": 0,
+    "events": 6608,
+    "state_hash": "22f77b40799dcd664be02fd9e754480ba451ab019921453ac02acc6ebb09b9aa"
+  },
+  "unchanged_scarcity": {
+    "ok": true,
+    "errors": [],
+    "packet_hash": "b57fb7bfefd323e0a33ded1d1a133c526ae6204dd19bcdb6a9c293bc612e95c7",
+    "refusal_memory_present": true,
+    "refusal_memory_day": 308,
+    "relationship_before": {
+      "trust": 0.7800000000000002,
+      "respect": 0.6800000000000002,
+      "conflicts": 1,
+      "favors_given": 0.0,
+      "favors_owed": 0.0
+    },
+    "relationship_after": {
+      "trust": 0.7600000000000002,
+      "respect": 0.6800000000000002,
+      "conflicts": 2,
+      "favors_given": 0.0,
+      "favors_owed": 0.0
+    },
+    "merchant_metal_after": 0.15,
+    "craft_metal_after": 0.009999999999999981,
+    "active_reciprocal_exchange": 0,
+    "negative_resources": 0
+  },
+  "recovered_capacity": {
+    "ok": true,
+    "errors": [],
+    "packet_hash": "bf96d0f2e69bb9fc7361889dbd3f8b6665de4bc21489cb0535bcb987cde023e3",
+    "refusal_memory_present": true,
+    "refusal_memory_day": 308,
+    "relationship_before": {
+      "trust": 0.7800000000000002,
+      "respect": 0.6800000000000002,
+      "conflicts": 1,
+      "favors_given": 0.0,
+      "favors_owed": 0.0
+    },
+    "relationship_after": {
+      "trust": 0.7800000000000002,
+      "respect": 0.6800000000000002,
+      "conflicts": 1,
+      "favors_given": 1.0,
+      "favors_owed": 0.0
+    },
+    "merchant_metal_after": 0.48,
+    "craft_metal_after": 0.12999999999999998,
+    "active_reciprocal_exchange": 1,
+    "negative_resources": 0
+  },
+  "canonical_low_cost_repair": {
+    "before": {
+      "p3_to_p7": {
+        "trust": 0.7700000000000002,
+        "respect": 0.6700000000000002,
+        "conflicts": 1,
+        "relationship_type": "exchange_contact"
+      },
+      "p7_to_p3": {
+        "trust": 0.8300000000000003,
+        "respect": 0.6100000000000001,
+        "conflicts": 1,
+        "relationship_type": "exchange_contact"
+      },
+      "introduction_events": 0
+    },
+    "after": {
+      "p3_to_p7": {
+        "trust": 0.7800000000000002,
+        "respect": 0.6800000000000002,
+        "conflicts": 1,
+        "relationship_type": "exchange_contact"
+      },
+      "p7_to_p3": {
+        "trust": 0.8500000000000003,
+        "respect": 0.6200000000000001,
+        "conflicts": 1,
+        "relationship_type": "exchange_contact"
+      },
+      "introduction_events": 1
+    }
+  },
+  "checks": {
+    "new_scenario_reuses_all_157_pre463_decisions": true,
+    "old_refusal_memory_visible_in_both_day463_packets": true,
+    "unchanged_scarcity_refuses_without_new_debt": true,
+    "recovered_capacity_resumes_bounded_supply": true,
+    "no_negative_resources": true,
+    "canonical_low_cost_cooperation_improved_relationship": true,
+    "canonical_repair_preserved_conflict_history": true,
+    "canonical_repair_was_actual_market_introduction": true
+  },
+  "all_checks_pass": true
+}

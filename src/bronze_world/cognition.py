@@ -41,6 +41,33 @@ def _build_packet(db: WorldDB, job_id: str) -> dict[str, Any]:
         )]
         seen={m["memory_id"] for m in memories}
         memories.extend(m for m in recent_decisions if m["memory_id"] not in seen)
+    # From v020 onward, a recorded relationship conflict also retains a tiny bounded
+    # sample of older relationship-relevant decision memories. This prevents a durable
+    # conflict counter from becoming causally opaque once the 30-day recent-memory window
+    # expires. It preserves history; it does not imply the conflict is still unresolved.
+    v020_relationship_memory_start = int(packet_cfg.get("v020_relationship_memory_start_day", 10**9))
+    conflicted_targets = {r["to_person_id"] for r in rels if int(r.get("conflicts", 0)) > 0}
+    if int(scene["day"]) >= v020_relationship_memory_start and conflicted_targets:
+        # Keep only memories whose causal event actually involved one of the actor's
+        # conflicted counterparties. Relationship relevance alone is not enough: an
+        # unrelated dispute must not leak into another relationship's decision packet.
+        candidates = [dict(r) for r in db.all(
+            "SELECT m.*,e.actor_ids_json AS _event_actor_ids_json FROM memories m "
+            "JOIN events e ON e.event_id=m.event_id "
+            "WHERE m.person_id=? AND m.memory_type='decision' "
+            "AND m.relationship_relevance>=0.5 AND m.created_day<=? "
+            "ORDER BY m.created_day DESC,m.relationship_relevance DESC,m.salience DESC LIMIT 12",
+            (actor["person_id"], int(scene["day"])),
+        )]
+        conflict_history = []
+        for candidate in candidates:
+            event_actors = set(_json(candidate.pop("_event_actor_ids_json")))
+            if event_actors & conflicted_targets:
+                conflict_history.append(candidate)
+            if len(conflict_history) >= 2:
+                break
+        seen={m["memory_id"] for m in memories}
+        memories.extend(m for m in conflict_history if m["memory_id"] not in seen)
     institution_ids = _json(scene["institution_ids_json"])
     institutions = [dict(db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))) for iid in institution_ids if db.one("SELECT * FROM institutions WHERE institution_id=?", (iid,))]
     obligations = [dict(r) for r in db.all("SELECT * FROM obligations WHERE status IN ('active','scheduled','granted') AND (obligor_person_id=? OR beneficiary_person_id=? OR obligor_household_id=? OR beneficiary_household_id=?) ORDER BY COALESCE(due_day,999999),obligation_id", (actor["person_id"],actor["person_id"],household["household_id"],household["household_id"]))]

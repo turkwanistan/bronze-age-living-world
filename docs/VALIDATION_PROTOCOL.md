@@ -109,3 +109,15 @@ The v019 packet groups cover:
 - P3 responding to the same trusted P7 workshop request after six fulfilled reciprocal returns, with only supplier metal reserve changed from 0.60 to 0.15.
 
 A useful refusal must not erase prior trust history merely because the current material request fails. A useful fulfillment must not silently dissolve a continuing obligation. Property consent must remain materially feasible and distinct from ownership/inheritance.
+## Long-horizon relationship-memory and recovery validation
+
+From v020, future scenario packets add a narrowly gated long-horizon relationship-memory rule. When an actor has a recorded directed relationship conflict after the v020 boundary, the packet may retain at most two older relationship-relevant **decision** memories whose causal event actually involved that conflicted counterparty. The rule does not pull in unrelated disputes and does not reset, resolve or intensify the conflict by itself.
+
+`scripts/relationship_recovery_validation.py` rebuilds the accepted 157-decision v015 history under the current scenario and then tests two disposable day-463 branches from the same P3↔P7 history:
+
+- unchanged 0.15 merchant metal reserve → the old day-308 refusal remains visible and P3 refuses another 0.12 advance without creating new debt;
+- recovered 0.60 merchant metal reserve → the same refusal history remains visible, but P3 can resume a bounded 0.12 reciprocal advance.
+
+The validation also audits the already-canonical day-361 market introduction as the low-cost cooperation case. That event improved trust/respect after the refusal while preserving `conflicts=1`, proving that repair can occur through later useful cooperation without deleting disagreement history.
+
+The intended invariant is **memory without grudge lock-in**: past conflict remains causally intelligible, present constraints can still dominate, and later changed conditions/cooperation may improve the relationship. No explicit forgiveness/reconciliation action is required merely to make this possible.

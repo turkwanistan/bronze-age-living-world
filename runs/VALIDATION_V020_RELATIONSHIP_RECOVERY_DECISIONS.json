@@ -1,0 +1,33 @@
+{
+  "unchanged_scarcity": {
+    "actor_id": "P3",
+    "selected_intent": "maintain the earlier scarcity boundary because the material reason for the refusal has not changed",
+    "proposed_actions": [
+      {
+        "type": "refuse_proposal",
+        "reason": "Urtenu repaid the earlier exchanges and remains a trusted counterparty, but my household still has only 0.15 raw metal. The scarcity that justified the earlier refusal is unchanged, so I will not make another metal advance from this reserve."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": ["K-LOCAL-P3", "K-LOCAL-TRADE-001-P3"],
+    "decision_basis_tags": ["remembered_refusal", "unchanged_scarcity", "repaid_history", "relationship_continuity"],
+    "declared_uncertainty": "The 0.15 stock is fixture state; refusal does not imply permanent hostility or a historical merchant reserve rule."
+  },
+  "recovered_capacity": {
+    "actor_id": "P3",
+    "selected_intent": "resume bounded reciprocal supply because household capacity has recovered while the successful repayment history remains relevant",
+    "proposed_actions": [
+      {
+        "type": "transfer_resource",
+        "target_household_id": "H-CRAFT",
+        "resource": "metal",
+        "amount": 0.12,
+        "social_target_person_id": "P7",
+        "create_reciprocal_obligation": true,
+        "reciprocal_obligation_description": "Urtenu and the craft household owe a future reciprocal return for renewed workshop metal after the merchant household's capacity recovered."
+      }
+    ],
+    "decisive_knowledge_or_belief_ids": ["K-LOCAL-P3", "K-LOCAL-TRADE-001-P3"],
+    "decision_basis_tags": ["remembered_refusal", "changed_capacity", "six_prior_repayments", "bounded_social_credit"],
+    "declared_uncertainty": "Recovered fixture stock permits this bounded advance; it does not establish permanent supply, a historical price, or a standing entitlement."
+  }
+}

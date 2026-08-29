@@ -1,6 +1,6 @@
 {
   "scenario_id": "ugarit_1350_micro_v001",
-  "scenario_version": "0.13.0",
+  "scenario_version": "0.14.0",
   "year_bce": 1350,
   "local_period_label": "Late Bronze Age Ugarit",
   "evidence_model_version": "evidence-v0.1",
@@ -68,5 +68,6 @@
   "v012_lifeways_start_day": 422,
   "v013_lifeways_start_day": 444,
   "v014_lifeways_start_day": 459,
-  "v015_lifeways_start_day": 460
+  "v015_lifeways_start_day": 460,
+  "v020_relationship_memory_start_day": 463
 }

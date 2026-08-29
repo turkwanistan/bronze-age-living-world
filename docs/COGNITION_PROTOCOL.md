@@ -32,6 +32,7 @@ The simulation engine decides **when** cognition is useful. ChatGPT never receiv
 - admissible knowledge/belief/rumor IDs only;
 - relevant memories;
 - from the v008 packet-policy boundary onward, recent refusal/decision memories are retained when an active relationship conflict exists so current strain cannot be hidden by older high-salience history;
+- from the v020 packet-policy boundary onward, an actor with recorded relationship conflict also retains at most two older relationship-relevant **decision** memories whose causal events involved that specific conflicted counterparty; this preserves causal context after the 30-day recent-memory window without treating the conflict as permanently unresolved;
 - active obligations and debts touching the actor or household;
 - available institutions and constraints;
 - active stakes/goals;
