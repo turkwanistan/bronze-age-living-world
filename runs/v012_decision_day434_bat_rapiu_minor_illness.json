@@ -1,0 +1,16 @@
+{
+  "decision_id": "DEC-V012-D434-BAT-RAPIU-MINOR-ILLNESS",
+  "actor_id": "P15",
+  "selected_intent": "respond conservatively to a first minor illness episode without consuming much of the household's limited ritual stock",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "brief household protective observance",
+      "ritual_goods_cost": 0.1,
+      "practical_response": "rest briefly and reduce household/property work while symptoms remain minor, then resume ordinary responsibilities if they settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-RITUAL-001-P15", "K-LOCAL-P15"],
+  "decision_basis_tags": ["first_minor_illness", "limited_ritual_stock", "household_continuity", "practical_rest"],
+  "declared_uncertainty": "The illness is a simulation circumstance and the rite/cost are fixture abstractions; no diagnosis or specific Ugaritic medical prescription is asserted."
+}

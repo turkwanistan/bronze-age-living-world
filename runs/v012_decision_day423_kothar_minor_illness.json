@@ -1,0 +1,24 @@
+{
+  "decision_id": "DEC-V012-D423-KOTHAR-MINOR-ILLNESS",
+  "actor_id": "P16",
+  "selected_intent": "respond modestly to minor symptoms after recent paid labor without overusing the household’s limited ritual stores",
+  "proposed_actions": [
+    {
+      "type": "perform_ritual",
+      "ritual_kind": "brief household protective observance",
+      "ritual_goods_cost": 0.1,
+      "practical_response": "rest briefly and avoid strenuous porter or seasonal work while symptoms remain minor, then resume if they settle"
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RITUAL-001-P16",
+    "K-LOCAL-P16"
+  ],
+  "decision_basis_tags": [
+    "minor_illness",
+    "recent_labor",
+    "limited_ritual_goods",
+    "practical_rest"
+  ],
+  "declared_uncertainty": "The illness and 0.10 ritual cost are simulation abstractions; no diagnosis or specific Ugaritic prescription is asserted."
+}

@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V012-D430-URTENU-RECYCLE-FOURTH",
+  "actor_id": "P7",
+  "selected_intent": "use another costly remelt because the market remains empty and the recovered metal would make one full master cycle viable",
+  "proposed_actions": [
+    {
+      "type": "recycle_finished_metalwork",
+      "input_finished_metalwork": 0.2,
+      "output_metal": 0.12
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-RECYCLE-001-P7",
+    "K-e0325e0f464ffea5"
+  ],
+  "decision_basis_tags": [
+    "market_unavailable",
+    "fourteen_day_interval",
+    "costly_recycling",
+    "viable_master_cycle"
+  ],
+  "declared_uncertainty": "The recycling ratio and recurrence interval remain explicit fixture calibration."
+}

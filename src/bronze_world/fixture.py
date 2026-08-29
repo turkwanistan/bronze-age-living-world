@@ -142,6 +142,9 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
             if "ASM-FIXTURE-029" in active_assumptions and h["id"] == "H-CRAFT":
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
                             ("H-CRAFT","fuel_feedstock",1.20,"abstract_fixture_unit","ASM-FIXTURE-029"))
+            if "ASM-FIXTURE-033" in active_assumptions and h["id"] == "H-CRAFT":
+                con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
+                            ("H-CRAFT","workshop_tool_condition",1.0,"abstract_fixture_unit","ASM-FIXTURE-033"))
             if "ASM-FIXTURE-025" in scenario.get("active_assumptions", []) and h["id"] == "H-FARM":
                 con.execute("INSERT OR REPLACE INTO resource_stocks VALUES (?,?,?,?,?)",
                             ("H-FARM","draft_team_condition",1.0,"abstract_fixture_unit","ASM-FIXTURE-025"))
@@ -246,6 +249,12 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "PROP-LOCAL-FUEL-LOGISTICS-001",
                 "Workshop fuel can require gathering, hauling, preparation and negotiated labor; a porter or seasonal worker may reasonably refuse during a household labor bottleneck.",
                 ["P7","P15","P16"],
+            ))
+        if "ASM-FIXTURE-033" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-WORKSHOP-TOOLS-001",
+                "Metalworking depends on usable tools, molds and workshop equipment as well as metal and fuel; damaged equipment can require repair before production resumes.",
+                ["P7","P8"],
             ))
         if "ASM-FIXTURE-028" in active_assumptions:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(

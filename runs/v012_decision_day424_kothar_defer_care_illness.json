@@ -1,0 +1,23 @@
+{
+  "decision_id": "DEC-V012-D424-KOTHAR-DEFER-CARE-ILLNESS",
+  "actor_id": "P16",
+  "selected_intent": "defer one care support day so the practical rest chosen for yesterday’s minor illness is meaningful",
+  "proposed_actions": [
+    {
+      "type": "defer_kin_care",
+      "care_obligation_id": "O-6a002e2785b22a67",
+      "reason": "I chose brief rest yesterday for minor symptoms; I will defer this one support episode rather than undermine that recovery, while keeping the continuing care obligation active."
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": [
+    "K-LOCAL-CARE-001-P16",
+    "K-LOCAL-P16"
+  ],
+  "decision_basis_tags": [
+    "recent_minor_illness",
+    "practical_rest",
+    "bounded_deferment",
+    "continuing_obligation"
+  ],
+  "declared_uncertainty": "The illness and care cadence are simulation fixtures; this does not establish a historical rule about illness and kin-care obligations."
+}

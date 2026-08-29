@@ -1,0 +1,15 @@
+{
+  "decision_id": "DEC-V012-D434-URTENU-REPAIR-TOOL",
+  "actor_id": "P7",
+  "selected_intent": "repair the failed workshop tool immediately so the recovered metal and prepared fuel remain usable for later production",
+  "proposed_actions": [
+    {
+      "type": "repair_workshop_tool",
+      "finished_metalwork_input": 0.1,
+      "repair_days": 1
+    }
+  ],
+  "decisive_knowledge_or_belief_ids": ["K-LOCAL-WORKSHOP-TOOLS-001-P7", "K-LOCAL-P7"],
+  "decision_basis_tags": ["tool_failure", "repair_before_production", "preserve_inputs", "workshop_continuity"],
+  "declared_uncertainty": "The one-shot failure, 0.10 repair input and one-day duration are ASM-FIXTURE-033 calibration, not historical tool lifetimes or repair costs."
+}

@@ -213,6 +213,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 386
 
+    def _v012_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v012_lifeways_start_day", 422))
+        except (TypeError, ValueError):
+            return 422
+
     def _v008_start_day(self) -> int:
         cfg = scenario_config(self.db, self.run_id)
         try:
@@ -351,6 +358,28 @@ class WorldEngine:
                     self._memory(con,beneficiary,day,"Received the agreed winter maintenance help; the earlier sowing favor is now answered.",
                                  event_id=eid,memory_type="reciprocal_labor",salience=.82,relationship_relevance=.9,goal_relevance=.76,
                                  provenance={"assumption_id":"ASM-FIXTURE-025"})
+
+        # Complete a bounded v012 workshop tool/mold repair after its modeled one-day delay.
+        if self._has_assumption("ASM-FIXTURE-033"):
+            repairs=con.execute(
+                "SELECT * FROM obligations WHERE status='scheduled' AND obligation_type='fixture_workshop_tool_repair' "
+                "AND due_day IS NOT NULL AND due_day<=? ORDER BY obligation_id",(day,)).fetchall()
+            for o in repairs:
+                hh=o["obligor_household_id"] or "H-CRAFT"
+                row=con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='workshop_tool_condition'",(hh,)).fetchone()
+                current=float(row[0]) if row else 0.0
+                restored=max(0.0,1.0-current)
+                if restored>0:
+                    self._change_resource(con,hh,"workshop_tool_condition",restored,assumption_id="ASM-FIXTURE-033")
+                con.execute("UPDATE obligations SET status='fulfilled' WHERE obligation_id=?",(o["obligation_id"],))
+                eid=self._event(con,day,"workshop_tool_repair_completed",actors=[o["obligor_person_id"]] if o["obligor_person_id"] else [],
+                    rules=["ASM-FIXTURE-033","RULE-WORKSHOP-TOOL-REPAIR-001"],
+                    material={hh:{"workshop_tool_condition":restored}} if restored else {},
+                    payload={"obligation_id":o["obligation_id"],"condition_restored":restored,
+                             "notice":"bounded fixture tool/mold repair completion; not a historical repair duration"},discriminator=o["obligation_id"])
+                if o["obligor_person_id"]:
+                    self._memory(con,o["obligor_person_id"],day,"Completed the workshop tool/mold repair; normal production can resume when material inputs are available.",
+                        event_id=eid,memory_type="craft_tool_repair",salience=.9,relationship_relevance=.2,goal_relevance=.98,provenance={"assumption_id":"ASM-FIXTURE-033"})
 
         # Resolve an accepted v011 fuel-haul contract only after the one-day labor/transport delay.
         # The feedstock enters from an explicit external local fixture source; payment moves
@@ -522,7 +551,28 @@ class WorldEngine:
                         (person["household_id"],),
                     ).fetchone()
                     material_tol = 1e-9 if self._has_assumption("ASM-FIXTURE-031") and day >= self._v011_start_day() else 0.0
-                    if metal and charcoal and float(metal[0]) + material_tol >= 0.15 and float(charcoal[0]) + material_tol >= 0.20:
+                    enough_master_inputs = bool(metal and charcoal and float(metal[0]) + material_tol >= 0.15 and float(charcoal[0]) + material_tol >= 0.20)
+                    tool_blocked = False
+                    if self._has_assumption("ASM-FIXTURE-033") and day >= self._v012_start_day():
+                        tool = con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='workshop_tool_condition'",(person["household_id"],)).fetchone()
+                        tool_condition=float(tool[0]) if tool else 1.0
+                        prior_damage=con.execute("SELECT 1 FROM events WHERE run_id=? AND event_type='workshop_tool_damage' LIMIT 1",(self.run_id,)).fetchone()
+                        if enough_master_inputs and not prior_damage and tool_condition >= 0.5:
+                            self._change_resource(con,person["household_id"],"workshop_tool_condition",-tool_condition,assumption_id="ASM-FIXTURE-033")
+                            damage_eid=self._event(con,day,"workshop_tool_damage",actors=[person["person_id"]],
+                                rules=["ASM-FIXTURE-033","RULE-WORKSHOP-TOOL-REPAIR-001"],
+                                material={person["household_id"]:{"workshop_tool_condition":-tool_condition}},
+                                payload={"blocked_cycle":True,"notice":"bounded fixture tool/mold failure; timing and condition scale are not historical failure rates"},
+                                discriminator="first-v012-tool-damage")
+                            self._memory(con,person["person_id"],day,"A workshop tool or mold failed just as a viable master production cycle was about to begin; production is blocked until repair.",
+                                event_id=damage_eid,memory_type="craft_tool_damage",salience=.94,relationship_relevance=.2,goal_relevance=.99,provenance={"assumption_id":"ASM-FIXTURE-033"})
+                            if person["person_id"]=='P7':
+                                self._memory(con,'P8',day,"A workshop tool or mold failed before the master's production cycle; the workshop cannot resume normal metalwork until it is repaired.",
+                                    event_id=damage_eid,memory_type="craft_tool_damage",salience=.88,relationship_relevance=.35,goal_relevance=.92,provenance={"assumption_id":"ASM-FIXTURE-033"})
+                            tool_blocked=True
+                        elif tool_condition < 0.5:
+                            tool_blocked=True
+                    if enough_master_inputs and not tool_blocked:
                         self._change_resource(con, person["household_id"], "metal", -0.15, assumption_id="ASM-FIXTURE-009")
                         self._change_resource(con, person["household_id"], "charcoal", -0.20, assumption_id="ASM-FIXTURE-009")
                         self._change_resource(con, person["household_id"], "finished_metalwork", 0.08, assumption_id="ASM-FIXTURE-009")
@@ -537,7 +587,11 @@ class WorldEngine:
                         (person["household_id"],),
                     ).fetchone()
                     material_tol = 1e-9 if self._has_assumption("ASM-FIXTURE-031") and day >= self._v011_start_day() else 0.0
-                    if metal and charcoal and float(metal[0]) + material_tol >= 0.08 and float(charcoal[0]) + material_tol >= 0.10:
+                    tool_ready = True
+                    if self._has_assumption("ASM-FIXTURE-033") and day >= self._v012_start_day():
+                        tool = con.execute("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='workshop_tool_condition'",(person["household_id"],)).fetchone()
+                        tool_ready = not tool or float(tool[0]) >= 0.5
+                    if tool_ready and metal and charcoal and float(metal[0]) + material_tol >= 0.08 and float(charcoal[0]) + material_tol >= 0.10:
                         self._change_resource(con, person["household_id"], "metal", -0.08, assumption_id="ASM-FIXTURE-017")
                         self._change_resource(con, person["household_id"], "charcoal", -0.10, assumption_id="ASM-FIXTURE-017")
                         self._change_resource(con, person["household_id"], "finished_metalwork", 0.04, assumption_id="ASM-FIXTURE-017")
@@ -1528,6 +1582,30 @@ class WorldEngine:
                             rules=["ASM-FIXTURE-029","RULE-CRAFT-FUEL-PREPARATION-001"],payload=stakes,discriminator=fuel_sid)
                     created.append(self.enqueue_job(fuel_sid,"P7",["prepare_charcoal_fuel","wait"]))
 
+        # v012 exposes one bounded tool/mold repair decision only after a real damage
+        # event has reduced shared workshop tool condition below the production threshold.
+        if self._has_assumption("ASM-FIXTURE-033") and day >= self._v012_start_day():
+            tool_condition=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='workshop_tool_condition'")
+            scheduled_repair=self.db.one("SELECT 1 FROM obligations WHERE status='scheduled' AND obligation_type='fixture_workshop_tool_repair' LIMIT 1")
+            repair_sid=stable_id("SCENE",self.run_id,"workshop_tool_repair_pressure","P7")
+            if (tool_condition is not None and float(tool_condition)<0.5 and not scheduled_repair
+                    and not self.db.one("SELECT 1 FROM scenes WHERE scene_id=?",(repair_sid,))):
+                actor=self.db.one("SELECT current_place_id FROM persons WHERE person_id='P7' AND alive=1 AND available=1")
+                finished=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id='H-CRAFT' AND resource_type='finished_metalwork'")
+                damage=self.db.one("SELECT event_id,day FROM events WHERE run_id=? AND event_type='workshop_tool_damage' ORDER BY day DESC,event_seq DESC LIMIT 1",(self.run_id,))
+                if actor and damage:
+                    stakes={"situation_id":"SIT-030","damage_event_id":damage["event_id"],"tool_condition":float(tool_condition),
+                            "finished_metalwork_available":float(finished or 0),"repair_finished_metalwork_input":0.10,"repair_days":1,
+                            "fixture_notice":"Workshop tools/molds are research-supported craft dependencies; the one-shot failure, 0.10 repair input and one-day repair are ASM-FIXTURE-033 calibration."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (repair_sid,self.run_id,day,actor["current_place_id"],"economic","workshop_tool_repair_pressure",canonical_json(stakes),
+                             canonical_json({"normal_metalwork_blocked":True,"repair_uses_finished_material":True}),
+                             canonical_json({"shared_workshop_equipment":True}),canonical_json([]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(repair_sid,"P7","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(repair_sid,"P8","affected_worker"))
+                    created.append(self.enqueue_job(repair_sid,"P7",["repair_workshop_tool","wait"]))
+
         # v011 turns fuel replenishment into a social/material logistics problem. The
         # workshop may plan ahead once it is down to one preparation batch, but the same
         # porter is not asked repeatedly inside one agricultural phase after a refusal.
@@ -2045,6 +2123,19 @@ class WorldEngine:
                 stock=self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='fuel_feedstock'",(actor_household,)) if actor_household else None
                 if not stock or not isinstance(feed,(int,float)) or float(stock["amount"])+1e-9<float(feed):
                     errors.append(f"action_{i}:insufficient_fuel_feedstock")
+            elif typ == "repair_workshop_tool":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "workshop_tool_repair_pressure":
+                    errors.append(f"action_{i}:invalid_scene_for_workshop_tool_repair")
+                amount=action.get("finished_metalwork_input"); days=action.get("repair_days")
+                if abs(float(amount or 0)-float(stakes.get("repair_finished_metalwork_input",0)))>1e-9 or int(days or 0)!=int(stakes.get("repair_days",0)):
+                    errors.append(f"action_{i}:workshop_tool_repair_terms_mismatch")
+                stock=self.db.one("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='finished_metalwork'",(actor_household,)) if actor_household else None
+                if not stock or not isinstance(amount,(int,float)) or float(stock["amount"])+1e-9<float(amount):
+                    errors.append(f"action_{i}:insufficient_finished_metalwork_for_repair")
+                condition=self.db.scalar("SELECT amount FROM resource_stocks WHERE household_id=? AND resource_type='workshop_tool_condition'",(actor_household,)) if actor_household else None
+                if condition is None or float(condition)>=0.5:
+                    errors.append(f"action_{i}:workshop_tool_not_broken")
             elif typ == "request_fuel_haul":
                 stakes=packet.get("scene",{}).get("stakes",{})
                 if packet.get("scene",{}).get("trigger") != "workshop_fuel_procurement_pressure":
@@ -3627,6 +3718,22 @@ class WorldEngine:
                                  "notice":"finite fixture fuel preparation; not a historical charcoal yield or woodland-use rate"},discriminator=aid)
                     self._memory(con,actor_id,day,f"Prepared workshop fuel from {feed:g} feedstock, producing {charcoal_out:g} charcoal in fixture units.",
                         event_id=eid,memory_type="craft_fuel",salience=.84,relationship_relevance=.15,goal_relevance=.94,provenance={"assumption_id":"ASM-FIXTURE-029"})
+
+                elif typ == "repair_workshop_tool":
+                    amount=float(action["finished_metalwork_input"]); days=int(action["repair_days"])
+                    self._change_resource(con,actor_household,"finished_metalwork",-amount,assumption_id="ASM-FIXTURE-033")
+                    oid=stable_id("O",self.run_id,"fixture_workshop_tool_repair",decision_id,idx)
+                    con.execute("INSERT INTO obligations VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (oid,actor_id,actor_household,None,None,"fixture_workshop_tool_repair",
+                         "Repair the damaged workshop tool/mold before normal metalwork resumes.",day+days,"scheduled",
+                         canonical_json({"assumption_id":"ASM-FIXTURE-033","rule_id":"RULE-WORKSHOP-TOOL-REPAIR-001",
+                                         "finished_metalwork_input":amount,"notice":"repair material and duration are fixture calibration"})))
+                    eid=self._event(con,day,"workshop_tool_repair_started",scene_id=job["scene_id"],decision_id=decision_id,actors=[actor_id],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-033","RULE-WORKSHOP-TOOL-REPAIR-001"],
+                        material={actor_household:{"finished_metalwork":-amount}},
+                        payload={"action_id":aid,"obligation_id":oid,"repair_days":days,"finished_metalwork_input":amount,"due_day":day+days},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Committed {amount:g} finished metalwork in fixture units and one modeled day to repair the failed workshop tool/mold.",
+                        event_id=eid,memory_type="craft_tool_repair",salience=.94,relationship_relevance=.2,goal_relevance=.99,provenance={"assumption_id":"ASM-FIXTURE-033"})
 
                 elif typ == "request_fuel_haul":
                     hauler=action["target_person_id"]

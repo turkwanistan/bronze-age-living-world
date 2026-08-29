@@ -82,6 +82,7 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `handle_winter_maintenance_internally` — resolve the current fixture winter-maintenance episode without consuming an outstanding social favor
 - `request_fuel_haul` / `accept_fuel_haul` / `decline_fuel_haul` — negotiate one bounded paid fuel-feedstock haul; payment and material delivery occur only after scheduled completion
 - `prepare_charcoal_fuel` — consume finite household fuel feedstock to prepare workshop charcoal under explicit fixture calibration; no free fuel
+- `repair_workshop_tool` — consume the exact sealed finished-work input and schedule a bounded repair; tool condition restores only when the repair obligation completes
 - `accept_alternate_metal_exchange` — may also accept a sealed disrupted repeat-market lot when the changed terms have actually arrived through the information network
 - `recycle_finished_metalwork` — sacrifice bounded finished output for a smaller raw-metal recovery under explicit fixture calibration
 - `request_market_introduction` / `grant_market_introduction` — ask an existing merchant relationship for a contact introduction without implying hidden supplier knowledge or guaranteed supply

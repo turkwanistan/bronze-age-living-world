@@ -1,6 +1,6 @@
 # STATUS
 
-**Checkpoint:** accepted strict Ugarit v011 fuel-logistics + market-unavailable recycling gate at day 421.
+**Checkpoint:** accepted strict Ugarit v012 workshop-tool interruption + repair gate at day 443.
 
 ## Authority
 
@@ -10,31 +10,28 @@
 
 ## Accepted strict runtime
 
-Canonical DB: `state/ugarit_living_v011.sqlite`; v002-v010 are immutable prior accepted histories.
+Canonical DB: `state/ugarit_living_v012.sqlite`; v002-v011 are immutable prior accepted histories.
 
 - run `RUN-3dda7920595c1748`, seed `1701`
-- scenario `0.9.0`, schema `3`
-- accepted day **421**
-- state hash `0b55f95796bc28a9995b3e63ab35c0c5f951c884fe99ad3ad2ca291eb0ed0102`
-- **5,998 events**
-- **137 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
-- **71/71 tests**
-- exact replay: **137 decisions / 0 new cognition / exact hash**
-- zero negative stocks, false shortfalls, delivery-before-arrival, knowledge-before-delivery, or overdue scheduled-obligation violations
-- neutral provisioning remains globally conserved at **5.08/day**
+- scenario `0.10.0`, schema `3`
+- accepted day **443**
+- hash `46bea8ae1c1614e51e3e11b7372f955af4fd5bc5a9fd4ac95da59e648c668c5b`
+- **6,300 events**
+- **144 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
+- **73/73 tests**
+- exact replay: **144 decisions / 0 new cognition / exact hash**
+- zero negative stocks, false shortfalls, overdue scheduled obligations, delivery-before-arrival or knowledge-before-delivery violations
 
-Acceptance manifest: `runs/ACCEPTED_DAY421_V011_FUEL_LOGISTICS_RECYCLING.md`.
+Acceptance manifest: `runs/ACCEPTED_DAY443_V012_TOOL_REPAIR.md`.
 
-## v011 result
+## v012 result
 
-Workshop fuel replenishment is no longer automatic. With only one feedstock batch left, P7 asks P16/Kothar for a paid fuel haul on day 386. Kothar declines during the 1.00 harvest bottleneck without relationship conflict. The offer does not recur daily; it returns only when the agricultural phase changes. On day 420 intensity falls to 0.68, P7 asks again, and Kothar accepts after also having fulfilled his household care duty on day 394. The scheduled day-421 completion moves 0.20 silver H-CRAFT→H-WIDOW and 0.80 fuel_feedstock into H-CRAFT. P7 then prepares 0.40 of that feedstock into 0.50 charcoal.
+The first post-v011 master metalwork cycle that is otherwise viable is interrupted by one bounded tool/mold failure on day 434. H-CRAFT has ~0.16 metal and 0.70 charcoal; damage occurs before either input is consumed and sets `workshop_tool_condition` to 0. P7 spends 0.10 finished metalwork on repair and schedules one day of downtime. The day-435 completion restores condition to 1.0. Ordinary day-441 work then consumes the preserved 0.15 metal + 0.20 charcoal and produces 0.08 finished work. Damage and repair each occur exactly once.
 
-The alternate metal network can also be truly unavailable. P7 asks P12 for a new update; P12's private no-lot state reaches P7 only by delayed message on day 388. Strict history then chooses lossy recycling on days 388, 402 and 416. Each use consumes 0.20 finished metalwork to recover 0.12 raw metal, with a true minimum 14-day interval. Recovered metal is consumed by ordinary workshop work; a v011-only numeric tolerance prevents binary floating-point dust from blocking exact calibrated material thresholds while older replay remains unchanged.
-
-P7 still makes zero post-day-308 resource requests to P3. P3's 16.5 silver reserve remains binding. Arhalbu's postponed palace service completes on the lower-intensity day-420 boundary. Care/property and neutral staple provisioning remain intact.
+Existing household/economic constraints remain causal: P3 still protects the 16.5 silver reserve, P7 still makes zero post-refusal resource requests to P3, and unrelated illness decisions remain sparse and individually grounded.
 
 ## Current limitations
 
-Fuel feedstock still enters from an explicit external-local fixture rather than a simulated woodland/ecology or charcoal-maker household. P16 is the first modeled hauler, not a generalized labor market. The no-lot market state does not yet recover endogenously. Recycling uses finished output as the scrap proxy rather than a generalized object inventory. Tool/mold damage, local weather effects, shared/renegotiated care, second-seed/counterfactual analysis and language/scribal trade constraints remain next work.
+Tool condition is a bounded engineering abstraction, not a generic durability simulator. Repair uses workshop output rather than a separate specialist. The current market no-lot state is still fixture-bounded. Agricultural weather/storage shocks, shared/renegotiated care, property-use disagreement, a second life-course transition, language/scribal transaction constraints and second-seed/paired-counterfactual validation remain future work.
 
 **The world is structured. The people are not scripted.**
