@@ -1,0 +1,14 @@
+{
+  "decision_id":"DEC-V015-D460-TALMIYANU-MINOR-ILLNESS",
+  "actor_id":"P6",
+  "selected_intent":"respond to a distant recurrent minor illness with a modest household observance and practical rest without treating it as worsening disease",
+  "proposed_actions":[{
+    "type":"perform_ritual",
+    "ritual_kind":"modest household protective rite",
+    "ritual_goods_cost":0.20,
+    "practical_response":"rest briefly and reduce textile and household exertion while symptoms remain minor, then resume ordinary work if they settle"
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-RITUAL-001-P6"],
+  "decision_basis_tags":["minor_illness","proportionate_ritual","practical_rest","distant_recurrence"],
+  "declared_uncertainty":"The runtime provides only minor illness uncertainty; this decision does not infer a diagnosis or worsening condition."
+}

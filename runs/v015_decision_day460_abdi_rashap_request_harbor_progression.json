@@ -1,0 +1,14 @@
+{
+  "decision_id":"DEC-V015-D460-ABDI-RASHAP-REQUEST-HARBOR-PROGRESSION",
+  "actor_id":"P11",
+  "selected_intent":"ask to formalize the coordination and information work I have already been doing without claiming a change in legal freedom or household standing",
+  "proposed_actions":[{
+    "type":"request_harbor_role_progression",
+    "reviewer_person_id":"P12",
+    "requested_role":"harbor_coordinator",
+    "reason":"I have sustained harbor and voyage work across many cycles and have twice served as a trusted information bridge. I want our household work division to recognize more coordination responsibility while I continue sailor work."
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-WORK-STATUS-001-P11","K-LOCAL-TRADE-001-P11","K-LOCAL-P11"],
+  "decision_basis_tags":["sustained_work","information_brokerage","adult_specialization","legal_status_unchanged"],
+  "declared_uncertainty":"The 60-cycle threshold and harbor_coordinator title are ASM-FIXTURE-036 calibration; this is not a historical Ugaritic promotion rule or office."
+}

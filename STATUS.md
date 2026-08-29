@@ -1,6 +1,6 @@
 # STATUS
 
-**Checkpoint:** accepted strict Ugarit v014 household property-use negotiation gate at day 459.
+**Checkpoint:** accepted strict Ugarit v015 adult harbor-work specialization gate at day 462.
 
 ## Authority
 
@@ -10,36 +10,47 @@
 
 ## Accepted strict runtime
 
-Canonical DB: `state/ugarit_living_v014.sqlite`; v002-v013 are immutable prior accepted histories.
+Canonical DB: `state/ugarit_living_v015.sqlite`; v002-v014 are immutable prior accepted histories.
 
 - run `RUN-3dda7920595c1748`, seed `1701`
-- scenario `0.12.0`, schema `3`
-- accepted day **459**
-- state hash `6e92d7ab618cc014b5a6668b63753c46780745d4542e272b0ca8580f3dd1c5a2`
-- **6,537 events**
-- **153 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
-- **80/80 tests**
-- exact replay: **153 decisions / 0 new cognition / exact hash**
+- scenario `0.13.0`, schema `3`
+- accepted day **462**
+- state hash `a15e3ec7a0ae8ada835b3920acb370855e1443977abd7849040a336cf8b0e2f0`
+- **6,608 events**
+- **157 accepted cognition / 0 rejected / 0 pending / 0 open scenes**
+- **83/83 tests**
+- exact replay: **157 decisions / 0 new cognition / exact hash**
 - zero negative stocks, false shortfalls or overdue scheduled obligations
 
-Acceptance manifest: `runs/ACCEPTED_DAY459_V014_PROPERTY_USE_NEGOTIATION.md`.
+Acceptance manifest: `runs/ACCEPTED_DAY462_V015_HARBOR_LIFE_COURSE.md`.
 
-## v014 result
+## v015 result
 
-Bat-Rapiu's care-informed property preference finally affects current household strategy without becoming ownership or inheritance.
+Abdi-Rashap (P11) now demonstrates a second independent life-course mechanism, distinct from Niqmepa's apprenticeship progression and from marriage.
 
-On day 459 Bat-Rapiu proposes earmarking **0.80 silver** for H-WIDOW property maintenance with Kothar as proposed steward. Šapšu, now a married-in adult household member, independently counters at **0.40 silver with joint approval required**, preserving more liquid household silver while still supporting maintenance. Bat-Rapiu accepts the counter rather than escalating the disagreement. Kothar then receives a separate stewardship-consent decision and accepts.
+By day 460 P11 has accumulated **65 recurring occupation cycles** and has twice acted as a provenance-preserving harbor information/report bridge. He requests that the H-HARBOR household recognize a revised division of labor: routine porter work should give way to **harbor coordination**, while sailor work continues. Dagan-beli (P12), the household manager/market trader, independently reviews and accepts.
 
-Only after all three decisions does canonical state move **0.40 H-WIDOW silver → 0.40 `property_maintenance_reserve`** and create an active `household_property_stewardship` obligation for Kothar. H-WIDOW liquid silver falls from 3.20 to 2.80; total earmarked+liquid silver remains 3.20. The stewardship provenance records Šapšu as joint reviewer.
+Canonical consequences are deliberately narrow:
 
-The pre-existing `care_informed_priority` preference remains active and non-binding. No ownership, inheritance, marriage, or succession state changes. A regression separately proves that Kothar can decline after Bat-Rapiu and Šapšu agree, in which case no reserve is established and no silver moves.
+- P11's `porter` role ends at day 460;
+- `harbor_coordinator` begins at day 460;
+- `sailor` remains active;
+- legal status remains `free_laborer`;
+- H-HARBOR membership remains `senior`, unchanged from day 0;
+- no new legal office, household formation, patronage tie or state promotion is inferred.
+
+The change is behaviorally causal rather than label-only. On the next weekly occupation boundary, day 462, P11's work cycle contains `harbor_coordinator` activity (cargo/porter coordination, harbor information brokerage and voyage-work allocation) plus continuing sailor work; routine porter activity is absent.
+
+An independent regression proves P12 can refuse the progression with no role, legal-status or household change. The same day also contains an unrelated minor illness for Talmiyanu, handled conservatively, and Yabninu again waits rather than violate the H-MERCH 16.5-silver reserve floor. The new life-course path therefore does not override older household constraints.
 
 ## Current limitations / next priorities
 
-- The reserve amount, joint approval structure and stewardship role are engineering fixtures, not a reconstructed Ugaritic property procedure.
-- No succession or inheritance transfer is modeled.
-- `property_maintenance_reserve` is an earmark abstraction; spending it should require a real future maintenance decision before deeper property machinery is added.
-- Highest-value next step is a **second independent life-course transition** or **second-seed / paired-counterfactual validation**, rather than another scripted household shock.
-- Language/interpreter or scribal-record constraints should be added only when they materially alter a multi-party transaction.
+- `harbor_coordinator`, the 60-cycle threshold, P11/P12 pairing and review procedure are engineering fixtures, not a reconstructed Ugaritic title or promotion rule.
+- The simulation now has two distinct state-based life-course paths, but frequency from one seed must not be treated as historically meaningful.
+- **Highest-value next milestone: second-seed / paired-counterfactual validation.** Compare mechanism activation, invariants, containment and failure modes across another deterministic seed; do not require identical stochastic scenes or decision identity.
+- Pair at least one mechanism-level counterfactual where a fixture parameter or response branch changes while structural invariants must remain true.
+- H-WIDOW's 0.40 property-maintenance reserve remains earmarked and unspent; no succession/inheritance transfer is modeled.
+- P12 market availability may recover only through new information, not automatic reset.
+- Language/scribal constraints should be added only when a real multi-party transaction requires them.
 
 **The world is structured. The people are not scripted.**

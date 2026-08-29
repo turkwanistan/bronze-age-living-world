@@ -71,6 +71,7 @@ Do not provide hidden chain-of-thought. A concise basis summary/tags is enough.
 - `grant_water_access` — create a temporary institution-linked permission that expires deterministically
 - `request_household_reserve_agreement` / `accept_household_reserve` — negotiate a household-controlled reserve that later material actions must obey
 - `request_apprenticeship_progression` / `grant_apprenticeship_progression` — negotiate a work/life-course role transition grounded in accumulated occupational history
+- `request_harbor_role_progression` / `accept_harbor_role_progression` — negotiate an adult harbor-household specialization change grounded in sustained work history without changing legal status or residence
 - `request_marriage_discussion` / `accept_marriage_discussion` — open a bounded prospective-marriage negotiation without creating marriage state
 - `propose_marriage_household_terms` / `accept_marriage_household_terms` — negotiate residence/care terms between two households
 - `give_marriage_consent` / `decline_marriage_consent` — separate final individual consent; a decline creates no marriage and is not overridden by mediation

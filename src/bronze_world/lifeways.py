@@ -72,6 +72,7 @@ ROLE_ACTIVITY: dict[str, dict[str, Any]] = {
     "merchant_account_partner": {"domain": "commerce", "activity": "household trade accounts, reserves, counterpart obligations"},
     "market_trader": {"domain": "commerce", "activity": "local exchange, prices, customer ties, voyage-income smoothing"},
     "sailor": {"domain": "maritime", "activity": "vessel preparation, cargo handling, crew work, harbor/weather intelligence"},
+    "harbor_coordinator": {"domain": "maritime", "activity": "cargo/porter coordination, harbor information brokerage, voyage-work allocation"},
     "porter": {"domain": "labor", "activity": "human portage for household, market, workshop or harbor"},
     "seasonal_worker": {"domain": "labor", "activity": "short-term labor where household and seasonal demand permit"},
     "scribe": {"domain": "scribal", "activity": "records, accounting, contracts, correspondence"},

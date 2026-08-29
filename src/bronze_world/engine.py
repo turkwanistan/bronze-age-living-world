@@ -234,6 +234,13 @@ class WorldEngine:
         except (TypeError, ValueError):
             return 459
 
+    def _v015_start_day(self) -> int:
+        cfg = scenario_config(self.db, self.run_id)
+        try:
+            return int(cfg.get("v015_lifeways_start_day", 460))
+        except (TypeError, ValueError):
+            return 460
+
     def _v008_start_day(self) -> int:
         cfg = scenario_config(self.db, self.run_id)
         try:
@@ -1609,6 +1616,34 @@ class WorldEngine:
                         )
                     created.append(self.enqueue_job(sid,"P8",["request_apprenticeship_progression","communicate","wait"]))
 
+        # v015: a second independent life-course transition can emerge from sustained
+        # adult harbor work plus demonstrated information brokerage. This changes P11's
+        # occupational specialization only; legal status and household membership stay fixed.
+        if self._has_assumption("ASM-FIXTURE-036") and day >= self._v015_start_day():
+            porter=self.db.one("SELECT 1 FROM person_roles pr JOIN roles r USING(role_id) WHERE pr.person_id='P11' AND r.name='porter' AND pr.end_day IS NULL")
+            coordinator=self.db.one("SELECT 1 FROM person_roles pr JOIN roles r USING(role_id) WHERE pr.person_id='P11' AND r.name='harbor_coordinator' AND pr.end_day IS NULL")
+            prior=self.db.one("SELECT 1 FROM scenes WHERE run_id=? AND trigger_type IN ('harbor_role_progression_review','harbor_role_progression_request') LIMIT 1",(self.run_id,))
+            work_cycles=int(self.db.scalar("SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='occupation_work_cycle' AND actor_ids_json LIKE '%P11%'",(self.run_id,)) or 0)
+            reports=int(self.db.scalar("SELECT COUNT(*) FROM events WHERE run_id=? AND actor_ids_json LIKE '%P11%' AND event_type='message_sent' AND payload_json LIKE '%\"sender_intent\":\"report\"%'",(self.run_id,)) or 0)
+            if porter and not coordinator and not prior and work_cycles>=60 and reports>=1:
+                p11=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P11'")
+                p12=self.db.one("SELECT current_place_id,alive,available FROM persons WHERE person_id='P12'")
+                if p11 and p12 and p11['alive'] and p11['available'] and p12['alive'] and p12['available'] and p11['current_place_id']==p12['current_place_id']:
+                    sid=stable_id("SCENE",self.run_id,"harbor_role_progression_review","P11")
+                    stakes={"situation_id":"SIT-033","worker_person_id":"P11","household_reviewer_person_id":"P12",
+                            "work_cycles":work_cycles,"information_reports":reports,"old_role":"porter","retained_role":"sailor",
+                            "proposed_role":"harbor_coordinator","legal_status_change":False,"household_change":False,
+                            "fixture_notice":"Accumulated work and constrained adult occupational mobility are research-supported; 60 cycles, P11/P12 and the harbor_coordinator title are ASM-FIXTURE-036 calibration."}
+                    with self.db.transaction() as con:
+                        con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                            (sid,self.run_id,day,p11['current_place_id'],"household","harbor_role_progression_review",canonical_json(stakes),
+                             canonical_json({"accumulated_work_cycles":work_cycles,"information_reports":reports}),
+                             canonical_json({"household_division_of_labor":True,"legal_status_unchanged":True}),canonical_json(["I-MARKET"]),"open"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P11","decision_actor"))
+                        con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(sid,"P12","household_reviewer"))
+                        self._event(con,day,"harbor_role_progression_eligible",scene_id=sid,actors=["P11","P12"],rules=["ASM-FIXTURE-036","RULE-ADULT-HARBOR-PROGRESSION-001"],payload=stakes,discriminator=sid)
+                    created.append(self.enqueue_job(sid,"P11",["request_harbor_role_progression","communicate","wait"]))
+
         # Recurrent port activity becomes a material commitment decision only after the
         # merchant has already experienced the information-provenance chain.
         if day >= 42 and day % 28 == 14 and self.db.one(
@@ -2491,6 +2526,20 @@ class WorldEngine:
                     errors.append(f"action_{i}:weather_storage_household_mismatch")
                 if typ == "protect_exposed_stores" and action.get("labor_days") != stakes.get("protection_labor_days"):
                     errors.append(f"action_{i}:weather_storage_labor_mismatch")
+            elif typ == "request_harbor_role_progression":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "harbor_role_progression_review" or job["actor_person_id"] != stakes.get("worker_person_id"):
+                    errors.append(f"action_{i}:invalid_harbor_progression_request")
+                if action.get("reviewer_person_id") != stakes.get("household_reviewer_person_id") or action.get("requested_role") != stakes.get("proposed_role"):
+                    errors.append(f"action_{i}:harbor_progression_terms_mismatch")
+            elif typ == "accept_harbor_role_progression":
+                stakes=packet.get("scene",{}).get("stakes",{})
+                if packet.get("scene",{}).get("trigger") != "harbor_role_progression_request" or job["actor_person_id"] != stakes.get("household_reviewer_person_id"):
+                    errors.append(f"action_{i}:invalid_harbor_progression_acceptance")
+                if action.get("worker_person_id") != stakes.get("worker_person_id") or action.get("new_role") != stakes.get("proposed_role") or action.get("old_role") != stakes.get("old_role"):
+                    errors.append(f"action_{i}:harbor_progression_acceptance_terms_mismatch")
+                if not self.db.one("SELECT 1 FROM person_roles pr JOIN roles r USING(role_id) WHERE pr.person_id=? AND r.name=? AND pr.end_day IS NULL",(stakes.get("worker_person_id"),stakes.get("old_role"))):
+                    errors.append(f"action_{i}:harbor_old_role_not_active")
             elif typ == "propose_household_property_reserve":
                 stakes=packet.get("scene",{}).get("stakes",{})
                 if packet.get("scene",{}).get("trigger") != "household_property_reserve_proposal" or job["actor_person_id"] != stakes.get("holder_person_id"):
@@ -3522,6 +3571,40 @@ class WorldEngine:
                     self._memory(con,actor_id,day,
                         (f"Committed one household labor day to cover/move exposed seasonal produce during a local moisture episode; {loss:g} fixture units were still lost." if protected else f"Accepted the local moisture exposure without extra protection; {loss:g} fixture units of exposed seasonal produce were lost."),
                         event_id=eid,memory_type="weather_storage",salience=.82,relationship_relevance=.2,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-034"})
+
+                elif typ == "request_harbor_role_progression":
+                    reviewer=action["reviewer_person_id"]
+                    req_scene=stable_id("SCENE",self.run_id,day,"harbor_role_progression_request",decision_id,idx)
+                    req_stakes={**scene_stakes,"request_reason":action.get("reason"),"household_reviewer_person_id":reviewer}
+                    con.execute("INSERT INTO scenes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (req_scene,self.run_id,day,scene['place_id'],"household","harbor_role_progression_request",canonical_json(req_stakes),
+                         canonical_json({"current_role":scene_stakes['old_role'],"proposed_role":scene_stakes['proposed_role']}),
+                         canonical_json({"adult_work_specialization":True,"legal_status_unchanged":True}),"[]","open"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(req_scene,actor_id,"worker"))
+                    con.execute("INSERT INTO scene_participants VALUES (?,?,?)",(req_scene,reviewer,"decision_actor"))
+                    eid=self._event(con,day,"harbor_role_progression_requested",scene_id=req_scene,decision_id=decision_id,actors=[actor_id,reviewer],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-036","RULE-ADULT-HARBOR-PROGRESSION-001"],
+                        payload={"action_id":aid,"old_role":scene_stakes['old_role'],"requested_role":action['requested_role'],"reason":action.get('reason')},discriminator=aid)
+                    self._memory(con,actor_id,day,f"Asked {reviewer} to recognize a shift from routine porter work toward harbor coordination after sustained harbor work.",event_id=eid,memory_type="life_course",salience=.88,relationship_relevance=.86,goal_relevance=.94,provenance={"assumption_id":"ASM-FIXTURE-036"})
+                    self._memory(con,reviewer,day,f"{actor_id} asked to revise our harbor-household work division from routine porter work toward harbor coordination while retaining sailor duties.",event_id=eid,memory_type="life_course",salience=.84,relationship_relevance=.88,goal_relevance=.86,provenance={"assumption_id":"ASM-FIXTURE-036"})
+                    followups.append((req_scene,reviewer,["accept_harbor_role_progression","refuse_proposal","communicate"]))
+
+                elif typ == "accept_harbor_role_progression":
+                    worker=action["worker_person_id"]
+                    old_role=action["old_role"]; new_role=action["new_role"]
+                    con.execute("UPDATE person_roles SET end_day=? WHERE person_id=? AND role_id=? AND end_day IS NULL",(day,worker,f"R-{old_role.upper()}"))
+                    con.execute("INSERT INTO person_roles VALUES (?,?,?,?,?)",(worker,f"R-{new_role.upper()}",1,day,None))
+                    rel={
+                        f"{actor_id}->{worker}":self._adjust_relationship(con,actor_id,worker,trust=.02,respect=.04),
+                        f"{worker}->{actor_id}":self._adjust_relationship(con,worker,actor_id,trust=.03,respect=.03),
+                    }
+                    eid=self._event(con,day,"adult_harbor_role_progressed",scene_id=job['scene_id'],decision_id=decision_id,actors=[actor_id,worker],
+                        knowledge=envelope.get("decisive_knowledge_or_belief_ids",[]),rules=["ASM-FIXTURE-036","RULE-ADULT-HARBOR-PROGRESSION-001"],relationships=rel,
+                        payload={"action_id":aid,"old_role":old_role,"new_role":new_role,"retained_role":"sailor",
+                                 "legal_status":"free_laborer","household_id":"H-HARBOR","reason":action.get('reason'),
+                                 "notice":"adult occupational specialization only; no historical office or legal-status promotion"},discriminator=aid)
+                    self._memory(con,worker,day,f"{actor_id} recognized my shift from routine porter work toward harbor coordination after sustained harbor and information work; I remain a sailor and free laborer in H-HARBOR.",event_id=eid,memory_type="life_course",salience=.96,relationship_relevance=.9,goal_relevance=.96,provenance={"assumption_id":"ASM-FIXTURE-036"})
+                    self._memory(con,actor_id,day,f"Recognized {worker}'s adult work specialization as harbor coordination while retaining sailor work and household/legal status.",event_id=eid,memory_type="life_course",salience=.9,relationship_relevance=.92,goal_relevance=.9,provenance={"assumption_id":"ASM-FIXTURE-036"})
 
                 elif typ == "propose_household_property_reserve":
                     reviewer=action["reviewer_person_id"]; steward=action["steward_person_id"]

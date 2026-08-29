@@ -150,6 +150,8 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                             ("H-FARM","draft_team_condition",1.0,"abstract_fixture_unit","ASM-FIXTURE-025"))
         for role,fam in ROLE_DEFS.items():
             con.execute("INSERT OR REPLACE INTO roles VALUES (?,?,?,?,?)",(f"R-{role.upper()}",role,fam,None,"{}"))
+        if "ASM-FIXTURE-036" in active_assumptions:
+            con.execute("INSERT OR REPLACE INTO roles VALUES (?,?,?,?,?)",("R-HARBOR_COORDINATOR","harbor_coordinator","maritime",None,"{}"))
         for p in PEOPLE:
             con.execute("INSERT OR REPLACE INTO persons VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",(
                 p["id"],p["name"],"simulation_identity_from_provisional_attested_name_pool; verify per P0 backlog",p["age"],p["sex"],"adult",1,1,
@@ -261,6 +263,12 @@ def init_fixture(db: WorldDB, root: Path, seed: int = 1350, *, scenario_override
                 "PROP-LOCAL-PROPERTY-USE-001",
                 "Current household property use, household decision authority, residence, and later inheritance are distinct; adults may negotiate present resource use without transferring ownership or deciding succession.",
                 ["P10","P15","P16"],
+            ))
+        if "ASM-FIXTURE-036" in active_assumptions:
+            local_norms.append((
+                "PROP-LOCAL-WORK-STATUS-001",
+                "Sustained trusted work can support a negotiated change in adult occupational specialization without automatically changing legal status, residence, or household membership.",
+                ["P11","P12"],
             ))
         if "ASM-FIXTURE-028" in active_assumptions:
             con.execute("INSERT OR REPLACE INTO propositions VALUES (?,?,?,?)",(

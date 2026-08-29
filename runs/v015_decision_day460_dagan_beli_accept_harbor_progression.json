@@ -1,0 +1,15 @@
+{
+  "decision_id":"DEC-V015-D460-DAGAN-BELI-ACCEPT-HARBOR-PROGRESSION",
+  "actor_id":"P12",
+  "selected_intent":"recognize Abdi-Rashap's sustained coordination and information work by revising our household harbor specialization while retaining his sailor role",
+  "proposed_actions":[{
+    "type":"accept_harbor_role_progression",
+    "worker_person_id":"P11",
+    "old_role":"porter",
+    "new_role":"harbor_coordinator",
+    "reason":"Abdi-Rashap has sustained harbor work across many cycles and has already handled trusted reports that mattered to our market contacts. Shifting routine porter responsibility toward coordination fits our household's voyage and market needs without changing his freedom or household standing."
+  }],
+  "decisive_knowledge_or_belief_ids":["K-LOCAL-WORK-STATUS-001-P12","K-LOCAL-TRADE-001-P12","K-LOCAL-P12"],
+  "decision_basis_tags":["household_labor_division","trusted_reports","market_ties","adult_specialization"],
+  "declared_uncertainty":"The role title and progression threshold are ASM-FIXTURE-036 calibration; this is not a historical Ugaritic office or universal promotion pathway."
+}
