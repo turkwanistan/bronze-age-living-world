@@ -1,0 +1,725 @@
+{
+  "mode": "social_relationship_repeated_fresh_cognition_validation",
+  "attempts_per_packet": 3,
+  "packet_count": 6,
+  "total_attempts": 18,
+  "results": {
+    "p16_care_no_conflict": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "action_family": "fulfill_kin_care",
+        "packet_hash": "c458f98cab5820381d0f101f7dfea1fd747ecdc07165c95ded42b4ba30404d4d",
+        "resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "honor the continuing care duty because no competing obligation currently prevents one bounded support day",
+        "declared_uncertainty": "The support cadence is fixture calibration and does not create property rights."
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "action_family": "fulfill_kin_care",
+        "packet_hash": "c458f98cab5820381d0f101f7dfea1fd747ecdc07165c95ded42b4ba30404d4d",
+        "resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "provide the promised household support rather than defer without a present conflict",
+        "declared_uncertainty": "The exact task is a simulation abstraction; fulfillment is not an inheritance claim."
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "action_family": "fulfill_kin_care",
+        "packet_hash": "c458f98cab5820381d0f101f7dfea1fd747ecdc07165c95ded42b4ba30404d4d",
+        "resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "continue the established care relationship when current capacity permits",
+        "declared_uncertainty": "This individual choice is not a universal kin-duty rule."
+      }
+    ],
+    "p16_care_recovery_conflict": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "action_family": "defer_kin_care",
+        "packet_hash": "c4103e5687c9e03e9d52742fc727dec8a59a0760cc977ecf8f77378a916e55af",
+        "resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "defer one support episode so the explicit same-day recovery duty remains meaningful without abandoning continuing care",
+        "declared_uncertainty": "The temporary recovery obligation is validation-only and does not imply a historical care hierarchy."
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "action_family": "defer_kin_care",
+        "packet_hash": "c4103e5687c9e03e9d52742fc727dec8a59a0760cc977ecf8f77378a916e55af",
+        "resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "protect short recovery today and return to the continuing care duty afterward",
+        "declared_uncertainty": "No long-term incapacity or end to care is inferred."
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "action_family": "defer_kin_care",
+        "packet_hash": "c4103e5687c9e03e9d52742fc727dec8a59a0760cc977ecf8f77378a916e55af",
+        "resources_before": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "resources_after": {
+          "grain": 15.649999999999764,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "defer only the current care day because present recovery and care duties conflict",
+        "declared_uncertainty": "The model does not establish how real Ugaritic households ranked these duties."
+      }
+    ],
+    "p16_stewardship_funded": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "action_family": "accept_property_stewardship",
+        "packet_hash": "130d746d3eeb1bc042687cd5be17596c26df9ee91c2b5dfeb8dd79c8f80ebe2e",
+        "resources_before": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 3.2
+        },
+        "resources_after": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "accept bounded stewardship because the agreed reserve is fundable and remains household property under joint approval",
+        "declared_uncertainty": "Acceptance does not determine inheritance or ownership."
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "action_family": "accept_property_stewardship",
+        "packet_hash": "130d746d3eeb1bc042687cd5be17596c26df9ee91c2b5dfeb8dd79c8f80ebe2e",
+        "resources_before": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 3.2
+        },
+        "resources_after": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "take responsibility for the currently affordable maintenance reserve without claiming unilateral authority",
+        "declared_uncertainty": "The fixture reserve is present-use stewardship only."
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "action_family": "accept_property_stewardship",
+        "packet_hash": "130d746d3eeb1bc042687cd5be17596c26df9ee91c2b5dfeb8dd79c8f80ebe2e",
+        "resources_before": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 3.2
+        },
+        "resources_after": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "property_maintenance_reserve": 0.4,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 2.8000000000000003
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 1,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "consent to the negotiated reserve because the household can actually earmark it now",
+        "declared_uncertainty": "No succession right follows from this consent."
+      }
+    ],
+    "p16_stewardship_underfunded": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "action_family": "decline_property_stewardship",
+        "packet_hash": "5d91e221b108ff2456c79b2b282fc758b09fb96cd5e7f2865290ae3d37a4707b",
+        "resources_before": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 0.2
+        },
+        "resources_after": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 0.2
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "decline the current stewardship terms because the household cannot fund the agreed reserve",
+        "declared_uncertainty": "Declining current terms does not reject future maintenance negotiation."
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "action_family": "decline_property_stewardship",
+        "packet_hash": "5d91e221b108ff2456c79b2b282fc758b09fb96cd5e7f2865290ae3d37a4707b",
+        "resources_before": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 0.2
+        },
+        "resources_after": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 0.2
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "refuse to formalize an unfundable reserve while leaving household maintenance cooperation open",
+        "declared_uncertainty": "The packet does not establish when more silver will become available."
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "action_family": "decline_property_stewardship",
+        "packet_hash": "5d91e221b108ff2456c79b2b282fc758b09fb96cd5e7f2865290ae3d37a4707b",
+        "resources_before": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 0.2
+        },
+        "resources_after": {
+          "grain": 13.459999999999766,
+          "oil": 4.0,
+          "ritual_goods": 0.29999999999999954,
+          "silver": 0.2
+        },
+        "relationship_before": null,
+        "relationship_after": null,
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "decline this version of the stewardship agreement because its material premise is no longer true",
+        "declared_uncertainty": "This says nothing about later inheritance or later renegotiation."
+      }
+    ],
+    "p3_workshop_request_abundant": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "action_family": "transfer_resource",
+        "packet_hash": "fbda8a62da1ebfae707566ec1db0aea52fe5e716aa2c92472b4fc3860c762497",
+        "resources_before": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.6,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "resources_after": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.48,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "relationship_before": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "relationship_after": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 1.0,
+          "favors_owed": 0.0
+        },
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "continue a proven reciprocal workshop relationship with the exact small request while retaining ample household metal",
+        "declared_uncertainty": "The amount and reciprocal obligation are fixture mechanics, not a historical price or standing contract."
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "action_family": "transfer_resource",
+        "packet_hash": "fbda8a62da1ebfae707566ec1db0aea52fe5e716aa2c92472b4fc3860c762497",
+        "resources_before": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.6,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "resources_after": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.48,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "relationship_before": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "relationship_after": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 1.0,
+          "favors_owed": 0.0
+        },
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "grant the modest request because repayment history is strong and the household keeps most of its metal",
+        "declared_uncertainty": "Future repayment is an open social obligation, not guaranteed value equivalence."
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "action_family": "transfer_resource",
+        "packet_hash": "fbda8a62da1ebfae707566ec1db0aea52fe5e716aa2c92472b4fc3860c762497",
+        "resources_before": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.6,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "resources_after": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.48,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "relationship_before": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "relationship_after": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 1.0,
+          "favors_owed": 0.0
+        },
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 1,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "support the workshop again while current reserve makes the request affordable",
+        "declared_uncertainty": "No permanent entitlement or future supply is implied."
+      }
+    ],
+    "p3_workshop_request_last_reserve": [
+      {
+        "attempt": 1,
+        "ok": true,
+        "errors": [],
+        "action_family": "refuse_proposal",
+        "packet_hash": "b1e84205fe23586b49773e65f75a3fda74d2a0d20bb805903a0cbd3a5234a55c",
+        "resources_before": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.15,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "resources_after": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.15,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "relationship_before": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "relationship_after": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7700000000000002,
+          "respect": 0.6700000000000002,
+          "conflicts": 1,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "protect the household's last usable metal reserve despite trusting a fully repaid counterparty",
+        "declared_uncertainty": "The 0.15 reserve is fixture state; refusal is not a permanent end to exchange."
+      },
+      {
+        "attempt": 2,
+        "ok": true,
+        "errors": [],
+        "action_family": "refuse_proposal",
+        "packet_hash": "b1e84205fe23586b49773e65f75a3fda74d2a0d20bb805903a0cbd3a5234a55c",
+        "resources_before": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.15,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "resources_after": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.15,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "relationship_before": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "relationship_after": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7700000000000002,
+          "respect": 0.6700000000000002,
+          "conflicts": 1,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "refuse this advance because household scarcity now outweighs the otherwise strong reciprocal relationship",
+        "declared_uncertainty": "I do not infer that future supply will remain impossible."
+      },
+      {
+        "attempt": 3,
+        "ok": true,
+        "errors": [],
+        "action_family": "refuse_proposal",
+        "packet_hash": "b1e84205fe23586b49773e65f75a3fda74d2a0d20bb805903a0cbd3a5234a55c",
+        "resources_before": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.15,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "resources_after": {
+          "finished_metalwork": 1.65,
+          "grain": 33.100000000000314,
+          "metal": 0.15,
+          "oil": 10.0,
+          "ritual_goods": 0.9999999999999996,
+          "silver": 16.5,
+          "trade_goods": 4.5
+        },
+        "relationship_before": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7900000000000003,
+          "respect": 0.6700000000000002,
+          "conflicts": 0,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "relationship_after": {
+          "relationship_type": "exchange_contact",
+          "trust": 0.7700000000000002,
+          "respect": 0.6700000000000002,
+          "conflicts": 1,
+          "favors_given": 0.0,
+          "favors_owed": 0.0
+        },
+        "active_care_obligations": 1,
+        "active_property_stewardship": 0,
+        "active_reciprocal_exchange": 0,
+        "rejected_jobs": 0,
+        "negative_resources": 0,
+        "selected_intent": "say no to the present material request without treating past reciprocity as meaningless",
+        "declared_uncertainty": "This bounded refusal does not establish a historical merchant reserve rule."
+      }
+    ]
+  },
+  "packet_summaries": {
+    "p16_care_no_conflict": {
+      "packet_hash": "c458f98cab5820381d0f101f7dfea1fd747ecdc07165c95ded42b4ba30404d4d",
+      "action_family_counts": {
+        "fulfill_kin_care": 3
+      },
+      "all_valid": true
+    },
+    "p16_care_recovery_conflict": {
+      "packet_hash": "c4103e5687c9e03e9d52742fc727dec8a59a0760cc977ecf8f77378a916e55af",
+      "action_family_counts": {
+        "defer_kin_care": 3
+      },
+      "all_valid": true
+    },
+    "p16_stewardship_funded": {
+      "packet_hash": "130d746d3eeb1bc042687cd5be17596c26df9ee91c2b5dfeb8dd79c8f80ebe2e",
+      "action_family_counts": {
+        "accept_property_stewardship": 3
+      },
+      "all_valid": true
+    },
+    "p16_stewardship_underfunded": {
+      "packet_hash": "5d91e221b108ff2456c79b2b282fc758b09fb96cd5e7f2865290ae3d37a4707b",
+      "action_family_counts": {
+        "decline_property_stewardship": 3
+      },
+      "all_valid": true
+    },
+    "p3_workshop_request_abundant": {
+      "packet_hash": "fbda8a62da1ebfae707566ec1db0aea52fe5e716aa2c92472b4fc3860c762497",
+      "action_family_counts": {
+        "transfer_resource": 3
+      },
+      "all_valid": true
+    },
+    "p3_workshop_request_last_reserve": {
+      "packet_hash": "b1e84205fe23586b49773e65f75a3fda74d2a0d20bb805903a0cbd3a5234a55c",
+      "action_family_counts": {
+        "refuse_proposal": 3
+      },
+      "all_valid": true
+    }
+  },
+  "checks": {
+    "all_18_valid": true,
+    "zero_rejections": true,
+    "zero_negative_resources": true,
+    "identical_packet_hash_within_group": true,
+    "care_no_conflict_consistently_fulfills": true,
+    "care_recovery_conflict_consistently_defers": true,
+    "care_obligation_survives_all_branches": true,
+    "funded_stewardship_accepts": true,
+    "underfunded_stewardship_declines": true,
+    "abundant_supplier_consistently_transfers": true,
+    "last_reserve_supplier_consistently_refuses": true,
+    "supplier_control_dominates_same_relationship_history": true,
+    "abundant_transfer_moves_only_requested_metal": true,
+    "scarce_refusal_preserves_last_reserve": true,
+    "funded_stewardship_materializes_reserve": true,
+    "underfunded_stewardship_creates_nothing": true,
+    "abundant_transfer_preserves_exchange_relationship": true,
+    "scarce_refusal_strains_but_preserves_relationship": true
+  },
+  "all_checks_pass": true,
+  "interpretation_notice": "Repeated choices diagnose this cognition configuration only; they are not historical probabilities."
+}

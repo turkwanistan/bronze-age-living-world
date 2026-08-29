@@ -97,3 +97,15 @@ The v018 subset uses six packets, three attempts each (18 decisions total):
 The diagnostic asks whether controlled-factor effects are stronger than within-packet answer variance. Stable action family is useful but not mandatory when more than one action is causally and epistemically defensible. In particular, asking for clarification and waiting are both acceptable conservative responses to unresolved contradictory reports if neither invents a shipment outcome.
 
 All repeated-choice frequencies are **model-configuration diagnostics only**. They are not historical probabilities, population estimates, or evidence that Bronze Age people would choose an action at the observed rate.
+
+## Social/relationship-heavy repeated fresh cognition
+
+From v019, repeated same-packet evaluation expands beyond mainly material/epistemic choices into ongoing social obligations and relationship continuity. The harness uses three fresh attempts per sealed packet and validates not only the selected action family but also the resulting obligation/resource/relationship state.
+
+The v019 packet groups cover:
+
+- P16 continuing care with no competing duty vs an explicit same-day recovery-rest conflict;
+- P16 property stewardship with sufficient vs insufficient liquid silver;
+- P3 responding to the same trusted P7 workshop request after six fulfilled reciprocal returns, with only supplier metal reserve changed from 0.60 to 0.15.
+
+A useful refusal must not erase prior trust history merely because the current material request fails. A useful fulfillment must not silently dissolve a continuing obligation. Property consent must remain materially feasible and distinct from ownership/inheritance.
